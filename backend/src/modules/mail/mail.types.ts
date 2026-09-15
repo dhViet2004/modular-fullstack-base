@@ -1,0 +1,1 @@
+export type RenderedMail={subject:string;html:string;text:string}; export type AuthActionInput={title:string;message:string;otp?:string;actionUrl?:string;actionLabel?:string;expiresIn?:string}; export type SecurityAlertInput={title:string;message:string;device?:string;ipAddress?:string;timestamp?:string;supportText?:string};

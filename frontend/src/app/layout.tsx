@@ -1,0 +1,1 @@
+import "./globals.css";import {Providers} from "./providers";export const metadata={title:"CoreStack Console",description:"Secure modular workspace"};export default function Layout({children}:{children:React.ReactNode}){return <html lang="en"><body><Providers><div className="app">{children}</div></Providers></body></html>}

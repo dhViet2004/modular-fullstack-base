@@ -1,0 +1,2 @@
+import type { RequestHandler } from "express"; import { verifyAccessToken } from "../core/security/token.js"; import { ApiError } from "../core/http/api-error.js";
+export const authenticate:RequestHandler=async(req,res,next)=>{try{const raw=req.header("authorization")?.replace(/^Bearer /,"");if(!raw)throw new ApiError(401,"UNAUTHORIZED","Authentication required");const {payload}=await verifyAccessToken(raw);res.locals.auth={userId:payload.sub,sessionId:payload.sid};next();}catch{next(new ApiError(401,"UNAUTHORIZED","Authentication required"));}};

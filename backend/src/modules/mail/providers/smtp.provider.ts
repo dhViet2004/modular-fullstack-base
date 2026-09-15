@@ -1,0 +1,2 @@
+import nodemailer from "nodemailer"; import { mailConfig } from "../../../config/mail.config.js"; import type { MailProvider } from "../mail.provider.js"; import type { RenderedMail } from "../mail.types.js";
+export class SmtpProvider implements MailProvider{private transport=nodemailer.createTransport({host:mailConfig.host,port:mailConfig.port,secure:mailConfig.secure,auth:mailConfig.user?{user:mailConfig.user,pass:mailConfig.password}:undefined});async send(to:string,mail:RenderedMail){await this.transport.sendMail({from:mailConfig.from,to,...mail});}}

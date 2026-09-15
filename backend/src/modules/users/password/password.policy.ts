@@ -1,0 +1,1 @@
+import { ApiError } from "../../../core/http/api-error.js"; export const assertStrongPassword=(v:string)=>{if(v.length<12||!/[A-Z]/.test(v)||!/[a-z]/.test(v)||!/[0-9]/.test(v))throw new ApiError(400,"VALIDATION_ERROR","Password must be 12+ characters with upper, lower and number")};

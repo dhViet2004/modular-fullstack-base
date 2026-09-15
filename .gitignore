@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+**/node_modules/
+.pnpm-store/
+
+# Environment variables and secrets
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Build output and framework caches
+.next/
+**/.next/
+dist/
+**/dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Generated source
+backend/src/generated/
+
+# Logs and runtime files
+*.log
+logs/
+*.pid
+*.seed
+
+# Local storage (keep folder placeholder)
+backend/storage/*
+!backend/storage/.gitkeep
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.swp

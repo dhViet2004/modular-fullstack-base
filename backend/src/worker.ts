@@ -1,0 +1,2 @@
+import { jobService } from "./modules/jobs/job.service.js"; import { registerJobs } from "./modules/jobs/job.registry.js"; import { registerSchedules } from "./modules/jobs/schedules/schedules.js"; import { logger } from "./core/logger/logger.js";
+async function start(){await jobService.start();await registerJobs();await registerSchedules();logger.info("Worker started")}const stop=async()=>{await jobService.stop();process.exit(0)};process.on("SIGINT",stop);process.on("SIGTERM",stop);start().catch(e=>{logger.error("Worker failed",e);process.exit(1)});

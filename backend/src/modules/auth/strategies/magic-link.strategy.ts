@@ -1,0 +1,2 @@
+import { challengeService } from "../challenges/challenge.service.js"; import type { StrategyResult } from "../auth.types.js";
+export const magicLinkStrategy={async authenticate(email:string,token:string):Promise<StrategyResult>{const c=await challengeService.verify(email,"MAGIC_LINK",token);return{provider:"MAGIC_LINK",providerAccountId:email,email,emailVerified:true,userId:c.userId??undefined};}};

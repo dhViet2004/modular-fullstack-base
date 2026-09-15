@@ -1,0 +1,2 @@
+import { createApp } from "./app.js"; import { appConfig } from "./config/app.config.js"; import { prisma } from "./core/database/prisma.js"; import { logger } from "./core/logger/logger.js";
+const server=createApp().listen(appConfig.port,()=>logger.info(`API listening on ${appConfig.port}`));const stop=()=>server.close(async()=>{await prisma.$disconnect();process.exit(0)});process.on("SIGINT",stop);process.on("SIGTERM",stop);

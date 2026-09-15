@@ -1,0 +1,1 @@
+import { prisma } from "../../../core/database/prisma.js"; export const roleService={list:()=>prisma.role.findMany({include:{permissions:{include:{permission:true}}},orderBy:{rank:"desc"}}),assign:(userId:string,roleId:string)=>prisma.userRole.create({data:{userId,roleId}}),remove:(userId:string,roleId:string)=>prisma.userRole.delete({where:{userId_roleId:{userId,roleId}}})};

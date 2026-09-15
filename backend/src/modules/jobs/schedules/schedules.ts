@@ -1,0 +1,1 @@
+import { jobService } from "../job.service.js"; export const registerSchedules=async()=>{await jobService.boss.schedule("files.cleanup-orphans","0 2 * * *",{});await jobService.boss.schedule("auth.cleanup-challenges","0 * * * *",{});await jobService.boss.schedule("sessions.cleanup-expired","15 * * * *",{});};

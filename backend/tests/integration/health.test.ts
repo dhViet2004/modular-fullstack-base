@@ -1,0 +1,1 @@
+import { describe,it,expect } from "vitest"; import request from "supertest"; import { createApp } from "../../src/app.js"; describe("health",()=>{it("returns standard success response",async()=>{const r=await request(createApp()).get("/health");expect(r.status).toBe(200);expect(r.body).toEqual({success:true,data:{status:"ok"},meta:{}})})});

@@ -1,0 +1,1 @@
+import {PageHead} from "@/components/shared/page-head";import {FileManager} from "@/features/files/components/file-manager";export default function Page(){return <><PageHead title="Files" description="Upload, download, and manage workspace documents."/><FileManager/></>}

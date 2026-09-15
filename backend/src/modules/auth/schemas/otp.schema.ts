@@ -1,0 +1,1 @@
+import { z } from "zod"; export const otpRequestSchema=z.object({email:z.email().transform(v=>v.toLowerCase())}); export const otpVerifySchema=otpRequestSchema.extend({otp:z.string().regex(/^\d{6}$/),fingerprint:z.string().optional()});

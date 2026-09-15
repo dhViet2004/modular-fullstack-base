@@ -1,0 +1,2 @@
+import { PgBoss } from "pg-boss"; import { env } from "../../config/env.js";
+class JobService{boss=new PgBoss(env.DATABASE_URL);private started?:Promise<PgBoss>;start(){return this.started??=this.boss.start()}async stop(){if(this.started)await this.boss.stop();this.started=undefined}async send(name:string,data:object){if(env.NODE_ENV==="test")return null;await this.start();await this.boss.createQueue(name);return this.boss.send(name,data)}} export const jobService=new JobService();

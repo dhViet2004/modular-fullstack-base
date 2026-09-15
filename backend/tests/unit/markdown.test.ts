@@ -1,0 +1,1 @@
+import { describe,it,expect } from "vitest"; import { normalizeMarkdown } from "../../src/modules/files/markdown/markdown.parser.js"; describe("markdown",()=>it("normalizes BOM and line endings",()=>expect(normalizeMarkdown("\uFEFF# Hi\r\n")).toBe("# Hi\n")));

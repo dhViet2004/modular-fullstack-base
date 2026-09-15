@@ -1,0 +1,1 @@
+import {PageHead} from "@/components/shared/page-head";import {UserList} from "@/features/users/components/user-list";export default function Page(){return <><PageHead title="Users" description="Manage members, roles, and account access."/><UserList/></>}

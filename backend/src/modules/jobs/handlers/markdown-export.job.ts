@@ -1,0 +1,1 @@
+import { markdownExportService } from "../../files/markdown/markdown-export.service.js"; export const markdownExportJob=async(jobs:{data:{ownerId:string;name:string;content:string}}[])=>Promise.all(jobs.map(j=>markdownExportService.export(j.data)));
