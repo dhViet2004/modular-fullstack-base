@@ -3,6 +3,7 @@ import request from "supertest";
 import { createApp } from "../../src/app.js";
 import { prisma } from "../../src/core/database/prisma.js";
 import { hashPassword } from "../../src/core/security/password.js";
+import { oauthHandoffService } from "../../src/modules/oauth/oauth-handoff.service.js";
 
 const app=createApp();
 const email="auth-test@example.com";
@@ -29,9 +30,21 @@ describe("password and session auth",()=>{
     const response=await request(app).post("/api/v1/auth/login").send({email,password:"ValidPassword123"});
     expect(response.status).toBe(200);
     expect(response.body.data.accessToken).toBeTypeOf("string");
+    expect(response.body.data.session).not.toHaveProperty("refreshTokenHash");
     const session=await prisma.session.findUniqueOrThrow({where:{id:response.body.data.session.id}});
     expect(session.refreshTokenHash).not.toBe(response.body.data.refreshToken);
     expect(session.refreshTokenHash).toHaveLength(64);
+  });
+  it("exchanges an OAuth handoff exactly once without exposing the refresh hash",async()=>{
+    await createUser();
+    const login=await request(app).post("/api/v1/auth/login").send({email,password:"ValidPassword123"}).expect(200);
+    const code=oauthHandoffService.issue(login.body.data);
+    const exchanged=await request(app).post("/api/v1/auth/google/exchange").send({code}).expect(200);
+    expect(exchanged.body.data.accessToken).toBe(login.body.data.accessToken);
+    expect(exchanged.body.data.session).not.toHaveProperty("refreshTokenHash");
+    const reused=await request(app).post("/api/v1/auth/google/exchange").send({code});
+    expect(reused.status).toBe(401);
+    expect(reused.body.error.code).toBe("INVALID_OAUTH_HANDOFF");
   });
   it("returns the same generic error for an invalid password",async()=>{
     await createUser();

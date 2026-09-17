@@ -529,10 +529,10 @@ Backend, chạy trong `backend/`:
 
 Google:
 
-- [ ] Client ID supplied — BLOCKED: chưa có Google credentials
-- [ ] Client Secret supplied — BLOCKED: chưa có Google credentials
-- [ ] Callback registered — BLOCKED: cần cấu hình Google Console
-- [ ] Real login tested — BLOCKED: cần Google credentials/callback
+- [x] Client ID supplied
+- [x] Client Secret supplied
+- [x] Callback registered
+- [ ] Real login tested end-to-end — mã handoff đã implement, cần verify redirect về dashboard
 
 SMTP:
 
