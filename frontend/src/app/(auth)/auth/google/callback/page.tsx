@@ -5,9 +5,7 @@ import Link from "next/link";
 import { useRouter,useSearchParams } from "next/navigation";
 import { Brand } from "@/components/shared/brand";
 import { api } from "@/lib/axios/client";
-import { authClient } from "@/lib/auth/auth-client";
-
-type AuthResult={accessToken:string;refreshToken:string;session:{id:string}};
+import { authClient,type AuthResult } from "@/lib/auth/auth-client";
 
 function GoogleCallback(){
   const params=useSearchParams(),router=useRouter(),started=useRef(false);

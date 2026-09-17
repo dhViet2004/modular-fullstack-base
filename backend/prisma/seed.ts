@@ -15,7 +15,8 @@ async function main() {
   }
   const email = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
   const password = process.env.BOOTSTRAP_ADMIN_PASSWORD;
-  if (email && password) {
+  const googleSuperAdminBootstrapEnabled = process.env.SUPER_ADMIN_BOOTSTRAP_ENABLED === "true";
+  if (email && password && !googleSuperAdminBootstrapEnabled) {
     const user = await prisma.user.upsert({where:{email},update:{},create:{email,emailVerifiedAt:new Date()}});
     const hash = await argon2.hash(password,{type:argon2.argon2id});
     await prisma.passwordCredential.upsert({where:{userId:user.id},update:{passwordHash:hash,passwordChangedAt:new Date()},create:{userId:user.id,passwordHash:hash}});

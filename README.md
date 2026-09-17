@@ -142,6 +142,8 @@ pnpm dev:worker
 # 5. Prisma models
 
 - [x] User
+- [x] User profile có `displayName` và `avatarUrl`
+- [x] Migration thêm `User.avatarUrl` đã áp dụng cho database development và test
 - [x] AuthIdentity
 - [x] PasswordCredential
 - [x] VerificationChallenge
@@ -174,6 +176,10 @@ pnpm dev:worker
 - [x] Seed audit permission
 - [x] Role-permission mapping
 - [x] Bootstrap superadmin bằng ENV
+- [x] Bootstrap `SUPER_ADMIN` từ verified Google email hoặc immutable Google `sub`
+- [x] `SUPER_ADMIN_BOOTSTRAP_ONCE` chỉ cho phép bootstrap administrator đầu tiên
+- [x] Bootstrap role idempotent và an toàn khi OAuth callback đồng thời
+- [x] Google bootstrap ưu tiên hơn legacy password bootstrap khi seed
 - [x] Seed idempotent
 
 ---
@@ -268,8 +274,13 @@ pnpm dev:worker
 - [x] State validation
 - [x] PKCE nếu áp dụng
 - [x] Verify provider email
+- [x] Verify Google ID token issuer và audience
+- [x] Lưu Google `sub` trong `AuthIdentity.providerAccountId`
 - [x] Resolve/link identity an toàn
 - [x] Create user nếu cần
+- [x] Đồng bộ Google display name và avatar khi login
+- [x] Auth response trả profile và roles đã resolve từ database
+- [x] Bootstrap `SUPER_ADMIN` không dùng dữ liệu role từ frontend
 - [x] Common auth pipeline
 - [x] Chống duplicate user do race condition
 
@@ -438,6 +449,7 @@ pnpm dev:worker
 - [x] Password changed
 - [x] User blocked/unblocked
 - [x] Role assigned/removed
+- [x] `SUPER_ADMIN_BOOTSTRAPPED` audit event
 - [x] Session revoked
 - [x] File deleted
 - [x] Không log sensitive secrets
@@ -455,6 +467,10 @@ pnpm dev:worker
 - [x] OTP page/request/verify
 - [x] Magic Link page/request
 - [x] Google login action
+- [x] Google callback lưu profile cùng local auth session
+- [x] Sidebar hiển thị tên, role và Google avatar của user đang đăng nhập
+- [x] Avatar có initials fallback khi remote image lỗi
+- [x] Next Image cho phép và tối ưu ảnh từ `lh3.googleusercontent.com`
 - [x] Logout/logout-all
 - [x] Refresh handling
 - [x] Infinite refresh loop prevented
@@ -532,7 +548,9 @@ Google:
 - [x] Client ID supplied
 - [x] Client Secret supplied
 - [x] Callback registered
-- [ ] Real login tested end-to-end — mã handoff đã implement, cần verify redirect về dashboard
+- [x] Real login tested end-to-end — callback/handoff redirect về dashboard thành công
+- [x] Verified Google profile name, database role và avatar hiển thị trong sidebar
+- [x] Google avatar qua Next Image Optimizer trả `HTTP 200 image/png`
 
 SMTP:
 

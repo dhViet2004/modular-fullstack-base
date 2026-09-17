@@ -21,6 +21,20 @@ NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED=true
 
 Change both enabled flags to `false` and restart the applications to remove the routes and UI entry point. No source deletion or router commenting is required.
 
+## Bootstrap the first super admin
+
+Google proves identity; database RBAC remains the authorization source. A deployment can promote an allowlisted, verified Google identity on its first successful login:
+
+```env
+SUPER_ADMIN_BOOTSTRAP_ENABLED=true
+SUPER_ADMIN_BOOTSTRAP_PROVIDER=google
+SUPER_ADMIN_GOOGLE_EMAILS=admin@example.com
+SUPER_ADMIN_GOOGLE_SUBS=
+SUPER_ADMIN_BOOTSTRAP_ONCE=true
+```
+
+Prefer the immutable Google `sub` when it is known. Email matching is case-insensitive and is only a bootstrap mechanism. With `SUPER_ADMIN_BOOTSTRAP_ONCE=true`, the allowlist stops promoting users as soon as any `SUPER_ADMIN` assignment exists. The assignment and its audit event are committed atomically, and concurrent callbacks are serialized. Later logins resolve authorization exclusively through `AuthIdentity -> User -> UserRole`.
+
 ## Reuse in another project
 
 Copy `backend/src/modules/oauth`, mount `googleOAuthRoutes` below the target auth prefix, and provide these host contracts:
