@@ -588,6 +588,18 @@ Cloudflare R2:
 
 ---
 
+# 28. Agent roadmap workflow
+
+- [x] Repository role instructions trong `AGENTS.md`
+- [x] Project skill `.agents/skills/roadmap-checklist/SKILL.md`
+- [x] Agent kiểm tra `CODEX_PROJECT_SETUP.md` trước và sau mỗi feature/bug fix
+- [x] Agent cập nhật checklist `README.md` sau khi implementation và verification hoàn tất
+- [x] Không tick task chưa verify; task bị chặn giữ `[ ]` kèm lý do `BLOCKED`
+- [x] Skill metadata cho phép implicit invocation
+- [x] Nội dung skill, role và metadata được chuẩn hóa bằng tiếng Việt
+
+---
+
 # CODEX WORKFLOW
 
 Mỗi task:
