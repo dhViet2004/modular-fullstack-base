@@ -2,7 +2,7 @@ import { z } from "zod";
 const bool = z.string().default("false").transform((v) => v === "true");
 const enabled = z.string().default("true").transform((v) => v === "true");
 const schema = z.object({
-  NODE_ENV:z.enum(["development","test","production"]).default("development"), PORT:z.coerce.number().default(4000), FRONTEND_URL:z.string().url().default("http://localhost:3000"),
+  NODE_ENV:z.enum(["development","test","production"]).default("development"), PORT:z.coerce.number().default(4000), FRONTEND_URL:z.string().url().default("http://localhost:3000"), TRUST_PROXY:bool,
   DATABASE_URL:z.string().default("postgresql://postgres:postgres@localhost:5432/corestack"), ACCESS_TOKEN_SECRET:z.string().min(32).default("development_only_secret_change_me_123"), ACCESS_TOKEN_TTL_MINUTES:z.coerce.number().default(15), REFRESH_TOKEN_TTL_DAYS:z.coerce.number().default(30), AUTH_MAX_ACTIVE_SESSIONS:z.coerce.number().default(5),
   GOOGLE_OAUTH_ENABLED:enabled, GOOGLE_CLIENT_ID:z.string().default(""), GOOGLE_CLIENT_SECRET:z.string().default(""), GOOGLE_CALLBACK_URL:z.string().url().default("http://localhost:4000/api/v1/auth/google/callback"),
   SUPER_ADMIN_BOOTSTRAP_ENABLED:bool, SUPER_ADMIN_BOOTSTRAP_PROVIDER:z.enum(["google"]).default("google"), SUPER_ADMIN_GOOGLE_EMAILS:z.string().default(""), SUPER_ADMIN_GOOGLE_SUBS:z.string().default(""), SUPER_ADMIN_BOOTSTRAP_ONCE:z.string().default("true").transform((v)=>v==="true"),
