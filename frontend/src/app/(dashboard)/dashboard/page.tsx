@@ -1,1 +1,65 @@
-import Link from "next/link";import {PageHead} from "@/components/shared/page-head";export default function Home(){return <><PageHead title="Workspace overview" description="Everything you need to manage your CoreStack application."/><section className="stats"><div className="stat"><div className="stat-icon">♙</div><div><strong>Users</strong><span>Identity and role management</span></div></div><div className="stat success"><div className="stat-icon">▱</div><div><strong>Files</strong><span>Storage and Markdown tools</span></div></div><div className="stat warn"><div className="stat-icon">⌘</div><div><strong>Sessions</strong><span>Devices and secure access</span></div></div><div className="stat danger"><div className="stat-icon">⚙</div><div><strong>Security</strong><span>Password and preferences</span></div></div></section><div className="panel"><div className="panel-head"><div><h2>Quick actions</h2><p>Jump back into your most common workspace tasks.</p></div></div><div className="form-panel head-actions"><Link className="btn" href="/users">Manage users</Link><Link className="btn secondary" href="/files">Upload a file</Link><Link className="btn secondary" href="/sessions">Review sessions</Link></div></div></>}
+import Link from "next/link";
+import { FiUsers, FiFolder, FiShield, FiSettings } from "react-icons/fi";
+import { PageHead } from "@/components/shared/page-head";
+
+export default function Home() {
+  return (
+    <>
+      <PageHead
+        title="Workspace overview"
+        description="Everything you need to manage your CoreStack application."
+      />
+      <section className="stats">
+        <div className="stat">
+          <div className="stat-icon" style={{ display: "grid", placeItems: "center" }}>
+            <FiUsers size={20} />
+          </div>
+          <div>
+            <strong>Users</strong>
+            <span>Identity and role management</span>
+          </div>
+        </div>
+        <div className="stat success">
+          <div className="stat-icon" style={{ display: "grid", placeItems: "center" }}>
+            <FiFolder size={20} />
+          </div>
+          <div>
+            <strong>Files</strong>
+            <span>Storage and Markdown tools</span>
+          </div>
+        </div>
+        <div className="stat warn">
+          <div className="stat-icon" style={{ display: "grid", placeItems: "center" }}>
+            <FiShield size={20} />
+          </div>
+          <div>
+            <strong>Sessions</strong>
+            <span>Devices and secure access</span>
+          </div>
+        </div>
+        <div className="stat danger">
+          <div className="stat-icon" style={{ display: "grid", placeItems: "center" }}>
+            <FiSettings size={20} />
+          </div>
+          <div>
+            <strong>Security</strong>
+            <span>Password and preferences</span>
+          </div>
+        </div>
+      </section>
+      <div className="panel">
+        <div className="panel-head">
+          <div>
+            <h2>Quick actions</h2>
+            <p>Jump back into your most common workspace tasks.</p>
+          </div>
+        </div>
+        <div className="form-panel head-actions">
+          <Link className="btn" href="/users">Manage users</Link>
+          <Link className="btn secondary" href="/files">Upload a file</Link>
+          <Link className="btn secondary" href="/sessions">Review sessions</Link>
+        </div>
+      </div>
+    </>
+  );
+}

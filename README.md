@@ -287,6 +287,9 @@ pnpm dev:worker
 - [x] Lưu Google `sub` trong `AuthIdentity.providerAccountId`
 - [x] Resolve/link identity an toàn
 - [x] Create user nếu cần
+- [x] Google login lần đầu tạo user và lưu identity theo Google `sub`
+- [x] Các lần Google login sau resolve đúng user cũ theo `sub`
+- [x] Google email đã xác minh liên kết với tài khoản email/password hiện hữu và đồng bộ trạng thái xác minh
 - [x] Đồng bộ Google display name và avatar khi login
 - [x] Auth response trả profile và roles đã resolve từ database
 - [x] Bootstrap `SUPER_ADMIN` không dùng dữ liệu role từ frontend
@@ -421,6 +424,11 @@ pnpm dev:worker
 - [x] Soft delete logical File
 - [x] Decrement referenceCount
 - [x] Audit file delete
+- [x] Cloudflare R2 upload and download verified end-to-end
+- [x] MIME validation fallback theo file extension cho markdown/image/document
+- [x] File upload error feedback và authenticated blob download trong Frontend UI
+- [x] Dev server watch `.env` (`--watch-path=.env`) để đồng bộ cấu hình storage
+- [x] Tái sử dụng (reuse/duplicate) tệp tin đã có sẵn qua API POST /files/:id/reuse và UI, tận dụng cơ chế Content Hash Deduplication để không tiêu tốn thêm dung lượng đĩa vật lý (0 byte phát sinh)
 
 ---
 
@@ -435,6 +443,7 @@ pnpm dev:worker
 - [x] Orphan > 10 ngày được xóa
 - [x] Storage failure handled
 - [x] Cleanup tests
+- [x] API và UI giám sát tệp mồ côi thời gian thực, hỗ trợ kích hoạt dọn dẹp theo thời hạn 10 ngày hoặc thủ công
 
 ---
 
@@ -450,6 +459,9 @@ pnpm dev:worker
 - [x] Reuse/create StoredObject
 - [x] Create logical File
 - [x] Background job support
+- [x] Trình soạn thảo bài giảng LMS chuyên dụng (LMS Lecture Editor) với thanh công cụ giáo án (H1-H3, Callout Lưu ý, Mẹo hay, Trọng tâm, Bảng dữ liệu, Code block) và Live Preview trực quan
+- [x] Chuyển đổi dữ liệu hai chiều Excel (.xlsx, .csv) & Google Sheets (TSV/CSV) <-> Bảng Markdown (Markdown Table)
+- [x] Chuyển đổi hai chiều Google Docs / HTML <-> Bài giảng Markdown LMS, hỗ trợ xuất và sao chép định dạng Rich Text tương thích 100% dán vào Google Docs
 
 ---
 
@@ -460,6 +472,7 @@ pnpm dev:worker
 - [x] Logout
 - [x] Password changed
 - [x] User blocked/unblocked
+- [x] Ghi nhận AuditLog hành động FILE_REUSED khi người dùng nhân bản tệp tin
 - [x] Role assigned/removed
 - [x] `SUPER_ADMIN_BOOTSTRAPPED` audit event
 - [x] Session revoked
@@ -472,6 +485,7 @@ pnpm dev:worker
 
 - [x] Axios client
 - [x] Axios interceptors
+- [x] Axios client và interceptors phân tách an toàn, tránh circular dependency và ReferenceError khi khởi tạo
 - [x] QueryClient
 - [x] Query key factory
 - [x] RHF + Zod forms
@@ -508,6 +522,8 @@ pnpm dev:worker
 - [x] Change password UI
 - [x] File upload/list/download/delete
 - [x] Markdown import/export UI
+- [x] Giao diện Quản lý tệp tin tiếng Việt: thống kê lưu trữ, tìm kiếm, lọc theo định dạng, sắp xếp, xem trước ảnh/văn bản và hộp thoại xác nhận xóa
+- [x] Tích hợp react-icons (Feather) thay thế toàn bộ ký tự emoji/unicode trên Files, Dashboard và Sidebar
 - [x] Mail compose/send UI
 - [x] Mail delivery history UI
 - [x] Mail navigation menu

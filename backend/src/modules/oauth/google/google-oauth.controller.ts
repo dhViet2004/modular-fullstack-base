@@ -9,6 +9,19 @@ const info=(req:Request)=>({ipAddress:req.ip,userAgent:req.header("user-agent"),
 
 export const googleOAuthController:Record<string,RequestHandler>={
   authorize(_req,res,next){try{res.redirect(googleOAuthStrategy.authorize())}catch(error){next(error)}},
-  async callback(req,res){try{const result=await authService.complete(await googleOAuthStrategy.callback(String(req.query.code),String(req.query.state)),info(req));const code=oauthHandoffService.issue(result);res.redirect(`${env.FRONTEND_URL}/auth/google/callback?code=${encodeURIComponent(code)}`)}catch{res.redirect(`${env.FRONTEND_URL}/auth/google/callback?error=google_auth_failed`)}},
+  async callback(req, res) {
+    try {
+      const result = await authService.complete(
+        await googleOAuthStrategy.callback(String(req.query.code), String(req.query.state)),
+        info(req)
+      );
+      const code = oauthHandoffService.issue(result);
+      res.redirect(`${env.FRONTEND_URL}/auth/google/callback?code=${encodeURIComponent(code)}`);
+    } catch (error: any) {
+      console.error("[Google OAuth Error]:", error?.code, error?.message || error);
+      const errCode = error?.code ? String(error.code).toLowerCase() : "google_auth_failed";
+      res.redirect(`${env.FRONTEND_URL}/auth/google/callback?error=${encodeURIComponent(errCode)}`);
+    }
+  },
   exchange(req,res,next){try{res.json(success(oauthHandoffService.consume(req.body.code)))}catch(error){next(error)}}
 };
