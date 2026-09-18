@@ -1,1 +1,29 @@
-"use client";import Link from "next/link";import {useState} from "react";import {Brand} from "@/components/shared/brand";import {authApi} from "@/features/auth/api/auth.api";export default function Page(){const[email,setEmail]=useState(""),[sent,setSent]=useState(false);const submit=async()=>{await authApi.requestMagic(email);setSent(true)};return <div className="auth-box"><Brand/><h1>Magic link</h1><p className="subtitle">No password needed. We’ll email you a secure sign-in link.</p><div className="auth-tabs"><Link href="/login">Password</Link><Link href="/otp">Email code</Link><Link className="active" href="/magic-link">Magic link</Link></div>{sent?<div className="success"><strong>Check your inbox</strong><br/>We sent a sign-in link to {email}.</div>:<><label className="field"><span>Email address</span><input className="input" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@company.com"/></label><button className="btn block" disabled={!email} onClick={submit}>Email me a sign-in link</button></>}<p className="helper"><Link href="/login">← Back to password sign in</Link></p></div>}
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { Brand } from "@/components/shared/brand";
+import { authApi } from "@/features/auth/api/auth.api";
+import { apiError } from "@/lib/axios/interceptors";
+
+export default function Page() {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<unknown>();
+
+  const submit = async () => {
+    setPending(true);
+    setError(undefined);
+    try {
+      await authApi.requestMagic(email);
+      setSent(true);
+    } catch (requestError) {
+      setError(requestError);
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return <div className="auth-box login-page"><Brand/><h1>Đăng nhập bằng liên kết</h1><p className="subtitle">Không cần mật khẩu. Chúng tôi sẽ gửi một liên kết đăng nhập an toàn đến email của bạn.</p><div className="auth-tabs"><Link href="/login">Mật khẩu</Link><Link href="/otp">Mã email</Link><Link className="active" href="/magic-link">Liên kết</Link></div>{sent?<div className="success"><strong>Kiểm tra hộp thư của bạn</strong><br/>Liên kết đăng nhập đã được gửi đến {email}.</div>:<><label className="field"><span>Địa chỉ email</span><input className="input" type="email" value={email} onChange={(event)=>setEmail(event.target.value)} placeholder="ban@congty.com"/></label>{error!==undefined&&<p className="error">{apiError(error).message}</p>}<button className="btn block" disabled={!email||pending} onClick={submit}>{pending?"Đang gửi…":"Gửi liên kết đăng nhập"}</button></>}<p className="helper"><Link href="/login">← Quay lại đăng nhập bằng mật khẩu</Link></p></div>;
+}

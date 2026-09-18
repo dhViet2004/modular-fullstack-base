@@ -126,6 +126,7 @@ pnpm dev:worker
 # 4. PostgreSQL + Prisma
 
 - [x] PostgreSQL service trong Docker Compose
+- [x] PostgreSQL tự khởi động lại để giữ ổn định các luồng Auth/Mail
 - [x] Persistent volume
 - [x] Healthcheck
 - [x] Backend kết nối PostgreSQL
@@ -367,6 +368,8 @@ pnpm dev:worker
 - [x] Built-in template catalog API
 - [x] Send mail from Auth Action template
 - [x] Send mail from Security Alert template
+- [x] Lưu và cập nhật 3 mẫu email HTML linh động trong database
+- [x] Merge biến an toàn và dùng mẫu đã lưu cho OTP/Magic Link/Security Alert
 
 ---
 
@@ -466,6 +469,7 @@ pnpm dev:worker
 - [x] Login page/mutation
 - [x] OTP page/request/verify
 - [x] Magic Link page/request
+- [x] Giao diện Password/Google, OTP và Magic Link đồng nhất
 - [x] Google login action
 - [x] Google callback lưu profile cùng local auth session
 - [x] Sidebar hiển thị tên, role và Google avatar của user đang đăng nhập
@@ -481,7 +485,7 @@ pnpm dev:worker
 
 - [x] Session list
 - [x] Revoke session
-- [x] SESSION_LIMIT_REACHED UI
+- [x] SESSION_LIMIT_REACHED UI cho đăng nhập Password và OTP
 - [x] Users list/detail/update
 - [x] Block/unblock UI
 - [x] Assign/remove role UI
@@ -496,6 +500,7 @@ pnpm dev:worker
 - [x] Auth Action template preview
 - [x] Security Alert template preview
 - [x] Apply built-in template to compose form
+- [x] Trình soạn HTML, chèn biến, xem trước và lưu 3 mẫu email
 
 ---
 
@@ -554,10 +559,10 @@ Google:
 
 SMTP:
 
-- [ ] Credentials supplied — BLOCKED: chưa có SMTP credentials
-- [ ] OTP mail tested — BLOCKED: chưa có SMTP credentials
-- [ ] Magic Link mail tested — BLOCKED: chưa có SMTP credentials
-- [ ] Security Alert mail tested — BLOCKED: chưa có SMTP credentials
+- [x] Credentials supplied
+- [x] OTP mail tested end-to-end — nhận mã qua email và đăng nhập thành công
+- [ ] Magic Link mail tested — chưa xác minh end-to-end
+- [ ] Security Alert mail tested — chưa xác minh end-to-end
 
 Cloudflare R2:
 
