@@ -25,6 +25,7 @@ import {
   copyToGoogleDocsClipboard
 } from "../utils/markdown-converter";
 import { useExportMarkdown } from "../hooks/use-files";
+import { parseMarkdownToElements } from "./markdown-previewer";
 
 interface LmsMarkdownEditorProps {
   initialContent?: string;
@@ -91,12 +92,29 @@ export function LmsMarkdownEditor({
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const excelFileInputRef = useRef<HTMLInputElement>(null);
+  const mdFileInputRef = useRef<HTMLInputElement>(null);
 
   const exportMutation = useExportMarkdown();
 
   const showNotification = (msg: string) => {
     setStatusMessage(msg);
     setTimeout(() => setStatusMessage(null), 4000);
+  };
+
+  // Tải file .md từ máy tính lên trình soạn thảo
+  const handleMdFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      setContent(text);
+      setDocTitle(file.name);
+      showNotification(`Đã tải lên và nạp nội dung từ tệp "${file.name}" thành công!`);
+    } catch {
+      showNotification("Không thể đọc tệp .md. Vui lòng kiểm tra định dạng tệp!");
+    } finally {
+      if (mdFileInputRef.current) mdFileInputRef.current.value = "";
+    }
   };
 
   // Chèn text tại vị trí con trỏ trong textarea
@@ -261,13 +279,28 @@ export function LmsMarkdownEditor({
             <span>{copiedDocs ? "Đã sao chép!" : "Sao chép cho Google Docs"}</span>
           </button>
 
+          <label
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-indigo-600 cursor-pointer transition-colors"
+            title="Tải tệp .md từ máy tính vào trình soạn thảo"
+          >
+            <FiUploadCloud className="w-4 h-4 text-indigo-600" />
+            <span>Tải .md lên</span>
+            <input
+              ref={mdFileInputRef}
+              type="file"
+              accept=".md,.markdown,text/markdown,text/plain"
+              onChange={handleMdFileUpload}
+              className="hidden"
+            />
+          </label>
+
           <button
             onClick={handleDownloadMarkdown}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 transition-colors"
             title="Tải tệp .md về máy"
           >
             <FiDownload className="w-4 h-4" />
-            <span>Tải .md</span>
+            <span>Tải .md về</span>
           </button>
 
           <button
@@ -466,7 +499,7 @@ export function LmsMarkdownEditor({
             <span className="text-emerald-600 font-medium">Trực quan hóa</span>
           </div>
           <div className="flex-1 p-6 overflow-y-auto lms-preview prose prose-slate max-w-none text-sm leading-relaxed">
-            {renderMarkdownPreview(content)}
+            {parseMarkdownToElements(content)}
           </div>
         </div>
       </div>
@@ -502,7 +535,7 @@ export function LmsMarkdownEditor({
                 disabled={!pasteInput.trim()}
                 className="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:opacity-50"
               >
-                Tạo Bảng Markdown
+                Chuyển thành Bảng Markdown
               </button>
             </div>
           </div>
@@ -547,240 +580,4 @@ export function LmsMarkdownEditor({
       )}
     </div>
   );
-}
-
-/**
- * Trình dựng hiển thị xem trước bài giảng phong phú (Rich LMS Preview)
- */
-function renderMarkdownPreview(markdown: string) {
-  const lines = markdown.split(/\r?\n/);
-  const elements: React.ReactNode[] = [];
-
-  let inCodeBlock = false;
-  let codeBuffer: string[] = [];
-  let inTable = false;
-  let tableHeaders: string[] = [];
-  let tableRows: string[][] = [];
-
-  const flushTable = (key: string) => {
-    if (inTable && tableHeaders.length > 0) {
-      elements.push(
-        <div key={key} className="overflow-x-auto my-4 rounded-lg border border-slate-200 shadow-2xs">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-slate-100 border-b border-slate-200">
-                {tableHeaders.map((h, i) => (
-                  <th key={i} className="p-2.5 font-semibold text-slate-800 border-r border-slate-200 last:border-r-0">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {tableRows.map((row, rIdx) => (
-                <tr
-                  key={rIdx}
-                  className={`border-b border-slate-200 last:border-b-0 ${
-                    rIdx % 2 === 0 ? "bg-white" : "bg-slate-50/50"
-                  } hover:bg-indigo-50/30 transition-colors`}
-                >
-                  {row.map((c, cIdx) => (
-                    <td key={cIdx} className="p-2.5 text-slate-700 border-r border-slate-200 last:border-r-0">
-                      {c}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-      inTable = false;
-      tableHeaders = [];
-      tableRows = [];
-    }
-  };
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    // Xử lý Code block
-    if (line.trim().startsWith("```")) {
-      if (inCodeBlock) {
-        elements.push(
-          <pre
-            key={`code-${i}`}
-            className="my-3 p-3.5 bg-slate-900 text-slate-100 font-mono text-xs rounded-lg overflow-x-auto border border-slate-800"
-          >
-            <code>{codeBuffer.join("\n")}</code>
-          </pre>
-        );
-        codeBuffer = [];
-        inCodeBlock = false;
-      } else {
-        flushTable(`tbl-pre-${i}`);
-        inCodeBlock = true;
-      }
-      continue;
-    }
-
-    if (inCodeBlock) {
-      codeBuffer.push(line);
-      continue;
-    }
-
-    // Xử lý Table
-    if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
-      const cells = line
-        .trim()
-        .slice(1, -1)
-        .split("|")
-        .map((c) => c.trim());
-      const isSep = cells.every((c) => /^:?-+:?$/.test(c));
-
-      if (isSep) {
-        // Hàng trước đó là header
-        if (!inTable && i > 0) {
-          const prev = lines[i - 1].trim();
-          if (prev.startsWith("|") && prev.endsWith("|")) {
-            tableHeaders = prev
-              .slice(1, -1)
-              .split("|")
-              .map((c) => c.trim());
-            inTable = true;
-            tableRows = [];
-          }
-        }
-        continue;
-      }
-
-      if (inTable) {
-        tableRows.push(cells);
-        continue;
-      }
-    } else {
-      flushTable(`tbl-${i}`);
-    }
-
-    // Xử lý Callout / Alert
-    if (line.startsWith("> [!NOTE]")) {
-      const noteContent = lines[i + 1]?.startsWith(">") ? lines[i + 1].replace(/^>\s*/, "") : "";
-      elements.push(
-        <div
-          key={`note-${i}`}
-          className="my-3 p-3 bg-sky-50 border-l-4 border-sky-500 rounded-r-lg text-xs text-sky-900 flex items-start gap-2.5"
-        >
-          <FiInfo className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
-          <div>
-            <strong className="font-semibold block mb-0.5 text-sky-950">Lưu ý giáo án</strong>
-            <span>{noteContent}</span>
-          </div>
-        </div>
-      );
-      i++; // Skip note body line
-      continue;
-    }
-
-    if (line.startsWith("> [!TIP]")) {
-      const tipContent = lines[i + 1]?.startsWith(">") ? lines[i + 1].replace(/^>\s*/, "") : "";
-      elements.push(
-        <div
-          key={`tip-${i}`}
-          className="my-3 p-3 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg text-xs text-emerald-900 flex items-start gap-2.5"
-        >
-          <FiHelpCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-          <div>
-            <strong className="font-semibold block mb-0.5 text-emerald-950">Mẹo áp dụng</strong>
-            <span>{tipContent}</span>
-          </div>
-        </div>
-      );
-      i++;
-      continue;
-    }
-
-    if (line.startsWith("> [!IMPORTANT]")) {
-      const impContent = lines[i + 1]?.startsWith(">") ? lines[i + 1].replace(/^>\s*/, "") : "";
-      elements.push(
-        <div
-          key={`imp-${i}`}
-          className="my-3 p-3 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg text-xs text-amber-900 flex items-start gap-2.5"
-        >
-          <FiAlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-          <div>
-            <strong className="font-semibold block mb-0.5 text-amber-950">Trọng tâm thi cử / Đánh giá</strong>
-            <span>{impContent}</span>
-          </div>
-        </div>
-      );
-      i++;
-      continue;
-    }
-
-    // Headers
-    if (line.startsWith("# ")) {
-      elements.push(
-        <h1 key={i} className="text-xl font-bold text-slate-900 mt-6 mb-3 pb-2 border-b border-slate-200">
-          {line.replace(/^#\s+/, "")}
-        </h1>
-      );
-      continue;
-    }
-    if (line.startsWith("## ")) {
-      elements.push(
-        <h2 key={i} className="text-base font-bold text-slate-800 mt-5 mb-2 flex items-center gap-1.5">
-          <span className="w-1.5 h-4 bg-indigo-600 rounded-full inline-block"></span>
-          <span>{line.replace(/^##\s+/, "")}</span>
-        </h2>
-      );
-      continue;
-    }
-    if (line.startsWith("### ")) {
-      elements.push(
-        <h3 key={i} className="text-sm font-semibold text-slate-700 mt-3 mb-1">
-          {line.replace(/^###\s+/, "")}
-        </h3>
-      );
-      continue;
-    }
-
-    // Horizontal Rule
-    if (line.trim() === "---") {
-      elements.push(<hr key={i} className="my-5 border-t border-slate-200" />);
-      continue;
-    }
-
-    // Bullet lists
-    if (line.startsWith("- ")) {
-      elements.push(
-        <li key={i} className="ml-5 list-disc text-xs text-slate-700 my-1">
-          {line.replace(/^- /, "")}
-        </li>
-      );
-      continue;
-    }
-
-    // Numbered lists
-    if (/^\d+\.\s/.test(line)) {
-      elements.push(
-        <li key={i} className="ml-5 list-decimal text-xs text-slate-700 my-1">
-          {line.replace(/^\d+\.\s/, "")}
-        </li>
-      );
-      continue;
-    }
-
-    // Regular paragraphs
-    if (line.trim().length > 0) {
-      elements.push(
-        <p key={i} className="my-2 text-xs text-slate-700 leading-relaxed">
-          {line}
-        </p>
-      );
-    }
-  }
-
-  flushTable("tbl-final");
-
-  return elements;
 }

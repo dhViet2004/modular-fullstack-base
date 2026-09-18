@@ -182,6 +182,8 @@ pnpm dev:worker
 - [x] Bootstrap role idempotent và an toàn khi OAuth callback đồng thời
 - [x] Google bootstrap ưu tiên hơn legacy password bootstrap khi seed
 - [x] Seed idempotent
+- [x] Single Super Admin Policy: Ẩn và chặn tuyệt đối việc gán vai trò SUPER_ADMIN
+- [x] Phân vai trò theo rank: Cho phép Admin (rank 50) gán vai trò ADMIN (rank 50) cho Member
 
 ---
 
@@ -331,14 +333,25 @@ pnpm dev:worker
 - [x] Authenticate middleware
 - [x] Authorize middleware
 - [x] Multiple roles
-- [x] Permission override
+- [x] Level/Rank Hierarchy: Cấp bậc cao hơn tự động kế thừa toàn bộ quyền của các cấp bậc bên dưới (SUPER_ADMIN > ADMIN > MEMBER)
+- [x] Super Admin duy nhất: Toàn hệ thống chỉ cho phép duy nhất 1 Super Admin, chặn chỉ định thêm
+- [x] Admin peer protection: Quản trị viên ngang hàng không được sửa quyền, khóa tài khoản hoặc can thiệp lẫn nhau
+- [x] Phân quyền động (Dynamic Permission Overrides): Cho phép cấu hình ALLOW (cấp thêm) hoặc DENY (tước quyền) trực tiếp cho từng người dùng
+- [x] API & UI quản trị phân quyền động (`GET /users/:id/permissions`, `POST /users/:id/permissions/override`, `DELETE /users/:id/permissions/override/:permissionId`)
+- [x] Sub-menu / Tab navigation trên UI: Chuyển đổi giữa "Danh sách người dùng" và "Nhóm quyền & Vai trò"
+- [x] Dropdown accordion menu "Người dùng & Phân quyền" trên Sidebar: Click để mở/đóng danh sách gồm 2 menu con "Người dùng" (`/users?tab=users`) và "Phân quyền" (`/users?tab=roles`), tự động active và sync URL query
+- [x] Quản lý nhóm quyền (Vai trò / Roles): Tạo vai trò mới với Tên và Rank tùy chỉnh (`POST /api/v1/users/roles`)
+- [x] Cấu hình quyền hạn cho vai trò: Gán/gỡ permissions theo module cho từng vai trò (`PUT /api/v1/users/roles/:id/permissions`)
+- [x] Xóa vai trò tùy chỉnh và bảo vệ vai trò hệ thống cốt lõi (`DELETE /api/v1/users/roles/:id`)
+- [x] Icon gán vai trò nhanh tại từng dòng người dùng (`FiShield`), mở modal phân vai trò trực tiếp (`AssignRoleModal`)
+- [x] Phân giải quyền hạn thời gian thực & cờ Permission trên Frontend: API auth & `/users/me` trả về danh sách permissions đầy đủ (kế thừa thứ bậc + override); Frontend hook `usePermissions` lọc hiển thị các menu sidebar và các button thao tác tương ứng trên UI
 - [x] Rank policy
 - [x] ADMIN không chỉnh SUPER_ADMIN
 - [x] ADMIN không chỉnh rank >= mình
 - [x] ADMIN không promote SUPER_ADMIN
 - [x] User không tự block
 - [x] Không block SUPER_ADMIN cuối cùng
-- [x] RBAC tests
+- [x] RBAC tests (13 unit tests bao gồm role creation, permission assignment, rank inheritance, single super admin, admin peer protection, dynamic overrides)
 
 ---
 
@@ -360,6 +373,14 @@ pnpm dev:worker
 - [x] passwordChangedAt
 - [x] Optional revoke other sessions
 - [x] Audit + security email
+- [x] Quản trị viên cấp lại mật khẩu tạm thời ngẫu nhiên 12 ký tự cho người dùng (`POST /api/v1/users/:id/reset-password`)
+- [x] Mật khẩu tạm thời có hiệu lực tối đa 24 giờ (`temporaryExpiresAt = now + 24h`)
+- [x] Tự động thu hồi toàn bộ phiên đăng nhập cũ của người dùng khi được cấp mật khẩu tạm
+- [x] Gửi email bảo mật chứa mật khẩu tạm và thời hạn 24 giờ về hòm thư người dùng
+- [x] Kiểm tra thời hạn mật khẩu tạm khi đăng nhập (quá 24h từ chối 401 `TEMPORARY_PASSWORD_EXPIRED`)
+- [x] Bắt buộc đổi mật khẩu mới (`mustChangePassword: true`) khi đăng nhập bằng mật khẩu tạm trước khi sử dụng hệ thống
+- [x] Modal giao diện bắt buộc đổi mật khẩu trên frontend (MustChangePasswordModal)
+- [x] Tự động gỡ cờ `mustChangePassword` và xóa `temporaryExpiresAt` sau khi đổi mật khẩu mới thành công
 
 ---
 
@@ -399,6 +420,11 @@ pnpm dev:worker
 - [x] `files.cleanup-orphans`
 - [x] `files.import-markdown`
 - [x] `files.export-markdown`
+- [x] Lên lịch công việc định kỳ động (Dynamic Scheduled Jobs) lưu trong cơ sở dữ liệu: thêm, sửa, cập nhật, xóa lịch trình (Cron pattern)
+- [x] Tích hợp Job Scheduler & Workers chạy trực tiếp theo Web Server (`server.ts`) in-process hoặc chạy qua Worker độc lập (`worker.ts`)
+- [x] Hỗ trợ các tác vụ định kỳ tự động: Xóa tệp mồ côi quá hạn, dọn OTP/Magic link, thu hồi phiên đăng nhập hết hạn, dọn dẹp AuditLog cũ (`system.cleanup-audit`), cập nhật trạng thái người dùng không hoạt động (`users.update-inactive`)
+- [x] Kích hoạt chạy ngay thủ công (Trigger Run Now) đưa tác vụ vào hàng đợi tức thì
+- [x] Giao diện quản lý Lịch trình Công việc (Jobs Dashboard UI) với thống kê, giải thích biểu thức Cron, bật/tắt nhanh và điều khiển trực quan
 
 ---
 

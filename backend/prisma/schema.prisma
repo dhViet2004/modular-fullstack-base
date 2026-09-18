@@ -74,6 +74,8 @@ model PasswordCredential {
   userId String @unique
   passwordHash String
   passwordChangedAt DateTime @default(now())
+  mustChangePassword Boolean @default(false)
+  temporaryExpiresAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -210,4 +212,32 @@ model EmailTemplate {
   html String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum JobTaskType {
+  CLEANUP_ORPHAN_FILES
+  CLEANUP_EXPIRED_SESSIONS
+  CLEANUP_CHALLENGES
+  CLEANUP_AUDIT_LOGS
+  UPDATE_INACTIVE_USERS
+  CUSTOM_TASK
+}
+
+model ScheduledJob {
+  id String @id @default(cuid())
+  name String
+  description String?
+  taskType JobTaskType
+  queue String
+  cron String
+  payload Json?
+  enabled Boolean @default(true)
+  runOnServer Boolean @default(true)
+  lastRunAt DateTime?
+  lastStatus String?
+  lastError String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enabled])
 }

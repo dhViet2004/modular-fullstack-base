@@ -35,6 +35,7 @@ import {
   useCleanupOrphans
 } from "../hooks/use-files";
 import { LmsMarkdownEditor } from "./lms-markdown-editor";
+import { MarkdownPreviewer } from "./markdown-previewer";
 import type { FileRecord } from "../types/file";
 
 const formatSize = (bytes: number): string => {
@@ -848,6 +849,18 @@ export function FileManager() {
                 <div className="file-preview-media">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={previewUrl} alt={previewFile.name} />
+                </div>
+              ) : getFileCategory(previewFile.object?.mimeType ?? "", previewFile.name) === "markdown" && previewText !== null ? (
+                <div style={{ marginBottom: 16 }}>
+                  <MarkdownPreviewer
+                    content={previewText}
+                    fileName={previewFile.name}
+                    onDownload={() => handleDownload(previewFile.id, previewFile.name)}
+                    onEditInLms={() => {
+                      handleClosePreview();
+                      handleOpenInLmsEditor(previewFile);
+                    }}
+                  />
                 </div>
               ) : previewText !== null ? (
                 <div>
