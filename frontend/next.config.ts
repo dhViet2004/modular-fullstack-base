@@ -8,6 +8,11 @@ const config: NextConfig = {
         destination: "/register",
         permanent: true,
       },
+      {
+        source: "/otp",
+        destination: "/login",
+        permanent: true,
+      },
     ];
   },
   images: {

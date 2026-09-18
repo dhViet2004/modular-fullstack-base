@@ -480,9 +480,9 @@ pnpm dev:worker
 - [x] Form đăng ký hiển thị rõ password policy và lỗi validation thay vì khóa nút âm thầm
 - [x] Thay liên kết đăng nhập bằng mã email trên form login bằng luồng Quên mật khẩu
 - [x] Trang Quên mật khẩu hỗ trợ gửi OTP, xác minh và đặt mật khẩu mới
-- [x] OTP page/request/verify
+- [x] Gỡ trang đăng nhập OTP `/otp`; URL cũ redirect về trang đăng nhập
 - [x] Gỡ trang đăng nhập Magic Link `/magic-link`; URL cũ redirect sang đăng ký user
-- [x] Giao diện Password/Google và OTP đồng nhất
+- [x] Tinh gọn trang login còn một form, không hiển thị thanh tab phương thức đăng nhập
 - [x] Layout auth một cột ổn định trong browser/webview, không phụ thuộc CSS `:has()`
 - [x] Frontend dev server phục vụ đầy đủ CSS/JS chunks cho trang đăng nhập
 - [x] Tách cache Next.js dev `.next-dev` khỏi production build `.next` để tránh lỗi Webpack module/chunk
