@@ -1,1 +1,1 @@
-import { z } from "zod"; export const magicRequestSchema=z.object({email:z.email().transform(v=>v.toLowerCase())}); export const magicVerifySchema=z.object({email:z.email(),token:z.string().min(20),fingerprint:z.string().optional()});
+import { z } from "zod"; export const magicRequestSchema=z.object({email:z.email().transform(v=>v.toLowerCase())}); export const magicVerifySchema=z.object({email:z.email(),token:z.string().min(20),fingerprint:z.string().optional()});export const magicExchangeSchema=z.object({code:z.string().min(20)});

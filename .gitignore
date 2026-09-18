@@ -14,6 +14,8 @@ node_modules/
 # Build output and framework caches
 .next/
 **/.next/
+.next-dev/
+**/.next-dev/
 .next-stale-*/
 **/.next-stale-*/
 dist/

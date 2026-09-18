@@ -9,7 +9,7 @@ const app=createApp();
 const email="auth-test@example.com";
 
 async function createUser(status:"ACTIVE"|"BLOCKED"="ACTIVE"){
-  const user=await prisma.user.create({data:{email,status,passwordCredential:{create:{passwordHash:await hashPassword("ValidPassword123")}}}});
+  const user=await prisma.user.create({data:{email,status,emailVerifiedAt:new Date(),passwordCredential:{create:{passwordHash:await hashPassword("ValidPassword123")}}}});
   return user;
 }
 
@@ -81,5 +81,11 @@ describe("password and session auth",()=>{
     await request(app).post("/api/v1/auth/logout").set("authorization",`Bearer ${first.body.data.accessToken}`).expect(200);
     expect(await prisma.auditLog.count({where:{action:"SESSION_REVOKED"}})).toBe(1);
     expect(await prisma.auditLog.count({where:{action:"AUTH_LOGOUT"}})).toBe(1);
+  });
+  it("rejects an access token immediately after its session is revoked",async()=>{
+    await createUser();
+    const login=await request(app).post("/api/v1/auth/login").send({email,password:"ValidPassword123"});
+    await prisma.session.update({where:{id:login.body.data.session.id},data:{revokedAt:new Date()}});
+    await request(app).get("/api/v1/auth/sessions").set("authorization",`Bearer ${login.body.data.accessToken}`).expect(401);
   });
 });

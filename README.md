@@ -223,6 +223,13 @@ pnpm dev:worker
 
 # 9. Password login
 
+- [x] Đăng ký user bằng email/password
+- [x] Password policy và hash credential khi đăng ký
+- [x] Gửi link xác minh email hết hạn sau 20 phút
+- [x] Link xác minh email one-time-use, không dùng lại lần hai
+- [x] Quên mật khẩu gửi OTP 6 số qua email, hết hạn sau 10 phút và chỉ dùng một lần
+- [x] Đặt lại mật khẩu bằng OTP và thu hồi toàn bộ phiên đăng nhập cũ
+- [x] Chặn password login trước khi email được xác minh
 - [x] Login Zod schema
 - [x] Password strategy
 - [x] Find user/credential
@@ -264,6 +271,7 @@ pnpm dev:worker
 - [x] `GET /api/v1/auth/magic-link/verify`
 - [x] Queue Magic Link email
 - [x] Test invalid/expired token
+- [x] Magic Link dùng one-time handoff và redirect frontend, không hiển thị token phiên trong trình duyệt
 
 ---
 
@@ -297,6 +305,7 @@ pnpm dev:worker
 - [x] Session limit từ ENV
 - [x] `SESSION_LIMIT_REACHED`
 - [x] Refresh rotation
+- [x] Access token bị từ chối ngay khi session tương ứng đã thu hồi
 - [x] `POST /auth/refresh`
 - [x] `POST /auth/logout`
 - [x] `POST /auth/logout-all`
@@ -467,9 +476,16 @@ pnpm dev:worker
 - [x] Query key factory
 - [x] RHF + Zod forms
 - [x] Login page/mutation
+- [x] Trang đăng ký email/password và kết quả xác minh email
+- [x] Form đăng ký hiển thị rõ password policy và lỗi validation thay vì khóa nút âm thầm
+- [x] Thay liên kết đăng nhập bằng mã email trên form login bằng luồng Quên mật khẩu
+- [x] Trang Quên mật khẩu hỗ trợ gửi OTP, xác minh và đặt mật khẩu mới
 - [x] OTP page/request/verify
-- [x] Magic Link page/request
-- [x] Giao diện Password/Google, OTP và Magic Link đồng nhất
+- [x] Gỡ trang đăng nhập Magic Link `/magic-link`; URL cũ redirect sang đăng ký user
+- [x] Giao diện Password/Google và OTP đồng nhất
+- [x] Layout auth một cột ổn định trong browser/webview, không phụ thuộc CSS `:has()`
+- [x] Frontend dev server phục vụ đầy đủ CSS/JS chunks cho trang đăng nhập
+- [x] Tách cache Next.js dev `.next-dev` khỏi production build `.next` để tránh lỗi Webpack module/chunk
 - [x] Google login action
 - [x] Google callback lưu profile cùng local auth session
 - [x] Sidebar hiển thị tên, role và Google avatar của user đang đăng nhập
@@ -561,7 +577,8 @@ SMTP:
 
 - [x] Credentials supplied
 - [x] OTP mail tested end-to-end — nhận mã qua email và đăng nhập thành công
-- [ ] Magic Link mail tested — chưa xác minh end-to-end
+- [x] Magic Link mail tested end-to-end — nhận email, one-time handoff và redirect dashboard thành công
+- [ ] Registration verification mail tested — chưa xác minh end-to-end
 - [ ] Security Alert mail tested — chưa xác minh end-to-end
 
 Cloudflare R2:

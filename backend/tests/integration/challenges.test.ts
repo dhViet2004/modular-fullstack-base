@@ -40,8 +40,16 @@ describe("one-time verification challenges",()=>{
     const token="route-magic-link-token";
     await prisma.verificationChallenge.create({data:{email,type:"MAGIC_LINK",tokenHash:sha256(token),expiresAt:new Date(Date.now()+60_000)}});
     const response=await request(app).get("/api/v1/auth/magic-link/verify").query({email,token});
-    expect(response.status).toBe(200);
-    expect(response.body.data.user.email).toBe(email);
+    expect(response.status).toBe(302);
+    expect(response.body).not.toHaveProperty("data.accessToken");
+    const location=new URL(response.headers.location);
+    expect(location.pathname).toBe("/auth/magic-link/callback");
+    const code=location.searchParams.get("code");
+    expect(code).toBeTruthy();
+    const exchange=await request(app).post("/api/v1/auth/magic-link/exchange").send({code});
+    expect(exchange.status).toBe(200);
+    expect(exchange.body.data.user.email).toBe(email);
+    await request(app).post("/api/v1/auth/magic-link/exchange").send({code}).expect(401);
     expect(await prisma.authIdentity.findFirst({where:{provider:"MAGIC_LINK",providerAccountId:email}})).not.toBeNull();
   });
 });
