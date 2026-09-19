@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   FiFolder,
   FiHardDrive,
@@ -112,7 +112,7 @@ export function FileManager() {
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
 
-  // Drag & drop state
+  const uploadInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [clientError, setClientError] = useState<string | null>(null);
 
@@ -122,7 +122,7 @@ export function FileManager() {
 
   // Actions states
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; kind: "success" | "error" } | null>(null);
 
   // Modals state
   const [previewFile, setPreviewFile] = useState<FileRecord | null>(null);
@@ -133,11 +133,17 @@ export function FileManager() {
   const [reusingFile, setReusingFile] = useState<FileRecord | null>(null);
   const [reuseName, setReuseName] = useState("");
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
+  const showToast = (message: string, kind: "success" | "error" = "success") => {
+    setToast({ message, kind });
     setTimeout(() => {
-      setToastMessage(null);
+      setToast(null);
     }, 3000);
+  };
+
+  const openUploadPicker = () => {
+    if (up.isPending) return;
+    if (uploadInputRef.current) uploadInputRef.current.value = "";
+    uploadInputRef.current?.click();
   };
 
   const handleOpenReuse = (f: FileRecord) => {
@@ -239,13 +245,17 @@ export function FileManager() {
   const handleFileUpload = (file: File) => {
     setClientError(null);
     if (file.size > 20 * 1024 * 1024) {
-      setClientError("Tệp quá lớn! Kích thước tối đa cho phép là 20MB.");
+      showToast("Tệp quá lớn! Kích thước tối đa cho phép là 20MB.", "error");
       return;
     }
     up.mutate(file, {
       onSuccess: () => {
         showToast(`Đã tải lên tệp "${file.name}" thành công!`);
         setActiveTab("list");
+      },
+      onError: (err: unknown) => {
+        const e = err as { response?: { data?: { error?: { message?: string } } }; message?: string };
+        showToast(e?.response?.data?.error?.message || e?.message || "Tải tệp lên thất bại.", "error");
       }
     });
   };
@@ -327,11 +337,24 @@ export function FileManager() {
 
   return (
     <>
+      <input
+        ref={uploadInputRef}
+        type="file"
+        hidden
+        accept=".md,.markdown,.txt,.pdf,.png,.jpg,.jpeg,.webp,.gif,.svg,.json,.csv"
+        onChange={e => {
+          const file = e.target.files?.[0];
+          if (file) handleFileUpload(file);
+        }}
+      />
+
       {/* Toast notification */}
-      {toastMessage && (
-        <div className="toast">
-          <FiCheck size={16} color="var(--success)" />
-          <span>{toastMessage}</span>
+      {toast && (
+        <div className="toast" role={toast.kind === "error" ? "alert" : "status"}>
+          {toast.kind === "error"
+            ? <FiAlertTriangle size={16} color="var(--danger)" />
+            : <FiCheck size={16} color="var(--success)" />}
+          <span>{toast.message}</span>
         </div>
       )}
 
@@ -375,6 +398,43 @@ export function FileManager() {
         </div>
       </section>
 
+      {activeTab === "list" && (
+        <section className="panel" style={{ marginBottom: 22 }}>
+          <div className="panel-head">
+            <div>
+              <h2>Thống kê tệp mồ côi</h2>
+              <p>Tệp quá hạn được job hệ thống tự động quét và xóa lúc 02:00 hằng ngày.</p>
+            </div>
+            <button
+              type="button"
+              className="btn secondary sm"
+              disabled={orphanStats.isFetching}
+              onClick={() => orphanStats.refetch()}
+              title="Làm mới thống kê tệp mồ côi"
+            >
+              <FiRefreshCw size={12} className={orphanStats.isFetching ? "spin" : ""} />
+              <span>{orphanStats.isFetching ? "Đang cập nhật…" : "Làm mới"}</span>
+            </button>
+          </div>
+          <div className="orphan-stats">
+            <div>
+              <span>Tệp đang được lưu giữ an toàn (&lt; 10 ngày)</span>
+              <strong>{orphanStats.data?.retainedOrphans ?? 0} tệp</strong>
+            </div>
+            <div>
+              <span>Tệp đã quá 10 ngày, chờ job xóa</span>
+              <strong className={(orphanStats.data?.eligibleForCleanup ?? 0) > 0 ? "warning" : "success"}>
+                {orphanStats.data?.eligibleForCleanup ?? 0} tệp
+              </strong>
+            </div>
+            <div>
+              <span>Tổng số tệp mồ côi hiện tại</span>
+              <strong>{orphanStats.data?.totalOrphans ?? 0} tệp</strong>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Thanh điều hướng tính năng */}
       <div className="file-tabs">
         <button
@@ -384,14 +444,6 @@ export function FileManager() {
         >
           <FiFolder size={15} />
           <span>Danh sách tệp tin ({files.length})</span>
-        </button>
-        <button
-          type="button"
-          className={activeTab === "upload" ? "active" : ""}
-          onClick={() => setActiveTab("upload")}
-        >
-          <FiUploadCloud size={15} />
-          <span>Tải tệp lên</span>
         </button>
         <button
           type="button"
@@ -424,10 +476,11 @@ export function FileManager() {
               <button
                 type="button"
                 className="btn sm"
-                onClick={() => setActiveTab("upload")}
+                onClick={openUploadPicker}
+                disabled={up.isPending}
               >
                 <FiPlus size={14} />
-                <span>Tải tệp mới</span>
+                <span>{up.isPending ? "Đang tải lên…" : "Tải tệp mới"}</span>
               </button>
             </div>
           </div>
@@ -510,10 +563,11 @@ export function FileManager() {
               <button
                 type="button"
                 className="btn"
-                onClick={() => setActiveTab("upload")}
+                onClick={openUploadPicker}
+                disabled={up.isPending}
               >
                 <FiUploadCloud size={16} />
-                <span>Tải lên tệp đầu tiên</span>
+                <span>{up.isPending ? "Đang tải lên…" : "Tải lên tệp đầu tiên"}</span>
               </button>
             </div>
           ) : !filteredFiles.length ? (

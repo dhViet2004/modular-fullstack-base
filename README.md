@@ -345,6 +345,7 @@ pnpm dev:worker
 - [x] Xóa vai trò tùy chỉnh và bảo vệ vai trò hệ thống cốt lõi (`DELETE /api/v1/users/roles/:id`)
 - [x] Icon gán vai trò nhanh tại từng dòng người dùng (`FiShield`), mở modal phân vai trò trực tiếp (`AssignRoleModal`)
 - [x] Phân giải quyền hạn thời gian thực & cờ Permission trên Frontend: API auth & `/users/me` trả về danh sách permissions đầy đủ (kế thừa thứ bậc + override); Frontend hook `usePermissions` lọc hiển thị các menu sidebar và các button thao tác tương ứng trên UI
+- [x] Dashboard tổng quan theo RBAC, chỉ tải và hiển thị số liệu của các menu người dùng được phép truy cập
 - [x] Rank policy
 - [x] ADMIN không chỉnh SUPER_ADMIN
 - [x] ADMIN không chỉnh rank >= mình
@@ -453,6 +454,7 @@ pnpm dev:worker
 - [x] Cloudflare R2 upload and download verified end-to-end
 - [x] MIME validation fallback theo file extension cho markdown/image/document
 - [x] File upload error feedback và authenticated blob download trong Frontend UI
+- [x] Nút tải tệp mở trực tiếp trình chọn tệp, không cần tab tải lên trung gian
 - [x] Dev server watch `.env` (`--watch-path=.env`) để đồng bộ cấu hình storage
 - [x] Tái sử dụng (reuse/duplicate) tệp tin đã có sẵn qua API POST /files/:id/reuse và UI, tận dụng cơ chế Content Hash Deduplication để không tiêu tốn thêm dung lượng đĩa vật lý (0 byte phát sinh)
 
@@ -469,7 +471,7 @@ pnpm dev:worker
 - [x] Orphan > 10 ngày được xóa
 - [x] Storage failure handled
 - [x] Cleanup tests
-- [x] API và UI giám sát tệp mồ côi thời gian thực, hỗ trợ kích hoạt dọn dẹp theo thời hạn 10 ngày hoặc thủ công
+- [x] API và UI thống kê tệp mồ côi ở đầu màn hình quản lý theo thời gian lưu giữ; việc xóa được thực hiện bởi job định kỳ theo thời hạn 10 ngày
 
 ---
 
