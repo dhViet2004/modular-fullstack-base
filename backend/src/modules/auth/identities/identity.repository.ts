@@ -1,2 +1,0 @@
-import { prisma } from "../../../core/database/prisma.js"; import type { AuthProvider } from "../../../generated/prisma/enums.js";
-export const identityRepository={find:(provider:AuthProvider,providerAccountId:string)=>prisma.authIdentity.findUnique({where:{provider_providerAccountId:{provider,providerAccountId}},include:{user:true}}),create:(userId:string,provider:AuthProvider,providerAccountId:string,email:string,verified:boolean)=>prisma.authIdentity.create({data:{userId,provider,providerAccountId,providerEmail:email,providerEmailVerified:verified}})};

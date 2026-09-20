@@ -1,3 +1,3 @@
 # CoreStack Frontend
 
-Independent Next.js application. Copy `.env.example` to `.env.local`, then run `pnpm install && pnpm dev`.
+Next.js 15 App Router. Xem hướng dẫn chạy và checklist tại `../README.md`.

@@ -1,2 +1,0 @@
-import { UAParser } from "ua-parser-js"; import { prisma } from "../../../core/database/prisma.js";
-export const deviceService={async resolve(userId:string,fingerprint:string|undefined,userAgent:string|undefined){const ua=UAParser(userAgent);return prisma.device.upsert({where:{userId_fingerprint:{userId,fingerprint:fingerprint??"anonymous"}},update:{platform:ua.os.name,browser:ua.browser.name},create:{userId,fingerprint:fingerprint??"anonymous",name:ua.device.model??"Browser",platform:ua.os.name,browser:ua.browser.name}});}};

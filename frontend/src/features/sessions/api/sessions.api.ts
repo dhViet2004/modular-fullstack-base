@@ -1,1 +1,0 @@
-import { api } from "@/lib/axios/client";export type Session={id:string;lastActiveAt:string;device?:{name?:string;browser?:string;platform?:string}};export const sessionsApi={list:()=>api.get("/auth/sessions").then(r=>r.data.data as Session[]),revoke:(id:string)=>api.delete(`/auth/sessions/${id}`)};

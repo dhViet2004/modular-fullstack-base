@@ -1,21 +1,22 @@
 FROM node:22-alpine AS build
-RUN corepack enable
 WORKDIR /app
+RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
-COPY prisma ./prisma
-RUN pnpm db:generate
 COPY . .
-RUN pnpm build
+RUN pnpm db:generate && pnpm build
+
+FROM build AS migration
+CMD ["pnpm", "db:migrate:deploy"]
+
+FROM build AS production-dependencies
 RUN pnpm prune --prod
-FROM node:22-alpine
-RUN corepack enable
+
+FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-COPY package.json pnpm-lock.yaml ./
-COPY --from=build /app/node_modules ./node_modules
+COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/src/generated ./src/generated
+COPY --from=build /app/package.json ./package.json
 EXPOSE 4000
-CMD ["node","dist/server.js"]
+CMD ["node", "dist/server.js"]

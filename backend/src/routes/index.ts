@@ -1,13 +1,6 @@
 import { Router } from "express";
-import { authRoutes } from "../modules/auth/auth.routes.js";
-import { userRoutes } from "../modules/users/user.routes.js";
-import { fileRoutes } from "../modules/files/file.routes.js";
-import { mailRoutes } from "../modules/mail/mail.routes.js";
-import { jobRoutes } from "../modules/jobs/job.routes.js";
 
-export const apiRoutes = Router();
-apiRoutes.use("/auth", authRoutes);
-apiRoutes.use("/users", userRoutes);
-apiRoutes.use("/files", fileRoutes);
-apiRoutes.use("/mail", mailRoutes);
-apiRoutes.use("/jobs", jobRoutes);
+export const apiRouter = Router();
+apiRouter.get("/", (_request, response) =>
+  response.json({ name: "CoreStack API", version: "v1" }),
+);

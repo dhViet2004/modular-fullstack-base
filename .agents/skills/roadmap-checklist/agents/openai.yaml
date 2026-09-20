@@ -1,6 +1,7 @@
 interface:
   display_name: "Roadmap và Checklist"
-  short_description: "Kiểm tra roadmap và cập nhật checklist sau tính năng"
-  default_prompt: "Dùng $roadmap-checklist để triển khai tính năng, đối chiếu roadmap và cập nhật checklist của dự án."
+  short_description: "Kiểm tra roadmap và cập nhật checklist sau mỗi thay đổi"
+  default_prompt: "Dùng $roadmap-checklist để triển khai task, verify thay đổi và cập nhật checklist."
+
 policy:
   allow_implicit_invocation: true

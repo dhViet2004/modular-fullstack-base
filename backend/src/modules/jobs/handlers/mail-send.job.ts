@@ -1,2 +1,0 @@
-import { MailService } from "../../mail/mail.service.js"; import { SmtpProvider } from "../../mail/providers/smtp.provider.js"; const service=new MailService(new SmtpProvider());
-export const mailSendJob=async(jobs:{data:{kind:"auth"|"security";to:string;templateId?:"otp"|"magic-link"}&Record<string,string> }[])=>{for(const {data} of jobs){const {kind,to,templateId,...input}=data;if(kind==="auth")await service.sendAuth(to,input as never,templateId??"otp");else await service.sendSecurity(to,input as never);}};

@@ -1,1 +1,0 @@
-import {PageHead} from "@/components/shared/page-head";import {MailManager} from "@/features/mail/components/mail-manager";export default function Page(){return <><PageHead title="Mail" description="Soạn, gửi và theo dõi email của hệ thống."/><MailManager/></>}

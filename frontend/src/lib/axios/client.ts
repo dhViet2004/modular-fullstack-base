@@ -1,10 +1,7 @@
 import axios from "axios";
-import { setupInterceptors } from "./interceptors";
 
-export const api = setupInterceptors(
-  axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1",
-    timeout: 15000,
-    withCredentials: true
-  })
-);
+export const apiClient = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1",
+  timeout: 10_000,
+  headers: { "Content-Type": "application/json" },
+});

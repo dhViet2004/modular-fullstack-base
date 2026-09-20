@@ -1,1 +1,7 @@
-export const success=<T>(data:T,meta:Record<string,unknown>={})=>({success:true,data,meta});
+export function successResponse<T>(data: T) {
+  return {
+    success: true as const,
+    data,
+    meta: { timestamp: new Date().toISOString() },
+  };
+}

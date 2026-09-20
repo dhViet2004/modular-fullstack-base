@@ -1,1 +1,0 @@
-"use client";import { useMutation } from "@tanstack/react-query";import { authApi } from "../api/auth.api";import { authClient } from "@/lib/auth/auth-client";export const useLogin=()=>useMutation({mutationFn:authApi.login,onSuccess:authClient.setTokens});export const useOtpVerify=()=>useMutation({mutationFn:authApi.verifyOtp,onSuccess:authClient.setTokens});

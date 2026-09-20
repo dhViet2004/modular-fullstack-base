@@ -1,2 +1,45 @@
-import express from "express"; import helmet from "helmet"; import cors from "cors"; import { appConfig } from "./config/app.config.js"; import { requestContext } from "./middleware/request-context.middleware.js"; import { errorMiddleware } from "./middleware/error.middleware.js"; import { apiRoutes } from "./routes/index.js"; import { success } from "./core/http/api-response.js";
-export const createApp=()=>{const app=express();app.disable("x-powered-by");if(appConfig.trustProxy)app.set("trust proxy",1);app.use(helmet());app.use(cors({origin:appConfig.origin,credentials:true,methods:["GET","POST","PATCH","DELETE"]}));app.use(express.json({limit:"1mb"}));app.use(requestContext);app.get("/health",(_q,r)=>r.json(success({status:"ok"})));app.use("/api/v1",apiRoutes);app.use((_q,r)=>r.status(404).json({success:false,error:{code:"NOT_FOUND",message:"Route not found",details:{}}}));app.use(errorMiddleware);return app;};
+import cors from "cors";
+import express from "express";
+import helmet from "helmet";
+import { checkDatabaseConnection } from "./core/database/prisma.js";
+import { successResponse } from "./core/http/api-response.js";
+import { errorMiddleware } from "./middleware/error.middleware.js";
+import { apiRouter } from "./routes/index.js";
+
+type AppOptions = {
+  corsOrigin?: string;
+  checkDatabase?: () => Promise<void>;
+};
+
+export function createApp(options: AppOptions = {}) {
+  const app = express();
+  const checkDatabase = options.checkDatabase ?? checkDatabaseConnection;
+
+  app.disable("x-powered-by");
+  app.use(helmet());
+  app.use(cors({ origin: options.corsOrigin ?? "http://localhost:3000" }));
+  app.use(express.json({ limit: "1mb" }));
+  app.get("/health", (_request, response) => {
+    response.json(successResponse({ status: "ok", service: "api" }));
+  });
+  app.get("/ready", async (_request, response) => {
+    try {
+      await checkDatabase();
+      response.json(
+        successResponse({ status: "ready", dependencies: { database: "up" } }),
+      );
+    } catch {
+      response.status(503).json({
+        success: false,
+        error: {
+          code: "SERVICE_UNAVAILABLE",
+          message: "Service dependencies are unavailable",
+        },
+        meta: { timestamp: new Date().toISOString() },
+      });
+    }
+  });
+  app.use("/api/v1", apiRouter);
+  app.use(errorMiddleware);
+  return app;
+}

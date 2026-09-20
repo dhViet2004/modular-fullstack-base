@@ -1,2 +1,0 @@
-import type { RequestHandler } from "express"; import { ApiError } from "../core/http/api-error.js"; import { permissionService } from "../modules/users/rbac/permission.service.js";
-export const authorize=(permission:string):RequestHandler=>async(_q,r,n)=>{try{if(!(await permissionService.resolve(r.locals.auth.userId)).has(permission))throw new ApiError(403,"FORBIDDEN","Permission denied");n()}catch(e){n(e)}};

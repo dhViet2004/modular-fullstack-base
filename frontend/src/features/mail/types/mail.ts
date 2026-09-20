@@ -1,1 +1,0 @@
-export type MailRecord={id:string;action:"MAIL_SENT"|"MAIL_FAILED";metadata:{to?:string;subject?:string;status?:"SENT"|"FAILED"}|null;createdAt:string;actor?:{email:string}|null};export type MailList={items:MailRecord[];total:number};

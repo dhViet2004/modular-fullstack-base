@@ -1,28 +1,7 @@
 import type { NextConfig } from "next";
-const config: NextConfig = {
-  distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
-  async redirects() {
-    return [
-      {
-        source: "/magic-link",
-        destination: "/register",
-        permanent: true,
-      },
-      {
-        source: "/otp",
-        destination: "/login",
-        permanent: true,
-      },
-    ];
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "lh3.googleusercontent.com",
-        pathname: "/**",
-      },
-    ],
-  },
+
+const nextConfig: NextConfig = {
+  output: process.env.BUILD_STANDALONE === "true" ? "standalone" : undefined,
 };
-export default config;
+
+export default nextConfig;

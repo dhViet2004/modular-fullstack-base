@@ -1,2 +1,21 @@
-import type { ErrorRequestHandler } from "express"; import { ZodError } from "zod"; import { ApiError } from "../core/http/api-error.js";import {logger} from "../core/logger/logger.js";
-export const errorMiddleware:ErrorRequestHandler=(error,req,res,_next)=>{void _next;if(error instanceof ZodError){res.status(400).json({success:false,error:{code:"VALIDATION_ERROR",message:"Request validation failed",details:error.flatten()}});return;}if(!(error instanceof ApiError))logger.error(`Unhandled error: ${req.method} ${req.path}`,error instanceof Error?{name:error.name,message:error.message,stack:error.stack}:{error});const e=error instanceof ApiError?error:new ApiError(500,"INTERNAL_ERROR","Internal server error");res.status(e.status).json({success:false,error:{code:e.code,message:e.message,details:e.details??{}}});};
+import type { ErrorRequestHandler } from "express";
+
+export const errorMiddleware: ErrorRequestHandler = (
+  error,
+  _request,
+  response,
+  _next,
+) => {
+  void _next;
+  console.error("Unhandled request error", {
+    name: error instanceof Error ? error.name : "UnknownError",
+  });
+  response.status(500).json({
+    success: false,
+    error: {
+      code: "INTERNAL_SERVER_ERROR",
+      message: "An unexpected error occurred",
+    },
+    meta: { timestamp: new Date().toISOString() },
+  });
+};

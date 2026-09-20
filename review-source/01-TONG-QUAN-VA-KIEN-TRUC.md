@@ -1,44 +1,46 @@
 # 01. Tổng quan và kiến trúc
 
+> **Tài liệu lịch sử:** file này review phiên bản source cũ đã được xóa để viết lại. Không dùng làm kiến trúc triển khai hiện tại. Kiến trúc mới, tối giản để tự code tay nằm tại [`docs/01-KIEN-TRUC-CODE-BASE.md`](../docs/01-KIEN-TRUC-CODE-BASE.md).
+
 ## 1. Dự án là gì
 
-**CoreStack** là một *fullstack base* (nền tảng dùng lại cho nhiều sản phẩm sau), xây theo đặc tả `CODEX_PROJECT_SETUP.md`. Tiến độ được theo dõi bằng checklist trong `README.md` để mentor review. Dự án gồm hai ứng dụng **độc lập**, không phải monorepo workspace:
+**CoreStack** là một _fullstack base_ (nền tảng dùng lại cho nhiều sản phẩm sau), xây theo đặc tả `CODEX_PROJECT_SETUP.md`. Tiến độ được theo dõi bằng checklist trong `README.md` để mentor review. Dự án gồm hai ứng dụng **độc lập**, không phải monorepo workspace:
 
-| Thành phần | Công nghệ | Vị trí |
-| --- | --- | --- |
-| Frontend | Next.js 15 (App Router), React 19, TanStack Query, Axios, React Hook Form + Zod, Tailwind 4 | `frontend/` |
-| Backend | Express 5 (ESM), TypeScript, Prisma 6, Zod, jose (JWT), argon2, multer, nodemailer | `backend/` |
-| Hàng đợi/lịch | pg-boss 12, dùng chính PostgreSQL | `backend/src/modules/jobs` |
-| Database | PostgreSQL 16 (Docker Compose) | `docker-compose.yml`, `backend/prisma` |
-| Lưu trữ file | Local disk hoặc Cloudflare R2 (S3 API) | `backend/src/core/storage` |
-| Dịch vụ ngoài | Google OAuth2, SMTP, Cloudflare R2 | |
+| Thành phần    | Công nghệ                                                                                   | Vị trí                                 |
+| ------------- | ------------------------------------------------------------------------------------------- | -------------------------------------- |
+| Frontend      | Next.js 15 (App Router), React 19, TanStack Query, Axios, React Hook Form + Zod, Tailwind 4 | `frontend/`                            |
+| Backend       | Express 5 (ESM), TypeScript, Prisma 6, Zod, jose (JWT), argon2, multer, nodemailer          | `backend/`                             |
+| Hàng đợi/lịch | pg-boss 12, dùng chính PostgreSQL                                                           | `backend/src/modules/jobs`             |
+| Database      | PostgreSQL 16 (Docker Compose)                                                              | `docker-compose.yml`, `backend/prisma` |
+| Lưu trữ file  | Local disk hoặc Cloudflare R2 (S3 API)                                                      | `backend/src/core/storage`             |
+| Dịch vụ ngoài | Google OAuth2, SMTP, Cloudflare R2                                                          |                                        |
 
 ## 2. Actor và chức năng
 
-| Actor | Mô tả | Làm được gì |
-| --- | --- | --- |
-| Khách | Chưa đăng nhập | Đăng ký email/mật khẩu, xác minh email, đăng nhập mật khẩu/Google, quên mật khẩu. API OTP/magic link vẫn mở dù UI đã gỡ |
-| User mới | Vừa đăng ký, **chưa có role nào** (rank 0, ERR-007) | Theo thiết kế thì không có quyền; thực tế vẫn gọi được Files và Jobs API (SEC-001/002) |
-| MEMBER (rank 10) | Người dùng thường | Files, xem/thu hồi phiên của mình |
-| ADMIN (rank 50) | Quản trị | Users, roles, mail, jobs (trên UI) |
-| SUPER_ADMIN (rank 100) | Duy nhất một người | Toàn quyền; được bootstrap qua Google hoặc qua seed |
-| Worker | Tiến trình pg-boss | Gửi mail, dọn challenge/session/orphan/audit, cập nhật user không hoạt động |
+| Actor                  | Mô tả                                               | Làm được gì                                                                                                             |
+| ---------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Khách                  | Chưa đăng nhập                                      | Đăng ký email/mật khẩu, xác minh email, đăng nhập mật khẩu/Google, quên mật khẩu. API OTP/magic link vẫn mở dù UI đã gỡ |
+| User mới               | Vừa đăng ký, **chưa có role nào** (rank 0, ERR-007) | Theo thiết kế thì không có quyền; thực tế vẫn gọi được Files và Jobs API (SEC-001/002)                                  |
+| MEMBER (rank 10)       | Người dùng thường                                   | Files, xem/thu hồi phiên của mình                                                                                       |
+| ADMIN (rank 50)        | Quản trị                                            | Users, roles, mail, jobs (trên UI)                                                                                      |
+| SUPER_ADMIN (rank 100) | Duy nhất một người                                  | Toàn quyền; được bootstrap qua Google hoặc qua seed                                                                     |
+| Worker                 | Tiến trình pg-boss                                  | Gửi mail, dọn challenge/session/orphan/audit, cập nhật user không hoạt động                                             |
 
 ## 3. Mức độ hoàn thiện theo module
 
-| Module | Backend | Frontend | Test | Nhận xét ngắn |
-| --- | --- | --- | --- | --- |
-| Đăng ký, đăng nhập mật khẩu, quên mật khẩu | Đủ | Đủ | Integration | Pipeline tốt; ERR-002, ERR-006, ERR-017, SEC-017 |
-| OTP / Magic Link | Đủ | Đã gỡ (chủ ý) | Integration | Lệch đặc tả mục 32 (ARCH-004) |
-| Google OAuth2 | Đủ (PKCE) | Đủ | Integration (identity) | SEC-017, SEC-005 |
-| Session / Device | Đủ | Đủ | Integration | ERR-003, ERR-013, ERR-018 |
-| Users / RBAC | Đủ, có policy riêng | Đủ (component lớn) | Unit (mock) | SEC-015, SEC-007, ERR-009 |
-| Mail + template | Đủ | Đủ | Unit | ERR-001 (PUT), SEC-014 |
-| Jobs / lịch | Đủ tính năng | Đủ | Unit (mock) | **SEC-001 Critical**, ERR-004, ARCH-002 |
-| Files / dedup / orphan | Đủ | Đủ (1.100 dòng) | Unit + integration | SEC-002, SEC-004, ERR-005, ERR-020 |
-| Markdown import/export | Export đủ; import là stub | Xử lý ở client | Unit | ERR-022 |
-| Audit | Đủ cho auth/users/files | — | Gián tiếp | Chưa audit jobs/mail template/cleanup |
-| Docs, Docker | Có, ngắn (14 file docs, 107 dòng) | Có | — | DOC-001, OPS-001, OPS-002 |
+| Module                                     | Backend                           | Frontend           | Test                   | Nhận xét ngắn                                    |
+| ------------------------------------------ | --------------------------------- | ------------------ | ---------------------- | ------------------------------------------------ |
+| Đăng ký, đăng nhập mật khẩu, quên mật khẩu | Đủ                                | Đủ                 | Integration            | Pipeline tốt; ERR-002, ERR-006, ERR-017, SEC-017 |
+| OTP / Magic Link                           | Đủ                                | Đã gỡ (chủ ý)      | Integration            | Lệch đặc tả mục 32 (ARCH-004)                    |
+| Google OAuth2                              | Đủ (PKCE)                         | Đủ                 | Integration (identity) | SEC-017, SEC-005                                 |
+| Session / Device                           | Đủ                                | Đủ                 | Integration            | ERR-003, ERR-013, ERR-018                        |
+| Users / RBAC                               | Đủ, có policy riêng               | Đủ (component lớn) | Unit (mock)            | SEC-015, SEC-007, ERR-009                        |
+| Mail + template                            | Đủ                                | Đủ                 | Unit                   | ERR-001 (PUT), SEC-014                           |
+| Jobs / lịch                                | Đủ tính năng                      | Đủ                 | Unit (mock)            | **SEC-001 Critical**, ERR-004, ARCH-002          |
+| Files / dedup / orphan                     | Đủ                                | Đủ (1.100 dòng)    | Unit + integration     | SEC-002, SEC-004, ERR-005, ERR-020               |
+| Markdown import/export                     | Export đủ; import là stub         | Xử lý ở client     | Unit                   | ERR-022                                          |
+| Audit                                      | Đủ cho auth/users/files           | —                  | Gián tiếp              | Chưa audit jobs/mail template/cleanup            |
+| Docs, Docker                               | Có, ngắn (14 file docs, 107 dòng) | Có                 | —                      | DOC-001, OPS-001, OPS-002                        |
 
 Nhìn chung, **độ phủ tính năng rộng và gần đạt đặc tả**. Chỗ còn thiếu là độ sâu: phân quyền cho các module mới, quy trình migration, và tính nhất quán giữa các luồng.
 
@@ -119,24 +121,24 @@ flowchart LR
 
 ### 4.6 Điểm chưa hợp lý
 
-| Điểm | Vì sao chưa hợp lý | Mã |
-| --- | --- | --- |
-| `server.ts` khởi động worker và scheduler | Đặc tả mục 22 ghi "`server.ts` chỉ HTTP API". Chạy cả `server` lẫn `worker` thì có 2 nhóm worker cùng xử lý; scale API lên N bản thì có N nhóm worker | ARCH-002 |
-| Trạng thái quan trọng nằm trong RAM | OAuth state, handoff code, rate limit mất khi restart và không dùng chung được giữa nhiều instance | ARCH-001 |
-| Permission là "danh sách", không phải "hợp đồng" | 20/26 permission không route nào kiểm tra. Phân quyền thực tế nằm ở UI | ARCH-003 |
-| Rank vừa là thứ bậc vừa là tập quyền | Role rank cao tự nhận quyền của mọi role thấp hơn, kể cả role tùy chỉnh không liên quan | SEC-015 |
-| Lịch jobs dùng tên queue làm khóa | Nhiều bản ghi `ScheduledJob` cùng queue sẽ ghi đè lịch của nhau trong pg-boss | ARCH-002 |
-| Controller gọi Prisma, page gọi axios | Trái hướng phụ thuộc mà chính đặc tả đặt ra | CODE-006 |
+| Điểm                                             | Vì sao chưa hợp lý                                                                                                                                    | Mã       |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `server.ts` khởi động worker và scheduler        | Đặc tả mục 22 ghi "`server.ts` chỉ HTTP API". Chạy cả `server` lẫn `worker` thì có 2 nhóm worker cùng xử lý; scale API lên N bản thì có N nhóm worker | ARCH-002 |
+| Trạng thái quan trọng nằm trong RAM              | OAuth state, handoff code, rate limit mất khi restart và không dùng chung được giữa nhiều instance                                                    | ARCH-001 |
+| Permission là "danh sách", không phải "hợp đồng" | 20/26 permission không route nào kiểm tra. Phân quyền thực tế nằm ở UI                                                                                | ARCH-003 |
+| Rank vừa là thứ bậc vừa là tập quyền             | Role rank cao tự nhận quyền của mọi role thấp hơn, kể cả role tùy chỉnh không liên quan                                                               | SEC-015  |
+| Lịch jobs dùng tên queue làm khóa                | Nhiều bản ghi `ScheduledJob` cùng queue sẽ ghi đè lịch của nhau trong pg-boss                                                                         | ARCH-002 |
+| Controller gọi Prisma, page gọi axios            | Trái hướng phụ thuộc mà chính đặc tả đặt ra                                                                                                           | CODE-006 |
 
 ### 4.7 Điểm nghẽn và điểm lỗi đơn
 
-| Điểm | Nhận định |
-| --- | --- |
-| PostgreSQL | Là điểm lỗi đơn cho mọi thứ (dữ liệu, hàng đợi, session). Chấp nhận được ở quy mô này, với điều kiện có backup và health check thật (OPS-004) |
-| Tiến trình API | Hiện chỉ chạy được 1 instance (ARCH-001). Khi chết thì mất luôn OAuth state và handoff đang chờ |
-| RAM khi upload/download | Buffer toàn bộ file (SEC-004, PERF-002). Vài request lớn đồng thời có thể làm sập API |
-| Rate limit theo IP | Sau proxy, cấu hình sai sẽ gộp mọi người vào một IP (OPS-003) |
-| Mỗi request có `authorize` tốn ≥ 3 query | Chưa phải nghẽn ở quy mô hiện tại (PERF-001) |
+| Điểm                                     | Nhận định                                                                                                                                     |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| PostgreSQL                               | Là điểm lỗi đơn cho mọi thứ (dữ liệu, hàng đợi, session). Chấp nhận được ở quy mô này, với điều kiện có backup và health check thật (OPS-004) |
+| Tiến trình API                           | Hiện chỉ chạy được 1 instance (ARCH-001). Khi chết thì mất luôn OAuth state và handoff đang chờ                                               |
+| RAM khi upload/download                  | Buffer toàn bộ file (SEC-004, PERF-002). Vài request lớn đồng thời có thể làm sập API                                                         |
+| Rate limit theo IP                       | Sau proxy, cấu hình sai sẽ gộp mọi người vào một IP (OPS-003)                                                                                 |
+| Mỗi request có `authorize` tốn ≥ 3 query | Chưa phải nghẽn ở quy mô hiện tại (PERF-001)                                                                                                  |
 
 ## 5. Điểm mạnh và hạn chế tổng quát
 

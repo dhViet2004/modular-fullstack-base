@@ -1,1 +1,0 @@
-import {PageHead} from "@/components/shared/page-head";import {SessionList} from "@/features/sessions/components/session-list";export default function Page(){return <><PageHead title="Active sessions" description="Review devices signed in to your account."/><SessionList/></>}

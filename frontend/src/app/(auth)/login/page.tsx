@@ -1,1 +1,0 @@
-import {Brand} from "@/components/shared/brand";import {LoginForm} from "@/features/auth/components/login-form";export default function Page(){return <div className="auth-box login-page"><Brand/><h1>Chào mừng trở lại</h1><p className="subtitle">Đăng nhập để tiếp tục truy cập không gian làm việc của bạn.</p><LoginForm/></div>}
