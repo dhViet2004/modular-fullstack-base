@@ -9,6 +9,8 @@ Hai app dùng `pnpm` riêng, có lockfile riêng và có thể build/deploy đ�
 
 Kiến trúc và quy tắc phân loại module: [`docs/01-KIEN-TRUC-CODE-BASE.md`](docs/01-KIEN-TRUC-CODE-BASE.md).
 
+Hướng dẫn tự code module đầu tiên: [`docs/02-MODULE-01-USERS.md`](docs/02-MODULE-01-USERS.md).
+
 ## Yêu cầu
 
 - Node.js 22 trở lên

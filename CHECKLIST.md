@@ -5,8 +5,8 @@
 ## Trạng thái hiện tại
 
 - **Phase hiện tại:** Phase 5 — Authentication
-- **Đang làm:** Không có task đang dở; baseline và tài liệu đã được đồng bộ lại theo review source
-- **Bước tiếp theo:** Mở rộng `User` model cho authentication theo từng task nhỏ có test
+- **Đang làm:** Module 01 — Users foundation; đã có schema, migration, repository, service và test chuẩn hóa dữ liệu
+- **Bước tiếp theo:** Test `ApplicationError`, xử lý Prisma unique conflict và hoàn tất verification cho module
 - **Blocker:** Không có
 
 ## Quy ước trạng thái
@@ -78,7 +78,7 @@
 
 ## Phase 5 — Authentication
 
-- [ ] Mở rộng `User` model cho authentication
+- [~] Mở rộng `User` model cho authentication
 - [ ] Tạo password authentication
 - [ ] Tạo session
 - [ ] Tạo refresh token rotation
@@ -96,6 +96,7 @@
 ## Phase 7 — Documentation
 
 - [x] Viết architecture docs nền tảng
+- [x] Viết hướng dẫn tự code Module 01 — Users foundation
 - [ ] Viết API docs
 - [ ] Viết database docs
 - [x] Viết local setup docs trong `README.md`
