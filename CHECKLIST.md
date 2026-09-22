@@ -5,8 +5,8 @@
 ## Trạng thái hiện tại
 
 - **Phase hiện tại:** Phase 5 — Authentication
-- **Đang làm:** Module 01 — Users foundation; đã có schema, migration, repository, service và test chuẩn hóa dữ liệu
-- **Bước tiếp theo:** Test `ApplicationError`, xử lý Prisma unique conflict và hoàn tất verification cho module
+- **Đang làm:** Module 02 — Password authentication; đang thiết kế password credential
+- **Bước tiếp theo:** Thêm `PasswordCredential` vào Prisma schema và tạo migration an toàn
 - **Blocker:** Không có
 
 ## Quy ước trạng thái
@@ -78,8 +78,8 @@
 
 ## Phase 5 — Authentication
 
-- [~] Mở rộng `User` model cho authentication
-- [ ] Tạo password authentication
+- [x] Mở rộng `User` model cho authentication
+- [~] Tạo password authentication
 - [ ] Tạo session
 - [ ] Tạo refresh token rotation
 - [ ] Tạo logout và revoke session

@@ -23,6 +23,7 @@
   "type": "module",
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "argon2": "^0.45.1",
     "cors": "^2.8.6",
     "dotenv": "^18.0.1",
     "express": "^5.2.1",
