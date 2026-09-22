@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Prisma } from "@prisma/client";
+import { ApplicationError } from "../../core/http/application-error.js";
 
 vi.mock("./user.repository.js", () => ({
   createUser: vi.fn(),
@@ -48,5 +50,30 @@ describe("user service", () => {
     await getUserByEmail("  User@Example.COM  ");
 
     expect(findUserByEmailMock).toHaveBeenCalledWith("user@example.com");
+  });
+
+  it("converts a duplicate email error into an application error", async () => {
+    createUserRecordMock.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: "P2002",
+        clientVersion: "6.19.3",
+        meta: {
+          target: ["email"],
+        },
+      }),
+    );
+
+    await expect(
+      createUser({
+        email: "user@example.com",
+        displayName: "User",
+      }),
+    ).rejects.toEqual(
+      new ApplicationError(
+        409,
+        "USER_EMAIL_ALREADY_EXISTS",
+        "A user with this email already exists",
+      ),
+    );
   });
 });

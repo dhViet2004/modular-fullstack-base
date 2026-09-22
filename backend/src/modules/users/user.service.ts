@@ -1,3 +1,6 @@
+import { Prisma } from "@prisma/client";
+import { ApplicationError } from "../../core/http/application-error.js";
+
 import {
   createUser as createUserRecord,
   findUserByEmail,
@@ -26,9 +29,24 @@ export function getUserByEmail(email: string) {
   return findUserByEmail(normalizeEmail(email));
 }
 
-export function createUser(input: CreateUserInput) {
-  return createUserRecord({
-    email: normalizeEmail(input.email),
-    displayName: normalizeDisplayName(input.displayName),
-  });
+export async function createUser(input: CreateUserInput) {
+  try {
+    return await createUserRecord({
+      email: normalizeEmail(input.email),
+      displayName: normalizeDisplayName(input.displayName),
+    });
+  } catch (error: unknown) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw new ApplicationError(
+        409,
+        "USER_EMAIL_ALREADY_EXISTS",
+        "A user with this email already exists",
+      );
+    }
+
+    throw error;
+  }
 }
