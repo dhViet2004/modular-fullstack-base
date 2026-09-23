@@ -33,7 +33,7 @@ export function createApp(options: AppOptions = {}) {
         success: false,
         error: {
           code: "SERVICE_UNAVAILABLE",
-          message: "Service dependencies are unavailable",
+          message: "Dịch vụ tạm thời chưa sẵn sàng",
         },
         meta: { timestamp: new Date().toISOString() },
       });

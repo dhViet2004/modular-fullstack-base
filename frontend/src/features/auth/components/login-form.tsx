@@ -1,12 +1,13 @@
 "use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { useForm } from "react-hook-form";
-import { useRegister } from "../hooks/use-register";
+import { useLogin } from "../hooks/use-login";
 import {
-  registerSchema,
-  type RegisterFormValues,
-} from "../schemas/register.schema";
+  loginSchema,
+  type LoginFormValues,
+} from "../schemas/login.schema";
 
 
 type ApiErrorResponse = {
@@ -16,73 +17,63 @@ type ApiErrorResponse = {
   };
 };
 
-
-export function RegisterForm() {
-  const registerMutation = useRegister();
+export function LoginForm() {
+  const loginMutation = useLogin();
 
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
-      displayName: "",
     },
   });
 
-  async function onSubmit(values: RegisterFormValues) {
+  async function onSubmit(values: LoginFormValues) {
     try {
-      await registerMutation.mutateAsync(values);
+      await loginMutation.mutateAsync(values);
     } catch (error: unknown) {
       if (axios.isAxiosError<ApiErrorResponse>(error)) {
         const code = error.response?.data.error?.code;
 
-        if (code === "USER_EMAIL_ALREADY_EXISTS") {
-          setError(
-            "email",
-            {
-              type: "server",
-              message: "Email này đã được đăng ký",
-            },
-            { shouldFocus: true },
-          );
+        if (code === "INVALID_CREDENTIALS") {
+          setError("root.server", {
+            type: "server",
+            message: "Email hoặc mật khẩu không đúng",
+          });
 
           return;
         }
 
-        setError("root.server", {
-          type: "server",
-          message:
-            error.response?.data.error?.message ??
-            "Đăng ký thất bại. Vui lòng thử lại.",
-        });
+        if (code === "ACCOUNT_SUSPENDED") {
+          setError("root.server", {
+            type: "server",
+            message: "Tài khoản đã bị tạm khóa",
+          });
 
-        return;
+          return;
+        }
       }
 
       setError("root.server", {
         type: "server",
-        message: "Đăng ký thất bại. Vui lòng thử lại.",
+        message: "Đăng nhập thất bại. Vui lòng thử lại.",
       });
     }
   }
 
-  if (registerMutation.isSuccess) {
+  if (loginMutation.isSuccess) {
     return (
       <section aria-live="polite">
         <p className="font-mono text-xs font-semibold tracking-[0.14em]">
-          ACCOUNT CREATED
+          CREDENTIALS VERIFIED
         </p>
-        <h2 className="my-2.5 text-3xl">
-          Welcome, {registerMutation.data.displayName ?? "new user"}.
-        </h2>
-        <p className="mb-0 leading-6">
-          Your account is ready. Login will be added in the next step.
-        </p>
+        <h2 className="my-2.5 text-3xl">Welcome back.</h2>
+        <p className="mb-0 leading-6">{loginMutation.data.email}</p>
       </section>
     );
   }
@@ -93,28 +84,6 @@ export function RegisterForm() {
       onSubmit={handleSubmit(onSubmit)}
       noValidate
     >
-      <div className="grid gap-2">
-        <label
-          className="font-mono text-xs font-semibold tracking-[0.08em] uppercase"
-          htmlFor="displayName"
-        >
-          Display name
-        </label>
-        <input
-          className="w-full rounded-none border border-[var(--ink)] bg-transparent px-3.5 py-3.25 font-[inherit] text-[var(--ink)] outline-none focus:border-[var(--signal)] focus:shadow-[4px_4px_0_rgba(237,93,42,0.24)]"
-          id="displayName"
-          type="text"
-          autoComplete="name"
-          placeholder="Nguyễn Văn A"
-          {...register("displayName")}
-        />
-        {errors.displayName ? (
-          <p className="m-0 text-sm leading-5 text-[#b52f1d]">
-            {errors.displayName.message}
-          </p>
-        ) : null}
-      </div>
-
       <div className="grid gap-2">
         <label
           className="font-mono text-xs font-semibold tracking-[0.08em] uppercase"
@@ -148,19 +117,15 @@ export function RegisterForm() {
           className="w-full rounded-none border border-[var(--ink)] bg-transparent px-3.5 py-3.25 font-[inherit] text-[var(--ink)] outline-none focus:border-[var(--signal)] focus:shadow-[4px_4px_0_rgba(237,93,42,0.24)]"
           id="password"
           type="password"
-          autoComplete="new-password"
-          placeholder="At least 12 characters"
+          autoComplete="current-password"
+          placeholder="Your password"
           {...register("password")}
         />
         {errors.password ? (
           <p className="m-0 text-sm leading-5 text-[#b52f1d]">
             {errors.password.message}
           </p>
-        ) : (
-          <p className="m-0 text-[0.82rem] opacity-65">
-            Use at least 12 characters.
-          </p>
-        )}
+        ) : null}
       </div>
 
       {errors.root?.server ? (
@@ -172,9 +137,9 @@ export function RegisterForm() {
       <button
         className="min-h-12 cursor-pointer border border-[var(--ink)] bg-[var(--ink)] px-4.5 py-3 font-mono text-xs font-semibold tracking-[0.08em] text-[var(--paper)] uppercase hover:bg-[var(--signal)] hover:text-[var(--ink)] disabled:cursor-wait disabled:opacity-65"
         type="submit"
-        disabled={registerMutation.isPending}
+        disabled={loginMutation.isPending}
       >
-        {registerMutation.isPending ? "Creating account..." : "Create account"}
+        {loginMutation.isPending ? "Signing in..." : "Sign in"}
       </button>
     </form>
   );

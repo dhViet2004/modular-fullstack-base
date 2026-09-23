@@ -41,7 +41,7 @@ describe("GET /ready", () => {
       success: false,
       error: {
         code: "SERVICE_UNAVAILABLE",
-        message: "Service dependencies are unavailable",
+        message: "Dịch vụ tạm thời chưa sẵn sàng",
       },
     });
     expect(JSON.stringify(response.body)).not.toContain("secret");

@@ -30,7 +30,7 @@ export const errorMiddleware: ErrorRequestHandler = (
     success: false,
     error: {
       code: "INTERNAL_SERVER_ERROR",
-      message: "An unexpected error occurred",
+      message: "Đã xảy ra lỗi không mong muốn",
     },
     meta: { timestamp: new Date().toISOString() },
   });

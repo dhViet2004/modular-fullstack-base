@@ -21,7 +21,7 @@ describe("error middleware", () => {
     const error = new ApplicationError(
       409,
       "USER_EMAIL_ALREADY_EXISTS",
-      "A user with this email already exists",
+      "Email này đã được đăng ký",
     );
 
     const response = await request(createTestApp(error)).get("/test-error");
@@ -31,7 +31,7 @@ describe("error middleware", () => {
       success: false,
       error: {
         code: "USER_EMAIL_ALREADY_EXISTS",
-        message: "A user with this email already exists",
+        message: "Email này đã được đăng ký",
       },
     });
   });

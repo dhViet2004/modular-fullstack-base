@@ -11,7 +11,7 @@ export function validateBody<T>(schema: ZodType<T>): RequestHandler {
         new ApplicationError(
           400,
           "VALIDATION_ERROR",
-          "Request body is invalid",
+          "Dữ liệu gửi lên không hợp lệ",
         ),
       );
 

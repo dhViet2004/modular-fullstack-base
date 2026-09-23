@@ -72,7 +72,7 @@ describe("user service", () => {
       new ApplicationError(
         409,
         "USER_EMAIL_ALREADY_EXISTS",
-        "A user with this email already exists",
+        "Email này đã được đăng ký",
       ),
     );
   });
