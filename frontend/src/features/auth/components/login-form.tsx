@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { useLogin } from "../hooks/use-login";
 import {
@@ -69,6 +70,8 @@ export function LoginForm() {
   }
 
   if (loginMutation.isSuccess) {
+    const canReadUsers = loginMutation.data.permissions.includes("users:read");
+
     return (
       <section aria-live="polite">
         <p className="font-mono text-xs font-semibold tracking-[0.14em]">
@@ -76,6 +79,14 @@ export function LoginForm() {
         </p>
         <h2 className="my-2.5 text-3xl">Welcome back.</h2>
         <p className="mb-0 leading-6">{loginMutation.data.email}</p>
+        {canReadUsers ? (
+          <Link
+            className="mt-5 inline-block font-semibold underline decoration-[var(--signal)] decoration-2 underline-offset-4"
+            href="/admin/users"
+          >
+            Mở trang quản trị
+          </Link>
+        ) : null}
       </section>
     );
   }

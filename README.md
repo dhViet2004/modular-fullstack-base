@@ -13,6 +13,8 @@ Hướng dẫn tự code module đầu tiên: [`docs/02-MODULE-01-USERS.md`](doc
 
 Thiết kế password authentication và session: [`docs/03-MODULE-02-AUTHENTICATION.md`](docs/03-MODULE-02-AUTHENTICATION.md).
 
+Thiết kế role và permission RBAC: [`docs/04-MODULE-03-AUTHORIZATION.md`](docs/04-MODULE-03-AUTHORIZATION.md).
+
 ## Yêu cầu
 
 - Node.js 22 trở lên

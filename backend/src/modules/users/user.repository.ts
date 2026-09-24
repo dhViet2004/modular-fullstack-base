@@ -22,3 +22,28 @@ export function createUser(data: CreateUserData) {
     data,
   });
 }
+
+// Lấy danh sách user an toàn cho màn hình quản trị, không trả credential hoặc session.
+export function findUsers() {
+  return prisma.user.findMany({
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      email: true,
+      displayName: true,
+      status: true,
+      emailVerifiedAt: true,
+      createdAt: true,
+      updatedAt: true,
+      roles: {
+        select: {
+          role: {
+            select: {
+              code: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}

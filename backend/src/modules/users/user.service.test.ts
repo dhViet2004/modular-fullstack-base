@@ -6,6 +6,7 @@ vi.mock("./user.repository.js", () => ({
   createUser: vi.fn(),
   findUserByEmail: vi.fn(),
   findUserById: vi.fn(),
+  findUsers: vi.fn(),
 }));
 
 import {

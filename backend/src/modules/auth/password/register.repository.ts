@@ -1,4 +1,5 @@
 import { prisma } from "../../../core/database/prisma.js";
+import { ROLE_CODES } from "../../access/permission.catalog.js";
 
 export type CreatePasswordUserData = {
   email: string;
@@ -16,6 +17,15 @@ export function createPasswordUser(data: CreatePasswordUserData) {
       passwordCredential: {
         create: {
           passwordHash: data.passwordHash,
+        },
+      },
+      roles: {
+        create: {
+          role: {
+            connect: {
+              code: ROLE_CODES.MEMBER,
+            },
+          },
         },
       },
     },

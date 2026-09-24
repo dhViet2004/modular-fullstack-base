@@ -10,12 +10,12 @@ import {
   type ReactNode,
 } from "react";
 
-import { getCurrentUser, type RegisteredUser } from "../api/auth.api";
+import { getCurrentUser, type AuthenticatedUser } from "../api/auth.api";
 
 type AuthContextValue = {
-  user: RegisteredUser | null;
+  user: AuthenticatedUser | null;
   isLoading: boolean;
-  setAuthenticatedUser: (user: RegisteredUser) => void;
+  setAuthenticatedUser: (user: AuthenticatedUser) => void;
   clearAuthenticatedUser: () => void;
 };
 
@@ -23,7 +23,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 // Khôi phục phiên đăng nhập từ HttpOnly refresh cookie khi ứng dụng được tải lại.
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<RegisteredUser | null>(null);
+  const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

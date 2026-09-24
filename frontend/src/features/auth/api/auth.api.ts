@@ -13,6 +13,11 @@ export type RegisteredUser = {
   updatedAt: string;
 };
 
+export type AuthenticatedUser = RegisteredUser & {
+  roles: string[];
+  permissions: string[];
+};
+
 type RegisterResponse = {
   success: true;
   data: {
@@ -39,6 +44,10 @@ type MeResponse = {
   success: true;
   data: {
     user: RegisteredUser;
+    access: {
+      roles: string[];
+      permissions: string[];
+    };
   };
 };
 
@@ -62,13 +71,18 @@ export async function loginUser(values: LoginFormValues) {
 
   setAccessToken(response.data.data.accessToken);
 
-  return response.data.data.user;
+  return getCurrentUser();
 }
 
 // Lấy user hiện tại bằng access token mà Axios interceptor tự gắn vào request.
 export async function getCurrentUser() {
   const response = await apiClient.get<MeResponse>("/auth/me");
-  return response.data.data.user;
+
+  return {
+    ...response.data.data.user,
+    roles: response.data.data.access.roles,
+    permissions: response.data.data.access.permissions,
+  } satisfies AuthenticatedUser;
 }
 
 // Thu hồi session phía backend và luôn xóa access token khỏi bộ nhớ phía frontend.

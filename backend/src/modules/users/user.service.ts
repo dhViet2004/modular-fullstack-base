@@ -3,6 +3,7 @@ import { ApplicationError } from "../../core/http/application-error.js";
 
 import {
   createUser as createUserRecord,
+  findUsers,
   findUserByEmail,
   findUserById,
 } from "./user.repository.js";
@@ -27,6 +28,11 @@ export function getUserById(id: string) {
 
 export function getUserByEmail(email: string) {
   return findUserByEmail(normalizeEmail(email));
+}
+
+// Trả danh sách user đã được repository giới hạn field cho use case quản trị.
+export function listUsers() {
+  return findUsers();
 }
 
 export async function createUser(input: CreateUserInput) {

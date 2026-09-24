@@ -8,8 +8,13 @@ vi.mock("./session.service.js", () => ({
   revokeAuthSession: vi.fn(),
 }));
 
+vi.mock("../../access/access.service.js", () => ({
+  getUserAccessContext: vi.fn(),
+}));
+
 import { errorMiddleware } from "../../../middleware/error.middleware.js";
 import { authenticate } from "../../../middleware/authenticate.middleware.js";
+import { getUserAccessContext } from "../../access/access.service.js";
 import { logoutController } from "./logout.controller.js";
 import { meController } from "./me.controller.js";
 import { refreshController } from "./refresh.controller.js";
@@ -22,6 +27,7 @@ import {
 const authenticateAccessTokenMock = vi.mocked(authenticateAccessToken);
 const refreshAuthSessionMock = vi.mocked(refreshAuthSession);
 const revokeAuthSessionMock = vi.mocked(revokeAuthSession);
+const getUserAccessContextMock = vi.mocked(getUserAccessContext);
 
 const user = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -46,6 +52,10 @@ function createTestApp() {
 describe("session HTTP flow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getUserAccessContextMock.mockResolvedValue({
+      roles: ["MEMBER"],
+      permissions: ["profile:read:self", "profile:update:self"],
+    });
   });
 
   it("rotates the HttpOnly cookie without exposing refresh token in JSON", async () => {
@@ -94,10 +104,16 @@ describe("session HTTP flow", () => {
     const response = await request(createTestApp())
       .get("/me")
       .set("Authorization", "Bearer access-token");
-    const body = response.body as { data: { user: { email: string } } };
+    const body = response.body as {
+      data: {
+        user: { email: string };
+        access: { roles: string[]; permissions: string[] };
+      };
+    };
 
     expect(response.status).toBe(200);
     expect(body.data.user.email).toBe(user.email);
+    expect(body.data.access.roles).toEqual(["MEMBER"]);
   });
 
   it("rejects a protected route without a Bearer token", async () => {
