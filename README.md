@@ -11,6 +11,8 @@ Kiến trúc và quy tắc phân loại module: [`docs/01-KIEN-TRUC-CODE-BASE.md
 
 Hướng dẫn tự code module đầu tiên: [`docs/02-MODULE-01-USERS.md`](docs/02-MODULE-01-USERS.md).
 
+Thiết kế password authentication và session: [`docs/03-MODULE-02-AUTHENTICATION.md`](docs/03-MODULE-02-AUTHENTICATION.md).
+
 ## Yêu cầu
 
 - Node.js 22 trở lên
@@ -115,7 +117,8 @@ Chỉ đánh dấu `[x]` khi đã chạy lệnh kiểm chứng trên working tre
 
 - [x] Chốt kiến trúc module `route → controller → service → repository`
 - [ ] Hoàn thiện schema nền tảng cho identity, session, RBAC và audit
-- [ ] Auth password và email verification với public URL từ cấu hình
+- [x] Auth password, JWT session, refresh rotation và logout
+- [ ] Email verification với public URL từ cấu hình
 - [ ] Authorization phía server và test ma trận route
 - [ ] Worker pg-boss chạy tách biệt API process
 - [ ] Files/storage với giới hạn upload trước khi buffer

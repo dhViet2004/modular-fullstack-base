@@ -6,7 +6,9 @@ export type CreatePasswordUserData = {
   passwordHash: string;
 };
 
+// Tạo User và PasswordCredential trong cùng một câu lệnh Prisma lồng nhau.
 export function createPasswordUser(data: CreatePasswordUserData) {
+  // Prisma thực hiện nested create trong transaction nên không tạo user thiếu credential.
   return prisma.user.create({
     data: {
       email: data.email,

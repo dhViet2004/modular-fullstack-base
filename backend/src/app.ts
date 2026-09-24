@@ -17,7 +17,12 @@ export function createApp(options: AppOptions = {}) {
 
   app.disable("x-powered-by");
   app.use(helmet());
-  app.use(cors({ origin: options.corsOrigin ?? "http://localhost:3000" }));
+  app.use(
+    cors({
+      origin: options.corsOrigin ?? "http://localhost:3000",
+      credentials: true,
+    }),
+  );
   app.use(express.json({ limit: "1mb" }));
   app.get("/health", (_request, response) => {
     response.json(successResponse({ status: "ok", service: "api" }));

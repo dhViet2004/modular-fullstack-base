@@ -17,6 +17,7 @@ type ApiErrorResponse = {
   };
 };
 
+// Hiển thị form đăng nhập và chuyển lỗi API thành thông báo dễ hiểu cho người dùng.
 export function LoginForm() {
   const loginMutation = useLogin();
 
@@ -33,6 +34,7 @@ export function LoginForm() {
     },
   });
 
+  // Gửi form qua mutation và ánh xạ từng mã lỗi backend vào form state.
   async function onSubmit(values: LoginFormValues) {
     try {
       await loginMutation.mutateAsync(values);

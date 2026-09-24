@@ -4,9 +4,9 @@
 
 ## Trạng thái hiện tại
 
-- **Phase hiện tại:** Phase 5 — Authentication
-- **Đang làm:** Module 02 — Password authentication; đang thiết kế password credential
-- **Bước tiếp theo:** Thêm `PasswordCredential` vào Prisma schema và tạo migration an toàn
+- **Phase hiện tại:** Phase 6 — Authorization
+- **Đang làm:** Chuẩn bị triển khai role và permission
+- **Bước tiếp theo:** Chốt schema RBAC và ma trận quyền tối thiểu
 - **Blocker:** Không có
 
 ## Quy ước trạng thái
@@ -79,17 +79,17 @@
 ## Phase 5 — Authentication
 
 - [x] Mở rộng `User` model cho authentication
-- [~] Tạo password authentication
-- [ ] Tạo session
-- [ ] Tạo refresh token rotation
-- [ ] Tạo logout và revoke session
-- [ ] Tạo auth tests
+- [x] Tạo password authentication
+- [x] Tạo session
+- [x] Tạo refresh token rotation
+- [x] Tạo logout và revoke session
+- [x] Tạo auth tests
 
 ## Phase 6 — Authorization
 
 - [ ] Tạo role
 - [ ] Tạo permission
-- [ ] Tạo authenticate middleware
+- [x] Tạo authenticate middleware
 - [ ] Tạo authorize middleware
 - [ ] Viết RBAC tests
 

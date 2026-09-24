@@ -12,6 +12,21 @@ enum UserStatus {
   SUSPENDED
 }
 
+model Session {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @db.Uuid
+  refreshTokenHash String    @unique @db.VarChar(64)
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
 model User {
   id                 String              @id @default(uuid()) @db.Uuid
   email              String              @unique
@@ -21,6 +36,7 @@ model User {
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   passwordCredential PasswordCredential?
+  sessions           Session[]
 }
 
 model PasswordCredential {
