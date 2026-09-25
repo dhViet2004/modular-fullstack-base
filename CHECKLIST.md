@@ -4,9 +4,9 @@
 
 ## Trạng thái hiện tại
 
-- **Phase hiện tại:** Phase 6 — Authorization
-- **Đang làm:** Module 03 — Authorization; đã chốt thiết kế RBAC và permission catalog
-- **Bước tiếp theo:** Thêm model `Role`, `Permission`, `UserRole`, `RolePermission` vào Prisma schema
+- **Phase hiện tại:** Phase 7 — Documentation
+- **Đang làm:** Hoàn thiện tài liệu API và database sau RBAC
+- **Bước tiếp theo:** Viết API docs và database docs từ các module đã nghiệm thu
 - **Blocker:** Không có
 
 ## Quy ước trạng thái
@@ -87,11 +87,11 @@
 
 ## Phase 6 — Authorization
 
-- [~] Tạo role
-- [~] Tạo permission
+- [x] Tạo role
+- [x] Tạo permission
 - [x] Tạo authenticate middleware
-- [ ] Tạo authorize middleware
-- [ ] Viết RBAC tests
+- [x] Tạo authorize middleware
+- [x] Viết RBAC tests
 
 ## Phase 7 — Documentation
 

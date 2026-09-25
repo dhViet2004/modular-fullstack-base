@@ -48,6 +48,12 @@ pnpm db:seed
 pnpm dev
 ```
 
+Sau khi đã đăng ký tài khoản cần dùng làm admin, thêm email vào `backend/.env` rồi chạy lại `pnpm db:seed`:
+
+```env
+RBAC_ADMIN_EMAIL=admin@example.com
+```
+
 Frontend ở terminal khác:
 
 ```bash
@@ -121,7 +127,7 @@ Chỉ đánh dấu `[x]` khi đã chạy lệnh kiểm chứng trên working tre
 - [ ] Hoàn thiện schema nền tảng cho identity, session, RBAC và audit
 - [x] Auth password, JWT session, refresh rotation và logout
 - [ ] Email verification với public URL từ cấu hình
-- [ ] Authorization phía server và test ma trận route
+- [x] Authorization phía server và test ma trận route
 - [ ] Worker pg-boss chạy tách biệt API process
 - [ ] Files/storage với giới hạn upload trước khi buffer
 - [ ] CI chạy format, lint, typecheck, test, build và migration drift check

@@ -26,6 +26,8 @@ Sau khi hoàn thành, backend cần có:
 - Route quản trị luôn khai báo permission cần thiết tại route.
 - Test cho các trường hợp `401`, `403` và request được phép.
 - Test phát hiện route ghi hoặc route quản trị bị thiếu authorization khi phù hợp.
+- API `GET /api/v1/users` yêu cầu `users:read`.
+- Frontend `/admin/users` hiển thị danh sách user cho tài khoản có quyền.
 
 Không nằm trong phạm vi module này:
 
@@ -186,6 +188,14 @@ User đăng ký mới sẽ được gán role `MEMBER` trong cùng transaction v
 
 User admin đầu tiên được xác định qua seed hoặc quy trình bootstrap tin cậy, không nhận role từ request đăng ký công khai.
 
+Để bootstrap admin ở local hoặc môi trường mới, đặt email của một user đã tồn tại trước khi chạy seed:
+
+```env
+RBAC_ADMIN_EMAIL=admin@example.com
+```
+
+Nếu biến này để trống, seed chỉ tạo catalog và gán `MEMBER`; không tự chọn admin.
+
 ## 6. Cấu trúc module
 
 ```text
@@ -230,6 +240,21 @@ Request
 ```
 
 `authorize` luôn đứng sau `authenticate`. Thiếu hoặc sai access token trả `401`; user hợp lệ nhưng thiếu quyền trả `403`.
+
+Vertical slice đầu tiên dùng luồng này:
+
+```text
+Frontend /admin/users
+  -> GET /api/v1/users
+  -> authenticate
+  -> authorize("users:read")
+  -> listUsersController
+  -> user service
+  -> user repository
+  -> Prisma/PostgreSQL
+```
+
+Frontend chỉ ẩn hoặc hiện trang theo permission nhận từ `/auth/me`. Backend vẫn kiểm tra `users:read` cho request thật.
 
 ## 8. Repository và service
 
