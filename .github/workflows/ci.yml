@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://corestack:corestack@localhost:5432/corestack?schema=public
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: corestack
+          POSTGRES_PASSWORD: corestack
+          POSTGRES_DB: corestack
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U corestack -d corestack"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Generate test JWT keys
+        run: |
+          node --input-type=module <<'NODE'
+          import { generateKeyPairSync } from 'node:crypto';
+          import { appendFileSync } from 'node:fs';
+          const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+          appendFileSync(process.env.GITHUB_ENV, `JWT_PRIVATE_KEY_BASE64=${privateKey.export({ format: 'der', type: 'pkcs8' }).toString('base64')}\n`);
+          appendFileSync(process.env.GITHUB_ENV, `JWT_PUBLIC_KEY_BASE64=${publicKey.export({ format: 'der', type: 'spki' }).toString('base64')}\n`);
+          NODE
+      - run: pnpm db:generate
+      - run: pnpm db:migrate:deploy
+      - name: Check migration drift
+        run: pnpm exec prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --exit-code
+      - run: pnpm db:seed
+      - run: pnpm jobs:install
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build

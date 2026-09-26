@@ -4,9 +4,9 @@
 
 ## Trạng thái hiện tại
 
-- **Phase hiện tại:** Phase 12 — Files/storage đã hoàn thành
-- **Đang làm:** Chờ bắt đầu module tiếp theo
-- **Bước tiếp theo:** Chốt phạm vi CI
+- **Phase hiện tại:** Phase 13 — CI
+- **Đang làm:** Kiểm chứng workflow GitHub Actions
+- **Bước tiếp theo:** Chạy workflow trên pull request hoặc push
 - **Blocker:** Không có
 
 ## Quy ước trạng thái
@@ -153,6 +153,18 @@
 - [x] Cloudflare R2 storage cho production
 - [x] Verify đầy đủ và nghiệm thu Files/storage — upload/download R2 thật trả đúng nội dung
 
+## Phase 13 — CI
+
+- [x] Tạo workflow riêng cho backend và frontend với pnpm lockfile độc lập
+- [x] Backend chạy PostgreSQL, Prisma migrate/seed, kiểm tra drift, format, lint, typecheck, test và build
+- [x] Frontend chạy lint, typecheck, test và build
+- [~] Kiểm chứng workflow trên GitHub Actions — actionlint và lệnh local đã đạt; chờ run trên push/PR
+
+## Bổ sung phân vai giao diện
+
+- [x] Seed role `SUPER_ADMIN`, giữ `ADMIN` và `MEMBER`; kiểm tra seed trên database
+- [x] Điều hướng sau đăng nhập, dashboard và menu theo role/permission; kiểm tra backend/frontend
+
 ## Blockers
 
 - Không có blocker hiện tại.
@@ -166,3 +178,9 @@
 - Route chỉ khai báo URL/middleware; controller xử lý HTTP mapping; service chứa business logic; repository gọi Prisma.
 - Không tạo trước module hoặc file rỗng; chỉ scaffold khi bắt đầu triển khai nghiệp vụ tương ứng.
 - `server.ts` chỉ chạy HTTP API; worker chạy trong entrypoint riêng khi Phase background jobs bắt đầu.
+- [x] Giao di?n qu?n l� t?p Markdown cho t�i kho?n
+- [x] C?p nh?t b? c?c responsive, tr?ng th�i luu v� danh s�ch b?n luu cho giao di?n Files
+- [x] Th�m ch? d? Review Markdown v?i n�t bi?u tu?ng con m?t
+- [x] Gi? header navigation c? d?nh khi cu?n trang
+- [~] CRUD qu?n l� file: d� th�m metadata API v� UI t?o/c?p nh?t/x�a; backend test b? ch?n do Prisma Client native engine dang kh�a tr�n Windows
+- [x] Ho�n t?t CRUD file v?i metadata b?n v?ng, migration v� giao di?n FE

@@ -68,7 +68,8 @@ Chạy worker ở terminal backend riêng bằng `pnpm worker`; API chỉ đưa 
 Sau khi đã đăng ký tài khoản cần dùng làm admin, thêm email vào `backend/.env` rồi chạy lại `pnpm db:seed`:
 
 ```env
-RBAC_ADMIN_EMAIL=admin@example.com
+RBAC_SUPER_ADMIN_EMAIL=owner@example.com
+RBAC_SUPER_ADMIN_EMAIL=owner@example.com
 ```
 
 Frontend ở terminal khác:
@@ -104,6 +105,8 @@ pnpm build
 ```
 
 Backend có thêm `pnpm format:check` và `pnpm db:generate`.
+
+GitHub Actions chạy hai job độc lập theo `.github/workflows/ci.yml`. Backend dùng PostgreSQL sạch để deploy migration rồi so database với Prisma schema bằng `prisma migrate diff --exit-code`; frontend chạy lint, typecheck, test và build.
 
 ## Baseline checklist
 
@@ -142,13 +145,16 @@ Chỉ đánh dấu `[x]` khi đã chạy lệnh kiểm chứng trên working tre
 
 - [x] Chốt kiến trúc module `route → controller → service → repository`
 - [x] Hoàn thiện schema nền tảng cho identity, session, RBAC và audit
-- [x] Auth password, JWT session, refresh rotation, logout và giao diện quản trị RBAC
+- [x] Auth password, JWT session, refresh rotation, logout và giao diện theo role/permission
 - [x] Email verification với public URL từ cấu hình
 - [x] Google OAuth Authorization Code + PKCE
 - [x] Authorization phía server và test ma trận route
 - [x] Audit log append-only cho sự kiện bảo mật và quản trị
 - [x] Worker pg-boss chạy tách biệt API process
 - [x] Files/storage với giới hạn upload trước khi buffer — local và Cloudflare R2 đã kiểm chứng
-- [ ] CI chạy format, lint, typecheck, test, build và migration drift check
+- [~] CI chạy format, lint, typecheck, test, build và migration drift check — workflow đã tạo và lint YAML đạt; chờ run trên GitHub Actions
 
 Các rủi ro và bài học từ phiên bản cũ nằm trong `review-source/`; baseline mới phải giải quyết chúng bằng test và bằng chứng kiểm chứng, không kế thừa các dấu tick cũ.
+
+- [x] Giao di?n qu?n l� t?p Markdown: import, luu server v� export
+- [x] CRUD Files: danh s�ch, t?o, c?p nh?t, t?i xu?ng v� x�a file

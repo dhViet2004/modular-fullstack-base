@@ -48,7 +48,7 @@ Không commit file `.env`, JWT private key, database password hoặc token vào 
 | `JWT_AUDIENCE` | Không | `corestack-web` | Phải khớp lúc ký và verify |
 | `JWT_ACCESS_TTL_SECONDS` | Không | `900` | Thời gian sống access token |
 | `REFRESH_TOKEN_TTL_DAYS` | Không | `30` | Thời gian sống session |
-| `RBAC_ADMIN_EMAIL` | Không | `admin@example.com` | Chỉ được seed sử dụng |
+| `RBAC_SUPER_ADMIN_EMAIL` | Không | `owner@example.com` | Chỉ được seed sử dụng |
 
 Tất cả backend replica phải dùng cùng key, issuer, audience và database. Đổi JWT key ngay lập tức sẽ làm access token cũ mất hiệu lực; cần có kế hoạch rotation trước khi thực hiện trong production.
 
@@ -205,7 +205,7 @@ pnpm db:seed
 Để bootstrap admin, user phải đăng ký trước. Sau đó đặt:
 
 ```env
-RBAC_ADMIN_EMAIL=admin@example.com
+RBAC_SUPER_ADMIN_EMAIL=owner@example.com
 ```
 
 và chạy lại seed. Seed có thể chạy lặp lại mà không tạo bản ghi trùng.
@@ -266,3 +266,4 @@ Baseline hiện chưa có:
 - Observability ngoài process log và health endpoint.
 
 Chỉ thêm cấu hình tương ứng khi chọn nền tảng deploy cụ thể; tránh duy trì manifest giả không được chạy kiểm chứng.
+

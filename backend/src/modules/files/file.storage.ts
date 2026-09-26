@@ -7,6 +7,7 @@ import { Readable, Transform } from "node:stream";
 import { finished, pipeline } from "node:stream/promises";
 import {
   GetObjectCommand,
+  DeleteObjectCommand,
   PutObjectCommand,
   S3Client,
   S3ServiceException,
@@ -144,4 +145,13 @@ export async function openFile(userId: string, id: string) {
   } catch {
     throw new ApplicationError(404, "FILE_NOT_FOUND", "Không tìm thấy tệp");
   }
+}
+
+export async function removeFile(userId: string, id: string) {
+  if (env.NODE_ENV === "production") {
+    const { client, bucket } = r2();
+    await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: `${userId}/${id}` }));
+    return;
+  }
+  await unlink(join(storageRoot, userId, id)).catch(() => undefined);
 }

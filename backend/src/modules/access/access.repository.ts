@@ -27,6 +27,24 @@ export async function userHasPermission(
   return assignment !== null;
 }
 
+export async function userHasRole(userId: string, roleCode: string) {
+  const assignment = await prisma.userRole.findUnique({
+    where: {
+      userId_roleId: {
+        userId,
+        roleId: (
+          await prisma.role.findUniqueOrThrow({
+            where: { code: roleCode },
+            select: { id: true },
+          })
+        ).id,
+      },
+    },
+    select: { userId: true },
+  });
+  return assignment !== null;
+}
+
 // Lấy role và permission hiệu lực để trả cho frontend sau khi user đã được xác thực.
 export async function findAccessContextByUserId(userId: string) {
   const assignments = await prisma.userRole.findMany({

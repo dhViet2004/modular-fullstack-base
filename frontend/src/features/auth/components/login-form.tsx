@@ -42,7 +42,7 @@ export function LoginForm() {
   async function onSubmit(values: LoginFormValues) {
     try {
       const user = await loginMutation.mutateAsync(values);
-      const postLoginPath = getPostLoginPath(user.permissions);
+      const postLoginPath = getPostLoginPath(user.roles);
 
       if (postLoginPath) {
         router.replace(postLoginPath);
@@ -78,7 +78,7 @@ export function LoginForm() {
   }
 
   if (loginMutation.isSuccess) {
-    const canReadUsers = loginMutation.data.permissions.includes("users:read");
+    const postLoginPath = getPostLoginPath(loginMutation.data.roles);
 
     return (
       <section aria-live="polite">
@@ -87,14 +87,12 @@ export function LoginForm() {
         </p>
         <h2 className="my-2.5 text-3xl">Welcome back.</h2>
         <p className="mb-0 leading-6">{loginMutation.data.email}</p>
-        {canReadUsers ? (
-          <Link
-            className="mt-5 inline-block font-semibold underline decoration-[var(--signal)] decoration-2 underline-offset-4"
-            href="/admin/users"
-          >
-            Mở trang quản trị
-          </Link>
-        ) : null}
+        <Link
+          className="mt-5 inline-block font-semibold underline decoration-[var(--signal)] decoration-2 underline-offset-4"
+          href={postLoginPath}
+        >
+          Mở trang của bạn
+        </Link>
       </section>
     );
   }

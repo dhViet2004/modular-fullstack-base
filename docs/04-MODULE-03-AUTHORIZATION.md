@@ -19,7 +19,7 @@ Người đó có quyền thực hiện hành động này không?
 Sau khi hoàn thành, backend cần có:
 
 - Mô hình `Role`, `Permission`, `UserRole` và `RolePermission` trong PostgreSQL.
-- Hai role nền tảng `ADMIN` và `MEMBER` được tạo bằng seed.
+- Ba role nền tảng `SUPER_ADMIN`, `ADMIN` và `MEMBER` được tạo bằng seed.
 - Permission catalog tập trung, có kiểu TypeScript rõ ràng.
 - Repository và service lấy tập quyền hiệu lực của user.
 - Middleware `authorize(permission)` chạy sau `authenticate`.
@@ -184,6 +184,10 @@ users:suspend
 roles:manage
 ```
 
+### `SUPER_ADMIN`
+
+Hiện có cùng catalog permission với `ADMIN`. Seed có thể cấp role này cho user đã tồn tại qua `RBAC_SUPER_ADMIN_EMAIL`. Sau đăng nhập, frontend mở `/super-admin`; `ADMIN` mở `/admin` và `MEMBER` mở `/account`. Menu quản trị người dùng và audit chỉ hiện khi session có permission tương ứng; API vẫn kiểm tra quyền ở backend.
+
 User đăng ký mới sẽ được gán role `MEMBER` trong cùng transaction với việc tạo user và password credential. Không dùng luồng tạo user xong rồi mới gán role bằng hai thao tác độc lập.
 
 User admin đầu tiên được xác định qua seed hoặc quy trình bootstrap tin cậy, không nhận role từ request đăng ký công khai.
@@ -191,7 +195,8 @@ User admin đầu tiên được xác định qua seed hoặc quy trình bootstr
 Để bootstrap admin ở local hoặc môi trường mới, đặt email của một user đã tồn tại trước khi chạy seed:
 
 ```env
-RBAC_ADMIN_EMAIL=admin@example.com
+RBAC_SUPER_ADMIN_EMAIL=owner@example.com
+RBAC_SUPER_ADMIN_EMAIL=owner@example.com
 ```
 
 Nếu biến này để trống, seed chỉ tạo catalog và gán `MEMBER`; không tự chọn admin.
@@ -360,3 +365,4 @@ Module chỉ hoàn thành khi:
 - Prisma generate, migration deploy và seed đều pass.
 - `git diff --check` pass.
 - `CHECKLIST.md` và `README.md` phản ánh đúng trạng thái đã kiểm chứng.
+

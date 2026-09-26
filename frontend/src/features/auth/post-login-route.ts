@@ -1,8 +1,8 @@
-import { PERMISSIONS } from "./permissions";
+import { getRoleFlags } from "./permissions";
 
-// Chỉ điều hướng vào trang quản trị khi backend đã cấp đúng permission.
-export function getPostLoginPath(permissions: string[]) {
-  return permissions.includes(PERMISSIONS.USERS_READ)
-    ? "/admin/users"
-    : "/account";
+export function getPostLoginPath(roles: string[]) {
+  const { isSuperAdmin, isAdmin } = getRoleFlags(roles);
+  if (isSuperAdmin) return "/super-admin";
+  if (isAdmin) return "/admin";
+  return "/account";
 }

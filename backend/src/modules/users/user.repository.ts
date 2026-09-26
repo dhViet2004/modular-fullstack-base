@@ -47,3 +47,22 @@ export function findUsers() {
     },
   });
 }
+
+export async function setAdminRole(userId: string, enabled: boolean) {
+  const [user, role] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { id: true } }),
+    prisma.role.findUniqueOrThrow({
+      where: { code: "ADMIN" },
+      select: { id: true },
+    }),
+  ]);
+  if (!user) return false;
+  if (enabled)
+    await prisma.userRole.upsert({
+      where: { userId_roleId: { userId, roleId: role.id } },
+      update: {},
+      create: { userId, roleId: role.id },
+    });
+  else await prisma.userRole.deleteMany({ where: { userId, roleId: role.id } });
+  return true;
+}

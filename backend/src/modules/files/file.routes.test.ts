@@ -6,6 +6,17 @@ import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+type TestFile = { id: string; userId: string; name: string; size: number };
+const records = vi.hoisted(() => new Map<string, TestFile>());
+vi.mock("../../core/database/prisma.js", () => ({
+  prisma: { file: {
+    create: vi.fn(({ data }: { data: TestFile }) => { records.set(data.id, data); return Promise.resolve(data); }),
+    findFirst: vi.fn(({ where }: { where: { id: string; userId: string } }) => Promise.resolve([...records.values()].find((file) => file.id === where.id && file.userId === where.userId) ?? null)),
+    findMany: vi.fn(({ where }: { where: { userId: string } }) => Promise.resolve([...records.values()].filter((file) => file.userId === where.userId))),
+    delete: vi.fn(({ where }: { where: { id: string } }) => { records.delete(where.id); return Promise.resolve(); }),
+  } },
+}));
+
 vi.mock("../auth/session/session.service.js", () => ({
   authenticateAccessToken: vi.fn(),
 }));
@@ -29,6 +40,7 @@ function app() {
 describe("private files", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    records.clear();
     authenticateMock.mockResolvedValue({
       sessionId: randomUUID(),
       user: {

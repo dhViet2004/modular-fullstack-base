@@ -11,6 +11,7 @@ export const PERMISSIONS = {
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
 export const ROLE_CODES = {
+  SUPER_ADMIN: "SUPER_ADMIN",
   ADMIN: "ADMIN",
   MEMBER: "MEMBER",
 } as const;
@@ -18,6 +19,7 @@ export const ROLE_CODES = {
 export type RoleCode = (typeof ROLE_CODES)[keyof typeof ROLE_CODES];
 
 export const ROLE_PERMISSIONS: Record<RoleCode, readonly PermissionCode[]> = {
+  SUPER_ADMIN: Object.values(PERMISSIONS),
   ADMIN: Object.values(PERMISSIONS),
   MEMBER: [PERMISSIONS.PROFILE_READ_SELF, PERMISSIONS.PROFILE_UPDATE_SELF],
 };

@@ -6,6 +6,7 @@ import {
   findUsers,
   findUserByEmail,
   findUserById,
+  setAdminRole as setAdminRoleRecord,
 } from "./user.repository.js";
 
 export type CreateUserInput = {
@@ -55,4 +56,8 @@ export async function createUser(input: CreateUserInput) {
 
     throw error;
   }
+}
+
+export async function setAdminRole(userId: string, enabled: boolean) {
+  return setAdminRoleRecord(userId, enabled);
 }

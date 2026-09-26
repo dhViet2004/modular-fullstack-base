@@ -1,8 +1,10 @@
 import { ApplicationError } from "../../core/http/application-error.js";
 import {
   findAccessContextByUserId,
+  userHasRole,
   userHasPermission,
 } from "./access.repository.js";
+import { ROLE_CODES } from "./permission.catalog.js";
 import type { PermissionCode, RoleCode } from "./permission.catalog.js";
 
 export type AccessContext = {
@@ -20,6 +22,16 @@ export async function assertUserHasPermission(
       403,
       "FORBIDDEN",
       "Bạn không có quyền thực hiện thao tác này",
+    );
+  }
+}
+
+export async function assertUserIsSuperAdmin(userId: string) {
+  if (!(await userHasRole(userId, ROLE_CODES.SUPER_ADMIN))) {
+    throw new ApplicationError(
+      403,
+      "FORBIDDEN",
+      "Chỉ SUPER_ADMIN được quản lý role",
     );
   }
 }

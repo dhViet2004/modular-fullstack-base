@@ -23,3 +23,7 @@ export async function getUsers(): Promise<AdminUser[]> {
   const response = await apiClient.get<UsersResponse>("/users");
   return response.data.data.users;
 }
+
+export async function setAdminRole(userId: string, enabled: boolean) {
+  await apiClient.patch(`/users/${userId}/roles/admin`, { enabled });
+}

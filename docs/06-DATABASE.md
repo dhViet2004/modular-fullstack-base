@@ -206,7 +206,7 @@ Seed có tính idempotent:
 - Role và permission được `upsert` theo `code`.
 - Quan hệ được tạo với `skipDuplicates`.
 - User cũ được bổ sung role `MEMBER` nếu còn thiếu.
-- `RBAC_ADMIN_EMAIL` có thể gán thêm role `ADMIN` cho một user đã tồn tại.
+- `RBAC_SUPER_ADMIN_EMAIL` có thể gán thêm role `SUPER_ADMIN` cho một user đã tồn tại.
 
 ## 8. Dữ liệu nhạy cảm
 
@@ -279,3 +279,4 @@ Các phần sau chưa được triển khai:
 - Organization hoặc tenant.
 
 Chỉ thêm model khi bắt đầu use case tương ứng; không tạo bảng dự phòng chưa có hành vi sử dụng.
+

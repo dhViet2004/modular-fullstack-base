@@ -7,6 +7,8 @@ import { LogoutButton } from "@/features/auth/components/logout-button";
 import { EmailVerificationNotice } from "@/features/auth/components/email-verification-notice";
 import { PERMISSIONS } from "@/features/auth/permissions";
 import { useUsers } from "../hooks/use-users";
+import { setAdminRole } from "../api/users.api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Hiển thị các trạng thái loading, chưa đăng nhập, thiếu quyền và danh sách user.
 export function AdminUsers() {
@@ -14,6 +16,9 @@ export function AdminUsers() {
   const canReadUsers =
     user?.permissions.includes(PERMISSIONS.USERS_READ) ?? false;
   const usersQuery = useUsers(canReadUsers);
+  const queryClient = useQueryClient();
+  const roleMutation = useMutation({ mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) => setAdminRole(id, enabled), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }) });
+  const canManageRoles = user?.roles.includes("SUPER_ADMIN") ?? false;
 
   if (isLoading) {
     return <p className="font-mono text-sm">Đang khôi phục phiên...</p>;
@@ -73,6 +78,7 @@ export function AdminUsers() {
               <th className="p-4">Người dùng</th>
               <th className="p-4">Trạng thái</th>
               <th className="p-4">Role</th>
+              {canManageRoles && <th className="p-4">Quản lý</th>}
             </tr>
           </thead>
           <tbody>
@@ -88,6 +94,7 @@ export function AdminUsers() {
                 <td className="p-4 font-mono text-xs">
                   {listedUser.roles.join(", ") || "—"}
                 </td>
+                {canManageRoles && <td className="p-4"><button type="button" disabled={roleMutation.isPending} onClick={() => roleMutation.mutate({ id: listedUser.id, enabled: !listedUser.roles.includes("ADMIN") })} className="underline">{listedUser.roles.includes("ADMIN") ? "Thu hồi ADMIN" : "Cấp ADMIN"}</button></td>}
               </tr>
             ))}
           </tbody>

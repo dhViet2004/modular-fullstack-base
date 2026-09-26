@@ -21,6 +21,10 @@ const permissionDescriptions: Record<PermissionCode, string> = {
 
 const roleDefinitions: Record<RoleCode, { name: string; description: string }> =
   {
+    [ROLE_CODES.SUPER_ADMIN]: {
+      name: "Siêu quản trị viên",
+      description: "Quản trị hệ thống và quyền truy cập",
+    },
     [ROLE_CODES.ADMIN]: {
       name: "Quản trị viên",
       description: "Có toàn bộ permission nền tảng",
@@ -81,20 +85,19 @@ async function seedAccessControl() {
     skipDuplicates: true,
   });
 
-  const adminEmail = process.env.RBAC_ADMIN_EMAIL?.trim().toLowerCase();
-
-  if (adminEmail) {
+  const email = process.env.RBAC_SUPER_ADMIN_EMAIL?.trim().toLowerCase();
+  if (email) {
     const adminRole = await prisma.role.findUniqueOrThrow({
-      where: { code: ROLE_CODES.ADMIN },
+      where: { code: ROLE_CODES.SUPER_ADMIN },
       select: { id: true },
     });
     const adminUser = await prisma.user.findUnique({
-      where: { email: adminEmail },
+      where: { email },
       select: { id: true },
     });
 
     if (!adminUser) {
-      throw new Error(`RBAC admin user not found: ${adminEmail}`);
+      throw new Error(`RBAC SUPER_ADMIN user not found: ${email}`);
     }
 
     await prisma.userRole.upsert({

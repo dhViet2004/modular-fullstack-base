@@ -21,7 +21,7 @@ export function GoogleOAuthCallback() {
     void restoreAuthenticatedSession()
       .then((user) => {
         setAuthenticatedUser(user);
-        router.replace(getPostLoginPath(user.permissions));
+        router.replace(getPostLoginPath(user.roles));
       })
       .catch(() => {
         setFailed(true);
