@@ -40,3 +40,27 @@ jobs:
             NEXT_PUBLIC_API_URL=https://core.hviet.info.vn/api/v1
             NEXT_PUBLIC_API_ORIGIN=https://core.hviet.info.vn
           tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/core-base-frontend:sha-${{ github.event.workflow_run.head_sha }}
+
+  deploy:
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy immutable image set to VPS
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.VPS_PORT }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -eu
+            release='${{ github.event.workflow_run.head_sha }}'
+            cd /opt/core-base
+            printf '%s' '${{ secrets.DOCKERHUB_TOKEN }}' | docker login -u '${{ secrets.DOCKERHUB_USERNAME }}' --password-stdin
+            sed -i -E "s#^BACKEND_IMAGE=.*#BACKEND_IMAGE=danghoangviet/core-base-backend:sha-$release#; s#^MIGRATION_IMAGE=.*#MIGRATION_IMAGE=danghoangviet/core-base-migration:sha-$release#; s#^FRONTEND_IMAGE=.*#FRONTEND_IMAGE=danghoangviet/core-base-frontend:sha-$release#" .env
+            docker compose -f docker-compose.production.yml pull migration api worker frontend
+            docker compose -f docker-compose.production.yml up -d migration api worker frontend
+            docker exec phuong-an-service-nginx-1 nginx -t
+            docker exec phuong-an-service-nginx-1 nginx -s reload
+            docker compose -f docker-compose.production.yml ps
