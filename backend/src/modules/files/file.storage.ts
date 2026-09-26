@@ -150,7 +150,9 @@ export async function openFile(userId: string, id: string) {
 export async function removeFile(userId: string, id: string) {
   if (env.NODE_ENV === "production") {
     const { client, bucket } = r2();
-    await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: `${userId}/${id}` }));
+    await client.send(
+      new DeleteObjectCommand({ Bucket: bucket, Key: `${userId}/${id}` }),
+    );
     return;
   }
   await unlink(join(storageRoot, userId, id)).catch(() => undefined);
