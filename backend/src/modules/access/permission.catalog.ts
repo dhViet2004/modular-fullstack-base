@@ -5,6 +5,7 @@ export const PERMISSIONS = {
   USERS_UPDATE: "users:update",
   USERS_SUSPEND: "users:suspend",
   ROLES_MANAGE: "roles:manage",
+  AUDIT_READ: "audit:read",
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

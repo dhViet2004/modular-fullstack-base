@@ -14,9 +14,9 @@ vi.mock("./refresh-token.js", () => ({
 }));
 
 vi.mock("./session.repository.js", () => ({
-  createSession: vi.fn(),
+  createSessionWithAudit: vi.fn(),
   findSessionById: vi.fn(),
-  revokeSession: vi.fn(),
+  revokeSessionWithAudit: vi.fn(),
   rotateSessionRefreshToken: vi.fn(),
 }));
 
@@ -27,9 +27,9 @@ import {
   verifyRefreshTokenSecret,
 } from "./refresh-token.js";
 import {
-  createSession,
+  createSessionWithAudit,
   findSessionById,
-  revokeSession,
+  revokeSessionWithAudit,
   rotateSessionRefreshToken,
 } from "./session.repository.js";
 import {
@@ -44,9 +44,9 @@ const verifyAccessTokenMock = vi.mocked(verifyAccessToken);
 const generateRefreshTokenMock = vi.mocked(generateRefreshToken);
 const parseRefreshTokenMock = vi.mocked(parseRefreshToken);
 const verifyRefreshTokenSecretMock = vi.mocked(verifyRefreshTokenSecret);
-const createSessionMock = vi.mocked(createSession);
+const createSessionWithAuditMock = vi.mocked(createSessionWithAudit);
 const findSessionByIdMock = vi.mocked(findSessionById);
-const revokeSessionMock = vi.mocked(revokeSession);
+const revokeSessionWithAuditMock = vi.mocked(revokeSessionWithAudit);
 const rotateSessionRefreshTokenMock = vi.mocked(rotateSessionRefreshToken);
 
 const activeSession = {
@@ -79,15 +79,23 @@ describe("session service", () => {
   });
 
   it("creates a database session without storing the raw refresh token", async () => {
-    await createAuthSession(activeSession.userId);
+    await createAuthSession(activeSession.userId, {
+      ipAddress: "127.0.0.1",
+      userAgent: "Test Browser",
+    });
 
-    expect(createSessionMock).toHaveBeenCalledWith(
+    expect(createSessionWithAuditMock).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: activeSession.userId,
         refreshTokenHash: "b".repeat(64),
       }),
+      expect.objectContaining({
+        action: "AUTH_LOGIN_SUCCEEDED",
+        actorUserId: activeSession.userId,
+        ipAddress: "127.0.0.1",
+      }),
     );
-    expect(createSessionMock.mock.calls[0]?.[0]).not.toHaveProperty(
+    expect(createSessionWithAuditMock.mock.calls[0]?.[0]).not.toHaveProperty(
       "refreshToken",
     );
   });
@@ -139,9 +147,35 @@ describe("session service", () => {
     findSessionByIdMock.mockResolvedValue(activeSession);
     verifyRefreshTokenSecretMock.mockReturnValue(false);
 
-    await revokeAuthSession("invalid-refresh-token");
+    await revokeAuthSession("invalid-refresh-token", {
+      ipAddress: null,
+      userAgent: null,
+    });
 
-    expect(revokeSessionMock).not.toHaveBeenCalled();
+    expect(revokeSessionWithAuditMock).not.toHaveBeenCalled();
+  });
+
+  it("revokes a valid session with its logout audit event", async () => {
+    parseRefreshTokenMock.mockReturnValue({
+      sessionId: activeSession.id,
+      secret: "valid-secret",
+    });
+    findSessionByIdMock.mockResolvedValue(activeSession);
+    verifyRefreshTokenSecretMock.mockReturnValue(true);
+
+    await revokeAuthSession("valid-refresh-token", {
+      ipAddress: "127.0.0.1",
+      userAgent: "Test Browser",
+    });
+
+    expect(revokeSessionWithAuditMock).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: activeSession.id }),
+      expect.objectContaining({
+        action: "AUTH_LOGOUT_SUCCEEDED",
+        actorUserId: activeSession.userId,
+        sessionId: activeSession.id,
+      }),
+    );
   });
 
   it("authenticates an access token only when its user and session match", async () => {

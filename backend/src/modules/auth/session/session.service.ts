@@ -2,6 +2,15 @@ import { randomUUID } from "node:crypto";
 
 import { env } from "../../../config/env.js";
 import { ApplicationError } from "../../../core/http/application-error.js";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_OUTCOMES,
+  AUDIT_SUBJECT_TYPES,
+} from "../../audit/audit.catalog.js";
+import {
+  normalizeAuditRequestContext,
+  type AuditRequestContext,
+} from "../../audit/audit.service.js";
 import { signAccessToken, verifyAccessToken } from "./access-token.js";
 import {
   generateRefreshToken,
@@ -9,9 +18,9 @@ import {
   verifyRefreshTokenSecret,
 } from "./refresh-token.js";
 import {
-  createSession,
+  createSessionWithAudit,
   findSessionById,
-  revokeSession,
+  revokeSessionWithAudit,
   rotateSessionRefreshToken,
 } from "./session.repository.js";
 
@@ -52,22 +61,36 @@ function createRefreshTokenExpiresAt(now: Date): Date {
 // Tạo session mới, access token và refresh token sau khi đăng nhập thành công.
 export async function createAuthSession(
   userId: string,
+  context: AuditRequestContext,
 ): Promise<CreatedAuthSession> {
   // UUID được tạo trong service để refresh token có thể chứa sessionId trước khi ghi DB.
   const sessionId = randomUUID();
   const refreshToken = generateRefreshToken(sessionId);
   const refreshTokenExpiresAt = createRefreshTokenExpiresAt(new Date());
+  const auditContext = normalizeAuditRequestContext(context);
   const accessToken = await signAccessToken({
     userId,
     sessionId,
   });
 
-  await createSession({
-    id: sessionId,
-    userId,
-    refreshTokenHash: refreshToken.tokenHash,
-    expiresAt: refreshTokenExpiresAt,
-  });
+  await createSessionWithAudit(
+    {
+      id: sessionId,
+      userId,
+      refreshTokenHash: refreshToken.tokenHash,
+      expiresAt: refreshTokenExpiresAt,
+    },
+    {
+      action: AUDIT_ACTIONS.AUTH_LOGIN_SUCCEEDED,
+      outcome: AUDIT_OUTCOMES.SUCCESS,
+      actorUserId: userId,
+      subjectType: AUDIT_SUBJECT_TYPES.SESSION,
+      subjectId: sessionId,
+      sessionId,
+      ipAddress: auditContext.ipAddress,
+      userAgent: auditContext.userAgent,
+    },
+  );
 
   return {
     accessToken,
@@ -132,7 +155,10 @@ export async function refreshAuthSession(
 }
 
 // Thu hồi session tương ứng với refresh token; token sai được bỏ qua để logout có tính idempotent.
-export async function revokeAuthSession(token: string): Promise<void> {
+export async function revokeAuthSession(
+  token: string,
+  context: AuditRequestContext,
+): Promise<void> {
   const parsedToken = parseRefreshToken(token);
 
   if (!parsedToken) {
@@ -149,11 +175,25 @@ export async function revokeAuthSession(token: string): Promise<void> {
     return;
   }
 
-  await revokeSession({
-    sessionId: session.id,
-    refreshTokenHash: session.refreshTokenHash,
-    revokedAt: new Date(),
-  });
+  const auditContext = normalizeAuditRequestContext(context);
+
+  await revokeSessionWithAudit(
+    {
+      sessionId: session.id,
+      refreshTokenHash: session.refreshTokenHash,
+      revokedAt: new Date(),
+    },
+    {
+      action: AUDIT_ACTIONS.AUTH_LOGOUT_SUCCEEDED,
+      outcome: AUDIT_OUTCOMES.SUCCESS,
+      actorUserId: session.userId,
+      subjectType: AUDIT_SUBJECT_TYPES.SESSION,
+      subjectId: session.id,
+      sessionId: session.id,
+      ipAddress: auditContext.ipAddress,
+      userAgent: auditContext.userAgent,
+    },
+  );
 }
 
 // Xác minh access token và kiểm tra session/user vẫn còn hiệu lực trong database.

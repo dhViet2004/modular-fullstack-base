@@ -91,7 +91,13 @@ describe("session HTTP flow", () => {
       .set("Cookie", "refresh_token=session-id.secret");
 
     expect(response.status).toBe(204);
-    expect(revokeAuthSessionMock).toHaveBeenCalledWith("session-id.secret");
+    expect(revokeAuthSessionMock).toHaveBeenCalledWith(
+      "session-id.secret",
+      expect.objectContaining({
+        ipAddress: expect.any(String) as string,
+        userAgent: null,
+      }),
+    );
     expect(response.headers["set-cookie"]?.[0]).toContain("refresh_token=");
   });
 

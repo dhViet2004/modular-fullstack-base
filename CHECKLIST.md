@@ -4,9 +4,9 @@
 
 ## Trạng thái hiện tại
 
-- **Phase hiện tại:** Phase 7 — Documentation đã hoàn thành
-- **Đang làm:** Chờ chốt phạm vi module tiếp theo
-- **Bước tiếp theo:** Thiết kế Module 04 — Audit log trước khi triển khai code
+- **Phase hiện tại:** Phase 8 — Module 04 Audit Log đã hoàn thành
+- **Đang làm:** Chờ bắt đầu module tiếp theo
+- **Bước tiếp theo:** Thiết kế email verification với public URL từ cấu hình
 - **Blocker:** Không có
 
 ## Quy ước trạng thái
@@ -102,6 +102,18 @@
 - [x] Viết database docs
 - [x] Viết local setup docs trong `README.md`
 - [x] Viết deployment docs
+
+## Phase 8 — Audit Log
+
+- [x] Chốt phạm vi, event catalog và transaction policy
+- [x] Thêm model `AuditLog` và migration
+- [x] Thêm permission `audit:read` và cập nhật seed
+- [x] Tạo audit repository/service và test
+- [x] Tích hợp audit vào login/logout
+- [x] Tạo API đọc audit log có cursor pagination
+- [x] Tạo frontend quản trị audit log
+- [x] Verify migration, seed, backend và frontend
+- [x] Đồng bộ API docs và database docs
 
 ## Blockers
 

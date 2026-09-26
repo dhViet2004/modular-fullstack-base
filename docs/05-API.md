@@ -83,6 +83,7 @@ Access token được trả trong JSON sau login/refresh. Refresh token chỉ đ
 | `POST` | `/api/v1/auth/logout` | Refresh cookie nếu có | Không |
 | `GET` | `/api/v1/auth/me` | Bearer access token | Không |
 | `GET` | `/api/v1/users` | Bearer access token | `users:read` |
+| `GET` | `/api/v1/audit-logs` | Bearer access token | `audit:read` |
 
 ## 5. System API
 
@@ -410,7 +411,68 @@ Các lỗi:
 | `401` | `UNAUTHENTICATED` | Chưa đăng nhập hoặc access token không hợp lệ |
 | `403` | `FORBIDDEN` | Đã đăng nhập nhưng thiếu `users:read` |
 
-## 12. Error codes hiện có
+## 12. Audit logs
+
+### `GET /api/v1/audit-logs`
+
+Trả timeline sự kiện bảo mật và quản trị, mới nhất trước.
+
+Yêu cầu:
+
+```text
+Authentication: Bearer access token
+Permission: audit:read
+```
+
+Query:
+
+| Field | Yêu cầu |
+| --- | --- |
+| `cursor` | Không bắt buộc, cursor opaque từ response trước |
+| `limit` | Mặc định `50`, từ `1` đến `100` |
+| `action` | Không bắt buộc, phải thuộc audit event catalog |
+| `actorUserId` | Không bắt buộc, UUID hợp lệ |
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "auditLogs": [
+      {
+        "id": "33333333-3333-4333-8333-333333333333",
+        "action": "AUTH_LOGIN_SUCCEEDED",
+        "outcome": "SUCCESS",
+        "actorUserId": "11111111-1111-4111-8111-111111111111",
+        "subjectType": "SESSION",
+        "subjectId": "22222222-2222-4222-8222-222222222222",
+        "sessionId": "22222222-2222-4222-8222-222222222222",
+        "ipAddress": "127.0.0.1",
+        "userAgent": "Browser",
+        "metadata": null,
+        "createdAt": "2026-09-26T00:00:00.000Z"
+      }
+    ],
+    "nextCursor": null
+  },
+  "meta": {
+    "timestamp": "2026-09-26T00:00:00.000Z"
+  }
+}
+```
+
+Frontend truyền `nextCursor` vào request tiếp theo để tải thêm. Không tự phân tích nội dung cursor.
+
+Các lỗi:
+
+| Status | Code | Khi nào |
+| --- | --- | --- |
+| `400` | `VALIDATION_ERROR` | Query hoặc cursor không hợp lệ |
+| `401` | `UNAUTHENTICATED` | Access token thiếu hoặc không hợp lệ |
+| `403` | `FORBIDDEN` | User thiếu `audit:read` |
+
+## 13. Error codes hiện có
 
 | Code | Status thường dùng | Ý nghĩa |
 | --- | --- | --- |
@@ -424,7 +486,7 @@ Các lỗi:
 | `SERVICE_UNAVAILABLE` | `503` | Dependency bắt buộc chưa sẵn sàng |
 | `INTERNAL_SERVER_ERROR` | `500` | Lỗi ngoài dự kiến |
 
-## 13. Kiểm tra bằng PowerShell
+## 14. Kiểm tra bằng PowerShell
 
 ### Đăng ký
 
@@ -502,7 +564,7 @@ Invoke-WebRequest `
   -WebSession $session
 ```
 
-## 14. Quy tắc khi thêm endpoint mới
+## 15. Quy tắc khi thêm endpoint mới
 
 Mỗi endpoint mới phải xác định rõ:
 

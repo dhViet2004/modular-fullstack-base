@@ -11,7 +11,10 @@ import { revokeAuthSession } from "./session.service.js";
 export const logoutController: RequestHandler = async (request, response) => {
   const refreshToken = readRefreshTokenCookie(request.headers.cookie);
 
-  await revokeAuthSession(refreshToken ?? "");
+  await revokeAuthSession(refreshToken ?? "", {
+    ipAddress: request.ip ?? null,
+    userAgent: request.get("user-agent") ?? null,
+  });
 
   // `clearCookie` yêu cầu path/options khớp với lúc tạo cookie.
   response.clearCookie(

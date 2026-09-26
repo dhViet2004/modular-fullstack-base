@@ -12,7 +12,10 @@ export const loginController: RequestHandler = async (request, response) => {
   // `as LoginInput` báo cho TypeScript rằng body đã được middleware validate đúng kiểu.
   const input = request.body as LoginInput;
   // `await` chờ Promise từ service hoàn thành trước khi chạy dòng tiếp theo.
-  const result = await loginWithPassword(input);
+  const result = await loginWithPassword(input, {
+    ipAddress: request.ip ?? null,
+    userAgent: request.get("user-agent") ?? null,
+  });
 
   // `response.cookie` gửi refresh token qua header Set-Cookie thay vì JSON.
   response.cookie(

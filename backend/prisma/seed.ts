@@ -16,6 +16,7 @@ const permissionDescriptions: Record<PermissionCode, string> = {
   [PERMISSIONS.USERS_UPDATE]: "Cập nhật người dùng khác",
   [PERMISSIONS.USERS_SUSPEND]: "Khóa hoặc mở khóa người dùng",
   [PERMISSIONS.ROLES_MANAGE]: "Quản lý role và permission",
+  [PERMISSIONS.AUDIT_READ]: "Xem audit log bảo mật và quản trị",
 };
 
 const roleDefinitions: Record<RoleCode, { name: string; description: string }> =

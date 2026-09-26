@@ -3,14 +3,15 @@
 import Link from "next/link";
 
 import { useAuth } from "@/features/auth/components/auth-provider";
+import { LogoutButton } from "@/features/auth/components/logout-button";
+import { PERMISSIONS } from "@/features/auth/permissions";
 import { useUsers } from "../hooks/use-users";
-
-const USERS_READ_PERMISSION = "users:read";
 
 // Hiển thị các trạng thái loading, chưa đăng nhập, thiếu quyền và danh sách user.
 export function AdminUsers() {
   const { user, isLoading } = useAuth();
-  const canReadUsers = user?.permissions.includes(USERS_READ_PERMISSION) ?? false;
+  const canReadUsers =
+    user?.permissions.includes(PERMISSIONS.USERS_READ) ?? false;
   const usersQuery = useUsers(canReadUsers);
 
   if (isLoading) {
@@ -54,7 +55,13 @@ export function AdminUsers() {
           </p>
           <h1 className="mt-2 text-5xl tracking-[-0.05em]">Người dùng</h1>
         </div>
-        <p className="font-mono text-sm">{usersQuery.data.length} tài khoản</p>
+        <div className="grid justify-items-end gap-1 text-right font-mono text-sm">
+          <Link className="underline underline-offset-4" href="/admin/audit-logs">
+            Audit log
+          </Link>
+          <span>{usersQuery.data.length} tài khoản</span>
+          <LogoutButton />
+        </div>
       </header>
 
       <div className="overflow-x-auto border border-[var(--ink)] bg-[var(--paper)]">

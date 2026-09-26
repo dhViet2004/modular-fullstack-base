@@ -21,6 +21,8 @@ Tài liệu database: [`docs/06-DATABASE.md`](docs/06-DATABASE.md).
 
 Hướng dẫn deployment: [`docs/07-DEPLOYMENT.md`](docs/07-DEPLOYMENT.md).
 
+Thiết kế audit log: [`docs/08-MODULE-04-AUDIT.md`](docs/08-MODULE-04-AUDIT.md).
+
 ## Yêu cầu
 
 - Node.js 22 trở lên
@@ -130,10 +132,11 @@ Chỉ đánh dấu `[x]` khi đã chạy lệnh kiểm chứng trên working tre
 ## Roadmap tiếp theo
 
 - [x] Chốt kiến trúc module `route → controller → service → repository`
-- [ ] Hoàn thiện schema nền tảng cho identity, session, RBAC và audit
+- [x] Hoàn thiện schema nền tảng cho identity, session, RBAC và audit
 - [x] Auth password, JWT session, refresh rotation, logout và giao diện quản trị RBAC
 - [ ] Email verification với public URL từ cấu hình
 - [x] Authorization phía server và test ma trận route
+- [x] Audit log append-only cho sự kiện bảo mật và quản trị
 - [ ] Worker pg-boss chạy tách biệt API process
 - [ ] Files/storage với giới hạn upload trước khi buffer
 - [ ] CI chạy format, lint, typecheck, test, build và migration drift check

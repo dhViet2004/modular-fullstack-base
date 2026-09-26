@@ -171,7 +171,29 @@ Không được log hoặc trả qua API:
 
 Repository trả dữ liệu theo use case, không mặc định mở toàn bộ relation nhạy cảm.
 
-## 9. Migration hiện có
+## 9. AuditLog
+
+`AuditLog` lưu sự kiện bảo mật và quản trị theo mô hình append-only ở application layer.
+
+| Field | Kiểu | Ý nghĩa |
+| --- | --- | --- |
+| `id` | UUID | Khóa chính |
+| `action` | `VARCHAR(100)` | Mã sự kiện ổn định |
+| `outcome` | `AuditOutcome` | `SUCCESS` hoặc `FAILURE` |
+| `actorUserId` | UUID? | Snapshot user thực hiện hành động |
+| `subjectType` | `VARCHAR(50)`? | Loại đối tượng chịu tác động |
+| `subjectId` | `VARCHAR(100)`? | Snapshot ID đối tượng |
+| `sessionId` | UUID? | Session liên quan |
+| `ipAddress` | `VARCHAR(45)`? | IPv4 hoặc IPv6 đã chuẩn hóa |
+| `userAgent` | `VARCHAR(512)`? | User-Agent đã giới hạn độ dài |
+| `metadata` | JSONB? | Dữ liệu không nhạy cảm theo event |
+| `createdAt` | DateTime | Thời điểm ghi event |
+
+Audit log không có `updatedAt`, foreign key hoặc API update/delete. Snapshot vẫn còn khi user hoặc session nguồn bị xóa.
+
+Session login/logout và audit event tương ứng được ghi trong cùng Prisma transaction. Login thất bại cũng được ghi nhưng không lưu email không tồn tại, password hoặc token.
+
+## 10. Migration hiện có
 
 | Migration | Thay đổi |
 | --- | --- |
@@ -180,10 +202,11 @@ Repository trả dữ liệu theo use case, không mặc định mở toàn bộ
 | `20260922081132_add_password_credential` | Tạo credential mật khẩu một-một |
 | `20260923100901_add_session` | Tạo session có thể refresh và revoke |
 | `20260924175337_add_rbac` | Tạo role, permission và hai bảng nối |
+| `20260926033703_add_audit_log` | Tạo enum outcome, bảng audit append-only và index timeline |
 
 Không sửa migration đã được áp dụng. Thay đổi schema mới phải tạo migration mới và được review trước khi deploy.
 
-## 10. Quy trình thay đổi database
+## 11. Quy trình thay đổi database
 
 1. Sửa `backend/prisma/schema.prisma`.
 2. Tạo migration mới ở môi trường development.
@@ -196,11 +219,10 @@ Không sửa migration đã được áp dụng. Thay đổi schema mới phải
 
 Không dùng `prisma migrate reset` với database chứa dữ liệu cần giữ. Production phải chạy migration bằng bước triển khai riêng trước khi khởi động API mới.
 
-## 11. Chưa có trong schema
+## 12. Chưa có trong schema
 
 Các phần sau chưa được triển khai:
 
-- Audit log.
 - Email verification token.
 - Password reset token.
 - OAuth account.

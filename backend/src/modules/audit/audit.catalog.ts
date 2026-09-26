@@ -1,0 +1,27 @@
+export const AUDIT_ACTIONS = {
+  AUTH_LOGIN_SUCCEEDED: "AUTH_LOGIN_SUCCEEDED",
+  AUTH_LOGIN_FAILED: "AUTH_LOGIN_FAILED",
+  AUTH_LOGOUT_SUCCEEDED: "AUTH_LOGOUT_SUCCEEDED",
+  USER_SUSPENDED: "USER_SUSPENDED",
+  USER_ACTIVATED: "USER_ACTIVATED",
+  USER_ROLE_ASSIGNED: "USER_ROLE_ASSIGNED",
+  USER_ROLE_REMOVED: "USER_ROLE_REMOVED",
+} as const;
+
+export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];
+
+export const AUDIT_OUTCOMES = {
+  SUCCESS: "SUCCESS",
+  FAILURE: "FAILURE",
+} as const;
+
+export type AuditOutcome = (typeof AUDIT_OUTCOMES)[keyof typeof AUDIT_OUTCOMES];
+
+export const AUDIT_SUBJECT_TYPES = {
+  USER: "USER",
+  SESSION: "SESSION",
+  ROLE: "ROLE",
+} as const;
+
+export type AuditSubjectType =
+  (typeof AUDIT_SUBJECT_TYPES)[keyof typeof AUDIT_SUBJECT_TYPES];

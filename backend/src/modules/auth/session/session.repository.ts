@@ -1,4 +1,5 @@
 import { prisma } from "../../../core/database/prisma.js";
+import type { CreateAuditLogData } from "../../audit/audit.repository.js";
 
 export type CreateSessionData = {
   id: string;
@@ -21,10 +22,15 @@ export type RevokeSessionData = {
   revokedAt: Date;
 };
 
-// Ghi một session mới và refresh token hash vào database.
-export function createSession(data: CreateSessionData) {
-  return prisma.session.create({
-    data,
+// Tạo session và audit event trong cùng transaction để không commit lệch nhau.
+export function createSessionWithAudit(
+  data: CreateSessionData,
+  audit: CreateAuditLogData,
+) {
+  return prisma.$transaction(async (transaction) => {
+    const session = await transaction.session.create({ data });
+    await transaction.auditLog.create({ data: audit });
+    return session;
   });
 }
 
@@ -60,16 +66,27 @@ export function rotateSessionRefreshToken(data: RotateSessionRefreshTokenData) {
   });
 }
 
-// Đánh dấu session đã bị thu hồi nếu session và refresh token hash vẫn khớp.
-export function revokeSession(data: RevokeSessionData) {
-  return prisma.session.updateMany({
-    where: {
-      id: data.sessionId,
-      refreshTokenHash: data.refreshTokenHash,
-      revokedAt: null,
-    },
-    data: {
-      revokedAt: data.revokedAt,
-    },
+// Chỉ ghi logout audit khi conditional update thực sự thu hồi được session.
+export function revokeSessionWithAudit(
+  data: RevokeSessionData,
+  audit: CreateAuditLogData,
+) {
+  return prisma.$transaction(async (transaction) => {
+    const result = await transaction.session.updateMany({
+      where: {
+        id: data.sessionId,
+        refreshTokenHash: data.refreshTokenHash,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: data.revokedAt,
+      },
+    });
+
+    if (result.count === 1) {
+      await transaction.auditLog.create({ data: audit });
+    }
+
+    return result;
   });
 }

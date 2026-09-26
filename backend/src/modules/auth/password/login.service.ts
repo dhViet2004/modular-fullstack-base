@@ -1,4 +1,13 @@
 import { ApplicationError } from "../../../core/http/application-error.js";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_OUTCOMES,
+  AUDIT_SUBJECT_TYPES,
+} from "../../audit/audit.catalog.js";
+import {
+  recordAuditEvent,
+  type AuditRequestContext,
+} from "../../audit/audit.service.js";
 import { createAuthSession } from "../session/session.service.js";
 import { findPasswordUserByEmail } from "./login.repository.js";
 import type { LoginInput } from "./login.schema.js";
@@ -19,12 +28,35 @@ function invalidCredentialsError() {
   );
 }
 
+function recordFailedLogin(
+  userId: string | null,
+  context: AuditRequestContext,
+) {
+  return recordAuditEvent({
+    action: AUDIT_ACTIONS.AUTH_LOGIN_FAILED,
+    outcome: AUDIT_OUTCOMES.FAILURE,
+    ...(userId
+      ? {
+          actorUserId: userId,
+          subjectType: AUDIT_SUBJECT_TYPES.USER,
+          subjectId: userId,
+        }
+      : {}),
+    ipAddress: context.ipAddress,
+    userAgent: context.userAgent,
+  });
+}
+
 // Xác thực email/mật khẩu, kiểm tra trạng thái user và tạo session đăng nhập.
-export async function loginWithPassword(input: LoginInput) {
+export async function loginWithPassword(
+  input: LoginInput,
+  context: AuditRequestContext,
+) {
   const user = await findPasswordUserByEmail(normalizeEmail(input.email));
 
   // `?.` là optional chaining: không đọc passwordCredential nếu user là null.
   if (!user?.passwordCredential) {
+    await recordFailedLogin(null, context);
     // `throw` dừng function và chuyển lỗi tới error middleware.
     throw invalidCredentialsError();
   }
@@ -36,10 +68,12 @@ export async function loginWithPassword(input: LoginInput) {
 
   // `!` đảo giá trị boolean: false trở thành true.
   if (!passwordIsValid) {
+    await recordFailedLogin(user.id, context);
     throw invalidCredentialsError();
   }
 
   if (user.status === "SUSPENDED") {
+    await recordFailedLogin(user.id, context);
     throw new ApplicationError(
       403,
       "ACCOUNT_SUSPENDED",
@@ -47,7 +81,7 @@ export async function loginWithPassword(input: LoginInput) {
     );
   }
 
-  const session = await createAuthSession(user.id);
+  const session = await createAuthSession(user.id, context);
 
   return {
     user: {

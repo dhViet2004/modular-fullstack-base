@@ -12,6 +12,30 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum AuditOutcome {
+  SUCCESS
+  FAILURE
+}
+
+model AuditLog {
+  id          String       @id @default(uuid()) @db.Uuid
+  action      String       @db.VarChar(100)
+  outcome     AuditOutcome
+  actorUserId String?      @db.Uuid
+  subjectType String?      @db.VarChar(50)
+  subjectId   String?      @db.VarChar(100)
+  sessionId   String?      @db.Uuid
+  ipAddress   String?      @db.VarChar(45)
+  userAgent   String?      @db.VarChar(512)
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+
+  @@index([createdAt])
+  @@index([action, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([subjectType, subjectId, createdAt])
+}
+
 model Session {
   id               String    @id @default(uuid()) @db.Uuid
   userId           String    @db.Uuid
