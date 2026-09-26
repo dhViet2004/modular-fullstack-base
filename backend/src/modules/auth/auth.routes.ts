@@ -8,6 +8,11 @@ import { authenticate } from "../../middleware/authenticate.middleware.js";
 import { logoutController } from "./session/logout.controller.js";
 import { meController } from "./session/me.controller.js";
 import { refreshController } from "./session/refresh.controller.js";
+import {
+  requestEmailVerificationController,
+  verifyEmailController,
+} from "./email-verification/email-verification.controller.js";
+import { verifyEmailSchema } from "./email-verification/email-verification.schema.js";
 
 export const authRouter = Router();
 
@@ -17,3 +22,13 @@ authRouter.post("/login", validateBody(loginSchema), loginController);
 authRouter.post("/refresh", refreshController);
 authRouter.post("/logout", logoutController);
 authRouter.get("/me", authenticate, meController);
+authRouter.post(
+  "/email-verification/request",
+  authenticate,
+  requestEmailVerificationController,
+);
+authRouter.post(
+  "/email-verification/verify",
+  validateBody(verifyEmailSchema),
+  verifyEmailController,
+);

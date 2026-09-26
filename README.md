@@ -23,6 +23,8 @@ Hướng dẫn deployment: [`docs/07-DEPLOYMENT.md`](docs/07-DEPLOYMENT.md).
 
 Thiết kế audit log: [`docs/08-MODULE-04-AUDIT.md`](docs/08-MODULE-04-AUDIT.md).
 
+Thiết kế email verification: [`docs/09-MODULE-05-EMAIL-VERIFICATION.md`](docs/09-MODULE-05-EMAIL-VERIFICATION.md).
+
 ## Yêu cầu
 
 - Node.js 22 trở lên

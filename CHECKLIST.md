@@ -4,9 +4,9 @@
 
 ## Trạng thái hiện tại
 
-- **Phase hiện tại:** Phase 8 — Module 04 Audit Log đã hoàn thành
-- **Đang làm:** Chờ bắt đầu module tiếp theo
-- **Bước tiếp theo:** Thiết kế email verification với public URL từ cấu hình
+- **Phase hiện tại:** Phase 9 — Module 05 Email Verification
+- **Đang làm:** Hoàn tất request/verify API và audit events
+- **Bước tiếp theo:** Tạo frontend request/verify flow
 - **Blocker:** Không có
 
 ## Quy ước trạng thái
@@ -114,6 +114,18 @@
 - [x] Tạo frontend quản trị audit log
 - [x] Verify migration, seed, backend và frontend
 - [x] Đồng bộ API docs và database docs
+
+## Phase 9 — Email Verification
+
+- [x] Chốt token policy, public URL và API contract
+- [x] Thêm config TTL/cooldown và model token
+- [x] Tạo migration và generate Prisma Client
+- [x] Tạo token utility, repository/service và test
+- [x] Chốt và tích hợp mail delivery
+- [x] Tạo request/verify API và audit events
+- [ ] Tạo frontend request/verify flow
+- [ ] Verify migration, backend, frontend và smoke test
+- [ ] Đồng bộ API docs và database docs
 
 ## Blockers
 

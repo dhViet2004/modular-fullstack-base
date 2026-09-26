@@ -25,7 +25,7 @@ Content-Type: application/json
 Các request dùng refresh token cần cho phép gửi cookie. Frontend Axios đã cấu hình:
 
 ```ts
-withCredentials: true
+withCredentials: true;
 ```
 
 ## 2. Response format
@@ -63,27 +63,29 @@ Không dùng nội dung `message` để điều khiển logic frontend. Frontend
 
 Hệ thống dùng hai token:
 
-| Token | Cách gửi | Mục đích |
-| --- | --- | --- |
-| Access token | `Authorization: Bearer <token>` | Gọi API được bảo vệ |
-| Refresh token | Cookie `refresh_token` | Xin access token mới và logout |
+| Token         | Cách gửi                        | Mục đích                       |
+| ------------- | ------------------------------- | ------------------------------ |
+| Access token  | `Authorization: Bearer <token>` | Gọi API được bảo vệ            |
+| Refresh token | Cookie `refresh_token`          | Xin access token mới và logout |
 
 Access token được trả trong JSON sau login/refresh. Refresh token chỉ được gửi bằng cookie `HttpOnly`; JavaScript frontend không đọc được giá trị này.
 
 ## 4. Tổng hợp endpoint
 
-| Method | Endpoint | Authentication | Permission |
-| --- | --- | --- | --- |
-| `GET` | `/health` | Public | Không |
-| `GET` | `/ready` | Public | Không |
-| `GET` | `/api/v1` | Public | Không |
-| `POST` | `/api/v1/auth/register` | Public | Không |
-| `POST` | `/api/v1/auth/login` | Public | Không |
-| `POST` | `/api/v1/auth/refresh` | Refresh cookie | Không |
-| `POST` | `/api/v1/auth/logout` | Refresh cookie nếu có | Không |
-| `GET` | `/api/v1/auth/me` | Bearer access token | Không |
-| `GET` | `/api/v1/users` | Bearer access token | `users:read` |
-| `GET` | `/api/v1/audit-logs` | Bearer access token | `audit:read` |
+| Method | Endpoint                                  | Authentication        | Permission   |
+| ------ | ----------------------------------------- | --------------------- | ------------ |
+| `GET`  | `/health`                                 | Public                | Không        |
+| `GET`  | `/ready`                                  | Public                | Không        |
+| `GET`  | `/api/v1`                                 | Public                | Không        |
+| `POST` | `/api/v1/auth/register`                   | Public                | Không        |
+| `POST` | `/api/v1/auth/login`                      | Public                | Không        |
+| `POST` | `/api/v1/auth/refresh`                    | Refresh cookie        | Không        |
+| `POST` | `/api/v1/auth/logout`                     | Refresh cookie nếu có | Không        |
+| `GET`  | `/api/v1/auth/me`                         | Bearer access token   | Không        |
+| `POST` | `/api/v1/auth/email-verification/request` | Bearer access token   | Không        |
+| `POST` | `/api/v1/auth/email-verification/verify`  | Public                | Không        |
+| `GET`  | `/api/v1/users`                           | Bearer access token   | `users:read` |
+| `GET`  | `/api/v1/audit-logs`                      | Bearer access token   | `audit:read` |
 
 ## 5. System API
 
@@ -175,10 +177,10 @@ Request:
 
 Validation:
 
-| Field | Yêu cầu |
-| --- | --- |
-| `email` | Email hợp lệ, tối đa 254 ký tự |
-| `password` | Từ 12 đến 128 ký tự |
+| Field         | Yêu cầu                                         |
+| ------------- | ----------------------------------------------- |
+| `email`       | Email hợp lệ, tối đa 254 ký tự                  |
+| `password`    | Từ 12 đến 128 ký tự                             |
 | `displayName` | Không bắt buộc, từ 1 đến 100 ký tự sau khi trim |
 
 Backend chuẩn hóa email bằng `trim().toLowerCase()` và hash password bằng Argon2id.
@@ -207,10 +209,10 @@ Response `201`:
 
 Các lỗi:
 
-| Status | Code | Khi nào |
-| --- | --- | --- |
-| `400` | `VALIDATION_ERROR` | Body không đúng schema |
-| `409` | `USER_EMAIL_ALREADY_EXISTS` | Email đã tồn tại |
+| Status | Code                        | Khi nào                |
+| ------ | --------------------------- | ---------------------- |
+| `400`  | `VALIDATION_ERROR`          | Body không đúng schema |
+| `409`  | `USER_EMAIL_ALREADY_EXISTS` | Email đã tồn tại       |
 
 ## 7. Login
 
@@ -261,11 +263,11 @@ Production bổ sung thuộc tính `Secure`.
 
 Các lỗi:
 
-| Status | Code | Khi nào |
-| --- | --- | --- |
-| `400` | `VALIDATION_ERROR` | Body không đúng schema |
-| `401` | `INVALID_CREDENTIALS` | Email không tồn tại hoặc password sai |
-| `403` | `ACCOUNT_SUSPENDED` | User đã bị khóa |
+| Status | Code                  | Khi nào                               |
+| ------ | --------------------- | ------------------------------------- |
+| `400`  | `VALIDATION_ERROR`    | Body không đúng schema                |
+| `401`  | `INVALID_CREDENTIALS` | Email không tồn tại hoặc password sai |
+| `403`  | `ACCOUNT_SUSPENDED`   | User đã bị khóa                       |
 
 Backend cố ý dùng cùng `INVALID_CREDENTIALS` cho email sai và password sai để hạn chế dò tài khoản.
 
@@ -299,9 +301,9 @@ Response `200`:
 
 Lỗi:
 
-| Status | Code | Khi nào |
-| --- | --- | --- |
-| `401` | `INVALID_REFRESH_TOKEN` | Cookie thiếu, sai, hết hạn, đã dùng, bị revoke hoặc user không còn active |
+| Status | Code                    | Khi nào                                                                   |
+| ------ | ----------------------- | ------------------------------------------------------------------------- |
+| `401`  | `INVALID_REFRESH_TOKEN` | Cookie thiếu, sai, hết hạn, đã dùng, bị revoke hoặc user không còn active |
 
 Mỗi refresh token chỉ được sử dụng thành công một lần. Hai request đồng thời dùng cùng token thì tối đa một request thành công.
 
@@ -346,10 +348,7 @@ Response `200`:
     },
     "access": {
       "roles": ["MEMBER"],
-      "permissions": [
-        "profile:read:self",
-        "profile:update:self"
-      ]
+      "permissions": ["profile:read:self", "profile:update:self"]
     }
   },
   "meta": {
@@ -360,13 +359,62 @@ Response `200`:
 
 Lỗi:
 
-| Status | Code | Khi nào |
-| --- | --- | --- |
-| `401` | `UNAUTHENTICATED` | Bearer header thiếu/sai, JWT hết hạn hoặc session/user không hợp lệ |
+| Status | Code              | Khi nào                                                             |
+| ------ | ----------------- | ------------------------------------------------------------------- |
+| `401`  | `UNAUTHENTICATED` | Bearer header thiếu/sai, JWT hết hạn hoặc session/user không hợp lệ |
 
 Roles và permissions dùng để điều chỉnh UI. Backend vẫn kiểm tra permission lại trên từng route cần phân quyền.
 
-## 11. Users administration
+## 11. Email verification
+
+### `POST /api/v1/auth/email-verification/request`
+
+Yêu cầu gửi email xác minh cho chính user đang đăng nhập. Endpoint không nhận email từ body và không trả token trong response.
+
+```http
+Authorization: Bearer <access-token>
+```
+
+Response `202`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "accepted": true
+  },
+  "meta": {
+    "timestamp": "2026-09-26T00:00:00.000Z"
+  }
+}
+```
+
+| Status | Code                              | Khi nào                                  |
+| ------ | --------------------------------- | ---------------------------------------- |
+| `401`  | `UNAUTHENTICATED`                 | Access token thiếu hoặc không hợp lệ     |
+| `429`  | `EMAIL_VERIFICATION_RATE_LIMITED` | Yêu cầu gửi lại trong thời gian cooldown |
+| `503`  | `EMAIL_DELIVERY_UNAVAILABLE`      | SMTP tạm thời không gửi được email       |
+
+### `POST /api/v1/auth/email-verification/verify`
+
+Endpoint public, nhận raw token từ trang frontend và consume token một lần.
+
+```json
+{
+  "token": "<raw-token>"
+}
+```
+
+Response `200` trả user với `emailVerifiedAt` đã được cập nhật. Token thiếu, sai, hết hạn hoặc đã dùng đều trả lỗi chung:
+
+| Status | Code                               | Khi nào                                 |
+| ------ | ---------------------------------- | --------------------------------------- |
+| `400`  | `VALIDATION_ERROR`                 | Body thiếu token hoặc sai kiểu dữ liệu  |
+| `400`  | `INVALID_EMAIL_VERIFICATION_TOKEN` | Token sai, hết hạn hoặc đã được sử dụng |
+
+Backend không log hoặc trả lại raw token, token hash hay URL xác minh.
+
+## 12. Users administration
 
 ### `GET /api/v1/users`
 
@@ -406,12 +454,12 @@ Danh sách được sắp xếp theo `createdAt` giảm dần. API không trả 
 
 Các lỗi:
 
-| Status | Code | Khi nào |
-| --- | --- | --- |
-| `401` | `UNAUTHENTICATED` | Chưa đăng nhập hoặc access token không hợp lệ |
-| `403` | `FORBIDDEN` | Đã đăng nhập nhưng thiếu `users:read` |
+| Status | Code              | Khi nào                                       |
+| ------ | ----------------- | --------------------------------------------- |
+| `401`  | `UNAUTHENTICATED` | Chưa đăng nhập hoặc access token không hợp lệ |
+| `403`  | `FORBIDDEN`       | Đã đăng nhập nhưng thiếu `users:read`         |
 
-## 12. Audit logs
+## 13. Audit logs
 
 ### `GET /api/v1/audit-logs`
 
@@ -426,12 +474,12 @@ Permission: audit:read
 
 Query:
 
-| Field | Yêu cầu |
-| --- | --- |
-| `cursor` | Không bắt buộc, cursor opaque từ response trước |
-| `limit` | Mặc định `50`, từ `1` đến `100` |
-| `action` | Không bắt buộc, phải thuộc audit event catalog |
-| `actorUserId` | Không bắt buộc, UUID hợp lệ |
+| Field         | Yêu cầu                                         |
+| ------------- | ----------------------------------------------- |
+| `cursor`      | Không bắt buộc, cursor opaque từ response trước |
+| `limit`       | Mặc định `50`, từ `1` đến `100`                 |
+| `action`      | Không bắt buộc, phải thuộc audit event catalog  |
+| `actorUserId` | Không bắt buộc, UUID hợp lệ                     |
 
 Response `200`:
 
@@ -466,27 +514,30 @@ Frontend truyền `nextCursor` vào request tiếp theo để tải thêm. Khôn
 
 Các lỗi:
 
-| Status | Code | Khi nào |
-| --- | --- | --- |
-| `400` | `VALIDATION_ERROR` | Query hoặc cursor không hợp lệ |
-| `401` | `UNAUTHENTICATED` | Access token thiếu hoặc không hợp lệ |
-| `403` | `FORBIDDEN` | User thiếu `audit:read` |
+| Status | Code               | Khi nào                              |
+| ------ | ------------------ | ------------------------------------ |
+| `400`  | `VALIDATION_ERROR` | Query hoặc cursor không hợp lệ       |
+| `401`  | `UNAUTHENTICATED`  | Access token thiếu hoặc không hợp lệ |
+| `403`  | `FORBIDDEN`        | User thiếu `audit:read`              |
 
-## 13. Error codes hiện có
+## 14. Error codes hiện có
 
-| Code | Status thường dùng | Ý nghĩa |
-| --- | --- | --- |
-| `VALIDATION_ERROR` | `400` | Request body không hợp lệ |
-| `UNAUTHENTICATED` | `401` | Thiếu hoặc sai thông tin xác thực |
-| `INVALID_CREDENTIALS` | `401` | Email/password không đúng |
-| `INVALID_REFRESH_TOKEN` | `401` | Refresh token không còn sử dụng được |
-| `FORBIDDEN` | `403` | User hợp lệ nhưng thiếu permission |
-| `ACCOUNT_SUSPENDED` | `403` | Tài khoản bị khóa |
-| `USER_EMAIL_ALREADY_EXISTS` | `409` | Email đã được đăng ký |
-| `SERVICE_UNAVAILABLE` | `503` | Dependency bắt buộc chưa sẵn sàng |
-| `INTERNAL_SERVER_ERROR` | `500` | Lỗi ngoài dự kiến |
+| Code                               | Status thường dùng | Ý nghĩa                                        |
+| ---------------------------------- | ------------------ | ---------------------------------------------- |
+| `VALIDATION_ERROR`                 | `400`              | Request body không hợp lệ                      |
+| `UNAUTHENTICATED`                  | `401`              | Thiếu hoặc sai thông tin xác thực              |
+| `INVALID_CREDENTIALS`              | `401`              | Email/password không đúng                      |
+| `INVALID_REFRESH_TOKEN`            | `401`              | Refresh token không còn sử dụng được           |
+| `INVALID_EMAIL_VERIFICATION_TOKEN` | `400`              | Token xác minh email sai, hết hạn hoặc đã dùng |
+| `FORBIDDEN`                        | `403`              | User hợp lệ nhưng thiếu permission             |
+| `ACCOUNT_SUSPENDED`                | `403`              | Tài khoản bị khóa                              |
+| `USER_EMAIL_ALREADY_EXISTS`        | `409`              | Email đã được đăng ký                          |
+| `EMAIL_VERIFICATION_RATE_LIMITED`  | `429`              | Yêu cầu gửi email xác minh quá sớm             |
+| `EMAIL_DELIVERY_UNAVAILABLE`       | `503`              | SMTP tạm thời không khả dụng                   |
+| `SERVICE_UNAVAILABLE`              | `503`              | Dependency bắt buộc chưa sẵn sàng              |
+| `INTERNAL_SERVER_ERROR`            | `500`              | Lỗi ngoài dự kiến                              |
 
-## 14. Kiểm tra bằng PowerShell
+## 15. Kiểm tra bằng PowerShell
 
 ### Đăng ký
 
@@ -533,6 +584,27 @@ Invoke-RestMethod `
   -Headers @{ Authorization = "Bearer $accessToken" }
 ```
 
+### Yêu cầu gửi email xác minh
+
+```powershell
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:4000/api/v1/auth/email-verification/request" `
+  -Headers @{ Authorization = "Bearer $accessToken" }
+```
+
+### Xác minh email
+
+```powershell
+$verifyBody = @{ token = "<token-trong-email>" } | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:4000/api/v1/auth/email-verification/verify" `
+  -ContentType "application/json" `
+  -Body $verifyBody
+```
+
 ### Refresh
 
 ```powershell
@@ -564,7 +636,7 @@ Invoke-WebRequest `
   -WebSession $session
 ```
 
-## 15. Quy tắc khi thêm endpoint mới
+## 16. Quy tắc khi thêm endpoint mới
 
 Mỗi endpoint mới phải xác định rõ:
 
