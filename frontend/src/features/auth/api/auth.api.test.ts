@@ -6,8 +6,16 @@ vi.mock("@/lib/axios/client", () => ({
   apiClient: { post: postMock },
 }));
 
-import { clearAccessToken, getAccessToken, setAccessToken } from "@/lib/auth/access-token";
-import { logoutUser } from "./auth.api";
+import {
+  clearAccessToken,
+  getAccessToken,
+  setAccessToken,
+} from "@/lib/auth/access-token";
+import {
+  logoutUser,
+  requestEmailVerification,
+  verifyEmail,
+} from "./auth.api";
 
 describe("logoutUser", () => {
   beforeEach(() => {
@@ -21,5 +29,46 @@ describe("logoutUser", () => {
 
     await expect(logoutUser()).rejects.toThrow("network error");
     expect(getAccessToken()).toBeNull();
+  });
+});
+
+describe("email verification API", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("requests an email without sending an address or token", async () => {
+    postMock.mockResolvedValue({ data: { data: { accepted: true } } });
+
+    await requestEmailVerification();
+
+    expect(postMock).toHaveBeenCalledWith(
+      "/auth/email-verification/request",
+    );
+  });
+
+  it("posts the raw token only to the verify endpoint", async () => {
+    postMock.mockResolvedValue({
+      data: {
+        data: {
+          user: {
+            id: "user-id",
+            email: "user@example.com",
+            displayName: null,
+            status: "ACTIVE",
+            emailVerifiedAt: "2026-09-26T00:00:00.000Z",
+            createdAt: "2026-09-25T00:00:00.000Z",
+            updatedAt: "2026-09-26T00:00:00.000Z",
+          },
+        },
+      },
+    });
+
+    await verifyEmail("raw-token");
+
+    expect(postMock).toHaveBeenCalledWith(
+      "/auth/email-verification/verify",
+      { token: "raw-token" },
+    );
   });
 });

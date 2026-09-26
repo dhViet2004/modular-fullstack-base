@@ -7,7 +7,7 @@ describe("getPostLoginPath", () => {
     expect(getPostLoginPath(["users:read"])).toBe("/admin/users");
   });
 
-  it("keeps regular users outside the admin interface", () => {
-    expect(getPostLoginPath(["profile:read:self"])).toBeNull();
+  it("routes regular users to their account page", () => {
+    expect(getPostLoginPath(["profile:read:self"])).toBe("/account");
   });
 });

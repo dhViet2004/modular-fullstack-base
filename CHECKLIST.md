@@ -4,9 +4,9 @@
 
 ## Trạng thái hiện tại
 
-- **Phase hiện tại:** Phase 9 — Module 05 Email Verification
-- **Đang làm:** Hoàn tất request/verify API và audit events
-- **Bước tiếp theo:** Tạo frontend request/verify flow
+- **Phase hiện tại:** Phase 9 — Module 05 Email Verification đã hoàn thành
+- **Đang làm:** Chờ bắt đầu module tiếp theo
+- **Bước tiếp theo:** Chốt phạm vi module tiếp theo
 - **Blocker:** Không có
 
 ## Quy ước trạng thái
@@ -123,9 +123,9 @@
 - [x] Tạo token utility, repository/service và test
 - [x] Chốt và tích hợp mail delivery
 - [x] Tạo request/verify API và audit events
-- [ ] Tạo frontend request/verify flow
-- [ ] Verify migration, backend, frontend và smoke test
-- [ ] Đồng bộ API docs và database docs
+- [x] Tạo frontend request/verify flow
+- [x] Verify migration, backend, frontend và smoke test
+- [x] Đồng bộ API docs và database docs
 
 ## Blockers
 

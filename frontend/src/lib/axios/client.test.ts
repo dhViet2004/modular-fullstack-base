@@ -101,6 +101,21 @@ describe("Axios auth client", () => {
     ).toEqual({ headers: {}, url: "/auth/login" });
   });
 
+  it("does not attach an access token to public email verification", () => {
+    setAccessToken("stale-access-token");
+    const interceptor = axiosMocks.getRequestInterceptor();
+
+    expect(
+      interceptor?.({
+        headers: {},
+        url: "/auth/email-verification/verify",
+      }),
+    ).toEqual({
+      headers: {},
+      url: "/auth/email-verification/verify",
+    });
+  });
+
   it("shares one refresh request between concurrent callers", async () => {
     axiosMocks.refreshClient.post.mockResolvedValue({
       data: {

@@ -136,7 +136,7 @@ Chỉ đánh dấu `[x]` khi đã chạy lệnh kiểm chứng trên working tre
 - [x] Chốt kiến trúc module `route → controller → service → repository`
 - [x] Hoàn thiện schema nền tảng cho identity, session, RBAC và audit
 - [x] Auth password, JWT session, refresh rotation, logout và giao diện quản trị RBAC
-- [ ] Email verification với public URL từ cấu hình
+- [x] Email verification với public URL từ cấu hình
 - [x] Authorization phía server và test ma trận route
 - [x] Audit log append-only cho sự kiện bảo mật và quản trị
 - [ ] Worker pg-boss chạy tách biệt API process

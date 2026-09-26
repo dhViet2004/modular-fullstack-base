@@ -51,6 +51,16 @@ type MeResponse = {
   };
 };
 
+type RequestEmailVerificationResponse = {
+  success: true;
+  data: { accepted: true };
+};
+
+type VerifyEmailResponse = {
+  success: true;
+  data: { user: RegisteredUser };
+};
+
 
 // Gửi dữ liệu đăng ký đã chuẩn hóa tới backend và trả user vừa tạo.
 export async function registerUser(values: RegisterFormValues) {
@@ -92,4 +102,21 @@ export async function logoutUser(): Promise<void> {
   } finally {
     clearAccessToken();
   }
+}
+
+// Yêu cầu backend gửi email cho user hiện tại; response không chứa token.
+export async function requestEmailVerification(): Promise<void> {
+  await apiClient.post<RequestEmailVerificationResponse>(
+    "/auth/email-verification/request",
+  );
+}
+
+// Gửi raw token trực tiếp tới backend để consume; không lưu token ở frontend.
+export async function verifyEmail(token: string) {
+  const response = await apiClient.post<VerifyEmailResponse>(
+    "/auth/email-verification/verify",
+    { token },
+  );
+
+  return response.data.data.user;
 }

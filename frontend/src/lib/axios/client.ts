@@ -42,6 +42,7 @@ const AUTH_FLOW_PATHS = [
   "/auth/register",
   "/auth/refresh",
   "/auth/logout",
+  "/auth/email-verification/verify",
 ];
 
 // Nhận biết request thuộc luồng auth để không tự gắn/retry access token sai ngữ cảnh.

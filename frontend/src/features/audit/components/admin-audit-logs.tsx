@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { useAuth } from "@/features/auth/components/auth-provider";
 import { LogoutButton } from "@/features/auth/components/logout-button";
+import { EmailVerificationNotice } from "@/features/auth/components/email-verification-notice";
 import { canReadAuditLogs } from "@/features/auth/permissions";
 import { useAuditLogs } from "../hooks/use-audit-logs";
 
@@ -54,6 +55,7 @@ export function AdminAuditLogs() {
 
   return (
     <section>
+      <EmailVerificationNotice />
       <header className="mb-8 flex items-end justify-between gap-4 border-b border-[var(--ink)] pb-5">
         <div>
           <p className="font-mono text-xs font-semibold tracking-[0.12em]">

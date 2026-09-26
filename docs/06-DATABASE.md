@@ -4,16 +4,18 @@ Tài liệu này mô tả schema PostgreSQL hiện tại của CoreStack. Nguồ
 
 ## 1. Tổng quan
 
-Database hiện lưu ba nhóm dữ liệu:
+Database hiện lưu bốn nhóm dữ liệu:
 
 - Identity: `User`, `PasswordCredential`.
 - Authentication session: `Session`.
+- Email verification: `EmailVerificationToken`.
 - Authorization RBAC: `Role`, `Permission`, `UserRole`, `RolePermission`.
 
 ```mermaid
 erDiagram
     User ||--o| PasswordCredential : has
     User ||--o{ Session : owns
+    User ||--o{ EmailVerificationToken : verifies
     User ||--o{ UserRole : receives
     Role ||--o{ UserRole : assigned
     Role ||--o{ RolePermission : grants
@@ -88,6 +90,21 @@ Session được xem là không hợp lệ khi:
 - Refresh token secret không khớp hash đang lưu.
 
 Xóa user sẽ xóa toàn bộ session của user đó nhờ `ON DELETE CASCADE`.
+
+### EmailVerificationToken
+
+`EmailVerificationToken` lưu token dùng một lần để xác minh địa chỉ email. Database chỉ lưu SHA-256 hash, không lưu raw token được gửi trong email.
+
+| Field | Kiểu | Ràng buộc | Ý nghĩa |
+| --- | --- | --- | --- |
+| `id` | UUID | Primary key | Định danh token record |
+| `userId` | UUID | Foreign key, index cùng `createdAt` | User sở hữu token |
+| `tokenHash` | `VARCHAR(64)` | Unique | SHA-256 hash của raw token |
+| `expiresAt` | DateTime | Index | Thời điểm token hết hạn |
+| `consumedAt` | DateTime? | Nullable | Thời điểm token đã được dùng |
+| `createdAt` | DateTime | Mặc định `now()` | Thời điểm phát hành token |
+
+Khi gửi lại email, token chưa dùng cũ bị xóa trước khi tạo token mới. Khi xác minh, conditional update `consumedAt = null` và cập nhật `User.emailVerifiedAt` chạy trong cùng transaction để chống sử dụng đồng thời. Xóa user sẽ xóa token theo `ON DELETE CASCADE`.
 
 ## 5. Role và Permission
 
@@ -166,7 +183,9 @@ Không được log hoặc trả qua API:
 
 - `PasswordCredential.passwordHash`.
 - `Session.refreshTokenHash`.
+- `EmailVerificationToken.tokenHash`.
 - Refresh token gốc.
+- Raw email verification token và URL chứa token.
 - JWT private key hoặc secret cấu hình.
 
 Repository trả dữ liệu theo use case, không mặc định mở toàn bộ relation nhạy cảm.
@@ -203,6 +222,7 @@ Session login/logout và audit event tương ứng được ghi trong cùng Pris
 | `20260923100901_add_session` | Tạo session có thể refresh và revoke |
 | `20260924175337_add_rbac` | Tạo role, permission và hai bảng nối |
 | `20260926033703_add_audit_log` | Tạo enum outcome, bảng audit append-only và index timeline |
+| `20260926041252_add_email_verification_token` | Tạo token hash dùng một lần, thời hạn và quan hệ cascade với user |
 
 Không sửa migration đã được áp dụng. Thay đổi schema mới phải tạo migration mới và được review trước khi deploy.
 
@@ -223,7 +243,6 @@ Không dùng `prisma migrate reset` với database chứa dữ liệu cần gi�
 
 Các phần sau chưa được triển khai:
 
-- Email verification token.
 - Password reset token.
 - OAuth account.
 - Organization hoặc tenant.
