@@ -10,7 +10,10 @@ import { authenticate } from "../../middleware/authenticate.middleware.js";
 import { logoutController } from "./session/logout.controller.js";
 import { meController } from "./session/me.controller.js";
 import { refreshController } from "./session/refresh.controller.js";
-import { listSessionsController, revokeSessionController } from "./session/sessions.controller.js";
+import {
+  listSessionsController,
+  revokeSessionController,
+} from "./session/sessions.controller.js";
 import {
   requestEmailVerificationController,
   verifyEmailController,
@@ -33,7 +36,12 @@ authRouter.post("/logout", logoutController);
 authRouter.get("/me", authenticate, meController);
 authRouter.get("/sessions", authenticate, listSessionsController);
 authRouter.delete("/sessions/:id", authenticate, revokeSessionController);
-authRouter.post("/password/change", authenticate, validateBody(changePasswordSchema), changePasswordController);
+authRouter.post(
+  "/password/change",
+  authenticate,
+  validateBody(changePasswordSchema),
+  changePasswordController,
+);
 authRouter.post(
   "/email-verification/request",
   authenticate,

@@ -31,7 +31,11 @@ export function createSessionWithAudit(
   return prisma.$transaction(async (transaction) => {
     await transaction.$executeRaw`SELECT 1 FROM "User" WHERE id = ${data.userId}::uuid FOR UPDATE`;
     const active = await transaction.session.findMany({
-      where: { userId: data.userId, revokedAt: null, expiresAt: { gt: new Date() } },
+      where: {
+        userId: data.userId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       select: { id: true },
     });

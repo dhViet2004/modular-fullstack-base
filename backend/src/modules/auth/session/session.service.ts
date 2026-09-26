@@ -105,9 +105,15 @@ export async function createAuthSession(
   };
 }
 
-export async function getActiveSessions(userId: string, currentSessionId: string) {
+export async function getActiveSessions(
+  userId: string,
+  currentSessionId: string,
+) {
   const sessions = await listActiveSessions(userId);
-  return sessions.map((session) => ({ ...session, current: session.id === currentSessionId }));
+  return sessions.map((session) => ({
+    ...session,
+    current: session.id === currentSessionId,
+  }));
 }
 
 export async function revokeUserSession(userId: string, sessionId: string) {
