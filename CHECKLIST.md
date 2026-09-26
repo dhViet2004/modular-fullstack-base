@@ -184,3 +184,9 @@
 - [x] Gi? header navigation c? d?nh khi cu?n trang
 - [~] CRUD qu?n lý file: dã thêm metadata API và UI t?o/c?p nh?t/xóa; backend test b? ch?n do Prisma Client native engine dang khóa trên Windows
 - [x] Hoàn t?t CRUD file v?i metadata b?n v?ng, migration và giao di?n FE
+
+## Session/device limits
+
+- [x] Gi?i h?n s? phiên ho?t d?ng theo user b?ng MAX_ACTIVE_SESSIONS_PER_USER và revoke phiên cu nh?t
+- [x] C?p nh?t tài li?u authentication/API và c?u hình môi tru?ng
+Session account security UI va API doi mat khau da cap nhat.

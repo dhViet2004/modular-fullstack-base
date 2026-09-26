@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const transactionClient = vi.hoisted(() => ({
+  $executeRaw: vi.fn(),
   session: {
     create: vi.fn(),
     updateMany: vi.fn(),
+    findMany: vi.fn(),
   },
   auditLog: {
     create: vi.fn(),
@@ -48,6 +50,7 @@ const auditData = {
 describe("session repository audit transaction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    transactionClient.session.findMany.mockResolvedValue([]);
   });
 
   it("creates the session and login audit with the same transaction client", async () => {

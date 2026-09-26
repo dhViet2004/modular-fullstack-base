@@ -32,6 +32,8 @@ const envSchema = z
 
     REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
 
+    MAX_ACTIVE_SESSIONS_PER_USER: z.coerce.number().int().positive().default(5),
+
     EMAIL_VERIFICATION_TTL_MINUTES: z.coerce
       .number()
       .int()

@@ -29,7 +29,8 @@ services:
   api:
     image: ${BACKEND_IMAGE:?set BACKEND_IMAGE}
     env_file: [backend.production.env]
-    expose: ["4000"]
+    ports: ["127.0.0.1:4001:4000"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
     depends_on:
       migration: { condition: service_completed_successfully }
     restart: unless-stopped
@@ -46,7 +47,8 @@ services:
 
   frontend:
     image: ${FRONTEND_IMAGE:?set FRONTEND_IMAGE}
-    expose: ["3000"]
+    ports: ["127.0.0.1:3001:3000"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
     depends_on: [api]
     restart: unless-stopped
     networks: [core_base]

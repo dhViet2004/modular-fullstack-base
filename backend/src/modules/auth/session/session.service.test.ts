@@ -18,6 +18,8 @@ vi.mock("./session.repository.js", () => ({
   findSessionById: vi.fn(),
   revokeSessionWithAudit: vi.fn(),
   rotateSessionRefreshToken: vi.fn(),
+  listActiveSessions: vi.fn(),
+  revokeOwnedSession: vi.fn(),
 }));
 
 import { signAccessToken, verifyAccessToken } from "./access-token.js";
@@ -31,6 +33,8 @@ import {
   findSessionById,
   revokeSessionWithAudit,
   rotateSessionRefreshToken,
+  listActiveSessions,
+  revokeOwnedSession,
 } from "./session.repository.js";
 import {
   authenticateAccessToken,
@@ -48,6 +52,8 @@ const createSessionWithAuditMock = vi.mocked(createSessionWithAudit);
 const findSessionByIdMock = vi.mocked(findSessionById);
 const revokeSessionWithAuditMock = vi.mocked(revokeSessionWithAudit);
 const rotateSessionRefreshTokenMock = vi.mocked(rotateSessionRefreshToken);
+const listActiveSessionsMock = vi.mocked(listActiveSessions);
+const revokeOwnedSessionMock = vi.mocked(revokeOwnedSession);
 
 const activeSession = {
   id: "22222222-2222-4222-8222-222222222222",
@@ -76,6 +82,8 @@ describe("session service", () => {
       token: `${activeSession.id}.new-secret`,
       tokenHash: "b".repeat(64),
     });
+    listActiveSessionsMock.mockResolvedValue([]);
+    revokeOwnedSessionMock.mockResolvedValue({ count: 1 });
   });
 
   it("creates a database session without storing the raw refresh token", async () => {
@@ -94,6 +102,7 @@ describe("session service", () => {
         actorUserId: activeSession.userId,
         ipAddress: "127.0.0.1",
       }),
+      5,
     );
     expect(createSessionWithAuditMock.mock.calls[0]?.[0]).not.toHaveProperty(
       "refreshToken",

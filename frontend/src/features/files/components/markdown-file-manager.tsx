@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { deleteFile, downloadFile, listFiles, updateFile, uploadFile, type StoredFile } from "../api/files.api";
+import { useAuth } from "@/features/auth/components/auth-provider";
 
 function previewMarkdown(source: string) {
   const escaped = source.replace(/[&<>]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[character] ?? character);
@@ -17,6 +18,7 @@ function previewMarkdown(source: string) {
 }
 
 export function MarkdownFileManager() {
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [content, setContent] = useState("# Ghi chú mới\n\n");
   const [name, setName] = useState("note.md");
   const [files, setFiles] = useState<StoredFile[]>([]);
@@ -26,8 +28,11 @@ export function MarkdownFileManager() {
   const [currentId, setCurrentId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isAuthLoading || !user) return;
     void listFiles().then(setFiles).catch(() => setStatus("Không thể tải danh sách file"));
-  }, []);
+  }, [isAuthLoading, user]);
+
+  if (isAuthLoading) return <p>Đang khôi phục phiên...</p>;
 
   function importMarkdown(file: File | undefined) {
     if (!file) return;

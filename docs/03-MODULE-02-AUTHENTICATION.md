@@ -84,3 +84,7 @@ Provider/Component -> Hook -> Feature API -> Axios client -> Backend
 ```
 
 Module nÃ y chÆ°a triá»ƒn khai email verification, reset password, OAuth, role hoáº·c permission.
+
+## Gi?i h?n thi?t b? và qu?n lý phiên
+
+Bi?n MAX_ACTIVE_SESSIONS_PER_USER (m?c d?nh 5) gi?i h?n s? phiên ho?t d?ng c?a m?i user. Khi dang nh?p vu?t gi?i h?n, các phiên cu nh?t b? revoke; refresh token c?a chúng không còn h?p l?.

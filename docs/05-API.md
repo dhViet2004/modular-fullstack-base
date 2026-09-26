@@ -682,3 +682,14 @@ Mỗi endpoint mới phải xác định rõ:
 8. Test cho trường hợp thành công, `401`, `403` hoặc validation error tương ứng.
 
 Khi API contract thay đổi, cập nhật tài liệu này trong cùng task.
+
+### Gi?i h?n thi?t b?
+
+Login t? d?ng duy tr� t?i da MAX_ACTIVE_SESSIONS_PER_USER phi�n ho?t d?ng cho m?i user v� revoke phi�n cu nh?t khi vu?t gi?i h?n.
+
+### GET /api/v1/auth/sessions`n
+Tr? c�c phi�n dang ho?t d?ng c?a user hi?n t?i, c� c? current. Y�u c?u Bearer access token.
+
+### DELETE /api/v1/auth/sessions/:id`n
+Thu h?i m?t phi�n thu?c user hi?n t?i; tr? 204. Session ID sai tr? 400 VALIDATION_ERROR.
+POST /api/v1/auth/password/change: doi mat khau voi Bearer token; body currentPassword va newPassword (12-128 ky tu).

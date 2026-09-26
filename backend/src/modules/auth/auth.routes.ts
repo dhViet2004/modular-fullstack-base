@@ -4,10 +4,13 @@ import { registerController } from "./password/register.controller.js";
 import { registerSchema } from "./password/register.schema.js";
 import { loginController } from "./password/login.controller.js";
 import { loginSchema } from "./password/login.schema.js";
+import { changePasswordController } from "./password/change-password.controller.js";
+import { changePasswordSchema } from "./password/change-password.schema.js";
 import { authenticate } from "../../middleware/authenticate.middleware.js";
 import { logoutController } from "./session/logout.controller.js";
 import { meController } from "./session/me.controller.js";
 import { refreshController } from "./session/refresh.controller.js";
+import { listSessionsController, revokeSessionController } from "./session/sessions.controller.js";
 import {
   requestEmailVerificationController,
   verifyEmailController,
@@ -28,6 +31,9 @@ authRouter.post("/login", validateBody(loginSchema), loginController);
 authRouter.post("/refresh", refreshController);
 authRouter.post("/logout", logoutController);
 authRouter.get("/me", authenticate, meController);
+authRouter.get("/sessions", authenticate, listSessionsController);
+authRouter.delete("/sessions/:id", authenticate, revokeSessionController);
+authRouter.post("/password/change", authenticate, validateBody(changePasswordSchema), changePasswordController);
 authRouter.post(
   "/email-verification/request",
   authenticate,

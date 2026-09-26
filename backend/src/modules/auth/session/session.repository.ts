@@ -26,11 +26,40 @@ export type RevokeSessionData = {
 export function createSessionWithAudit(
   data: CreateSessionData,
   audit: CreateAuditLogData,
+  limit = 5,
 ) {
   return prisma.$transaction(async (transaction) => {
+    await transaction.$executeRaw`SELECT 1 FROM "User" WHERE id = ${data.userId}::uuid FOR UPDATE`;
+    const active = await transaction.session.findMany({
+      where: { userId: data.userId, revokedAt: null, expiresAt: { gt: new Date() } },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      select: { id: true },
+    });
+    const stale = active.slice(0, Math.max(0, active.length - limit + 1));
+    if (stale.length) {
+      await transaction.session.updateMany({
+        where: { id: { in: stale.map((session) => session.id) } },
+        data: { revokedAt: new Date() },
+      });
+    }
     const session = await transaction.session.create({ data });
     await transaction.auditLog.create({ data: audit });
     return session;
+  });
+}
+
+export function listActiveSessions(userId: string) {
+  return prisma.session.findMany({
+    where: { userId, revokedAt: null, expiresAt: { gt: new Date() } },
+    select: { id: true, createdAt: true, expiresAt: true },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export function revokeOwnedSession(userId: string, sessionId: string) {
+  return prisma.session.updateMany({
+    where: { id: sessionId, userId, revokedAt: null },
+    data: { revokedAt: new Date() },
   });
 }
 

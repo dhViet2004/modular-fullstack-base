@@ -18,6 +18,21 @@ export type AuthenticatedUser = RegisteredUser & {
   permissions: string[];
 };
 
+export type AuthSession = { id: string; createdAt: string; expiresAt: string; current: boolean };
+
+export async function getSessions() {
+  const response = await apiClient.get<{ data: { sessions: AuthSession[] } }>("/auth/sessions");
+  return response.data.data.sessions;
+}
+
+export async function revokeSession(id: string) {
+  await apiClient.delete(`/auth/sessions/${encodeURIComponent(id)}`);
+}
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+  await apiClient.post("/auth/password/change", { currentPassword, newPassword });
+}
+
 type RegisterResponse = {
   success: true;
   data: {

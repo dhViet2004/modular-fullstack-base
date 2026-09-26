@@ -23,6 +23,8 @@ import {
   findSessionById,
   revokeSessionWithAudit,
   rotateSessionRefreshToken,
+  listActiveSessions,
+  revokeOwnedSession,
 } from "./session.repository.js";
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -92,6 +94,7 @@ export async function createAuthSession(
       ipAddress: auditContext.ipAddress,
       userAgent: auditContext.userAgent,
     },
+    env.MAX_ACTIVE_SESSIONS_PER_USER,
   );
 
   return {
@@ -100,6 +103,15 @@ export async function createAuthSession(
     refreshToken: refreshToken.token,
     refreshTokenExpiresAt,
   };
+}
+
+export async function getActiveSessions(userId: string, currentSessionId: string) {
+  const sessions = await listActiveSessions(userId);
+  return sessions.map((session) => ({ ...session, current: session.id === currentSessionId }));
+}
+
+export async function revokeUserSession(userId: string, sessionId: string) {
+  await revokeOwnedSession(userId, sessionId);
 }
 
 // Kiểm tra refresh token cũ, thay hash trong database và phát cặp token mới.

@@ -158,3 +158,6 @@ CÃ¡c rá»§i ro vÃ  bÃ i há»c tá»« phiÃªn báº£n cÅ© náº±m trong `review-source/`;
 
 - [x] Giao di?n qu?n lı t?p Markdown: import, luu server và export
 - [x] CRUD Files: danh sách, t?o, c?p nh?t, t?i xu?ng và xóa file
+
+- [x] Qu?n lı phiên và gi?i h?n thi?t b? ho?t d?ng theo user
+Account security UI va API doi mat khau da cap nhat.
