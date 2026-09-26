@@ -33,7 +33,7 @@ function invalidTokenError() {
 export async function requestEmailVerification(
   userId: string,
   context: AuditRequestContext,
-  sessionId: string,
+  sessionId: string | null,
   now = new Date(),
 ) {
   const generated = generateEmailVerificationToken();

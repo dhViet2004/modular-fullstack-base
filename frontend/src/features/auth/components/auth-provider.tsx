@@ -1,6 +1,5 @@
 "use client";
 
-import { refreshAccessToken } from "@/lib/axios/client";
 import {
   createContext,
   useContext,
@@ -10,7 +9,10 @@ import {
   type ReactNode,
 } from "react";
 
-import { getCurrentUser, type AuthenticatedUser } from "../api/auth.api";
+import {
+  restoreAuthenticatedSession,
+  type AuthenticatedUser,
+} from "../api/auth.api";
 
 type AuthContextValue = {
   user: AuthenticatedUser | null;
@@ -32,8 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Function bên trong effect được dùng vì callback của useEffect không được trả Promise.
     async function restoreSession() {
       try {
-        await refreshAccessToken();
-        const currentUser = await getCurrentUser();
+        const currentUser = await restoreAuthenticatedSession();
 
         if (isMounted) {
           setUser(currentUser);

@@ -2,10 +2,8 @@ import type { RequestHandler } from "express";
 
 import { successResponse } from "../../../core/http/api-response.js";
 import type { VerifyEmailInput } from "./email-verification.schema.js";
-import {
-  requestEmailVerification,
-  verifyEmail,
-} from "./email-verification.service.js";
+import { verifyEmail } from "./email-verification.service.js";
+import { enqueueEmailVerification } from "../../jobs/email-verification.job.js";
 
 function auditContext(request: Parameters<RequestHandler>[0]) {
   return {
@@ -19,11 +17,7 @@ export const requestEmailVerificationController: RequestHandler = async (
   request,
   response,
 ) => {
-  const result = await requestEmailVerification(
-    request.auth.user.id,
-    auditContext(request),
-    request.auth.sessionId,
-  );
+  const result = await enqueueEmailVerification(request.auth.user.id);
 
   response.status(202).json(successResponse(result));
 };

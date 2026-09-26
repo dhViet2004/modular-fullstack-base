@@ -6,6 +6,7 @@ import {
   AUDIT_ACTIONS,
   AUDIT_OUTCOMES,
   AUDIT_SUBJECT_TYPES,
+  type AuditAction,
 } from "../../audit/audit.catalog.js";
 import {
   normalizeAuditRequestContext,
@@ -62,6 +63,7 @@ function createRefreshTokenExpiresAt(now: Date): Date {
 export async function createAuthSession(
   userId: string,
   context: AuditRequestContext,
+  auditAction: AuditAction = AUDIT_ACTIONS.AUTH_LOGIN_SUCCEEDED,
 ): Promise<CreatedAuthSession> {
   // UUID được tạo trong service để refresh token có thể chứa sessionId trước khi ghi DB.
   const sessionId = randomUUID();
@@ -81,7 +83,7 @@ export async function createAuthSession(
       expiresAt: refreshTokenExpiresAt,
     },
     {
-      action: AUDIT_ACTIONS.AUTH_LOGIN_SUCCEEDED,
+      action: auditAction,
       outcome: AUDIT_OUTCOMES.SUCCESS,
       actorUserId: userId,
       subjectType: AUDIT_SUBJECT_TYPES.SESSION,

@@ -4,9 +4,9 @@
 
 ## Trạng thái hiện tại
 
-- **Phase hiện tại:** Phase 9 — Module 05 Email Verification đã hoàn thành
+- **Phase hiện tại:** Phase 12 — Files/storage đã hoàn thành
 - **Đang làm:** Chờ bắt đầu module tiếp theo
-- **Bước tiếp theo:** Chốt phạm vi module tiếp theo
+- **Bước tiếp theo:** Chốt phạm vi CI
 - **Blocker:** Không có
 
 ## Quy ước trạng thái
@@ -46,7 +46,7 @@
 
 - [x] Tạo Express app
 - [x] Tạo server entrypoint
-- [ ] Tạo worker entrypoint — chỉ triển khai khi bắt đầu background jobs
+- [x] Tạo worker entrypoint — triển khai cùng background email verification job
 - [x] Tạo config/env và validation bằng Zod
 - [x] Tạo error middleware nền tảng
 - [x] Tạo API routes
@@ -126,6 +126,32 @@
 - [x] Tạo frontend request/verify flow
 - [x] Verify migration, backend, frontend và smoke test
 - [x] Đồng bộ API docs và database docs
+
+## Phase 10 — Google OAuth
+
+- [x] Chốt Authorization Code + PKCE flow và API contract
+- [x] Thêm Google config, model và migration
+- [x] Tạo state/PKCE utility và test
+- [x] Tạo Google token client và ID token verification
+- [x] Tạo repository/service liên kết hoặc tạo user
+- [x] Tạo start/callback API và audit events
+- [x] Tạo frontend Google login/callback flow
+- [x] Verify migration, backend, frontend và smoke test
+- [x] Đồng bộ API/database docs và roadmap
+
+## Phase 11 — Worker pg-boss
+
+- [x] Cài pg-boss, tạo lệnh cài schema/queue riêng và worker entrypoint
+- [x] Chuyển yêu cầu gửi email xác minh sang queue chỉ chứa `userId`
+- [x] Worker tạo token và gửi SMTP; queue retry khi lỗi
+- [x] Cập nhật UI, API và deployment docs cho phản hồi `202` bất đồng bộ
+- [x] Verify lint, typecheck, test, build, cài queue và khởi động worker
+
+## Phase 12 — Files/storage
+
+- [x] Upload/download riêng tư bằng local storage, giới hạn 5 MiB trước khi buffer và test HTTP
+- [x] Cloudflare R2 storage cho production
+- [x] Verify đầy đủ và nghiệm thu Files/storage — upload/download R2 thật trả đúng nội dung
 
 ## Blockers
 

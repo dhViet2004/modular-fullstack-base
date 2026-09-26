@@ -19,7 +19,6 @@ Chưa nằm trong phạm vi:
 - OTP nhập bằng mã số.
 - Đổi email tài khoản.
 - Bắt buộc email đã xác minh cho mọi API.
-- Background job hoặc retry queue; chỉ thêm khi module jobs được triển khai.
 - Khóa vào một nhà cung cấp email cụ thể trước khi cấu hình delivery được chọn.
 
 ## 2. API mục tiêu
@@ -98,12 +97,14 @@ Không dựng public URL từ `Host`, `Origin` hoặc forwarded header của req
 ```text
 Authenticated user
   -> POST /auth/email-verification/request
+  -> enqueue userId vào pg-boss
+  -> trả 202 Accepted
+Worker
   -> kiểm tra emailVerifiedAt
   -> kiểm tra cooldown
   -> vô hiệu token chưa dùng cũ
   -> tạo token hash và expiresAt
   -> gửi email chứa frontend URL
-  -> trả 202 Accepted
 ```
 
 Response không chứa token:
@@ -122,7 +123,7 @@ Response không chứa token:
 
 Nếu email đã xác minh, endpoint vẫn có thể trả `202` mà không gửi mail để giữ hành vi idempotent.
 
-Cooldown dùng token gần nhất của user. Request quá sớm trả:
+Queue dùng singleton key theo user trong 60 giây; worker vẫn kiểm tra cooldown theo token gần nhất. Request trùng quá sớm trả:
 
 ```text
 429 EMAIL_VERIFICATION_RATE_LIMITED
@@ -163,7 +164,7 @@ Trong cùng transaction:
 - Xóa hoặc vô hiệu token chưa dùng cũ của user.
 - Tạo token hash mới.
 
-Gửi email không thể nằm trong database transaction. Baseline gửi đồng bộ sau khi commit; nếu delivery thất bại, service xóa đúng token vừa tạo và trả lỗi. Khi có worker/outbox, thay phần compensation bằng retry bền vững.
+API chỉ enqueue `userId` vào pg-boss. Worker tạo token sau khi nhận job, gửi email ngoài database transaction và xóa đúng token vừa tạo nếu SMTP thất bại. pg-boss retry job; job payload không chứa token hoặc URL xác minh. API trả `202` khi enqueue thành công, không chờ SMTP. Cần chạy `pnpm jobs:install` trước API/worker và chạy `pnpm worker` riêng.
 
 ### Verify token
 

@@ -18,7 +18,11 @@ Deployment pipeline
 
 Migration phải hoàn thành trước khi phiên bản backend mới nhận traffic. API không tự chạy migration khi startup.
 
+Sau Prisma migration, chạy `node dist/jobs-install.js` một lần để cài schema/queue pg-boss. API và worker dùng chung PostgreSQL; chạy worker bằng `node dist/worker.js` trong workload riêng. API không xử lý job và cả hai runtime không tự chạy migration pg-boss.
+
 Repository hiện chưa cung cấp production Docker Compose, Kubernetes manifest hoặc cấu hình cho một cloud cụ thể. Các phần đó chỉ nên được thêm khi đã chọn môi trường deploy thật.
+
+File API dùng local storage ở development/test và Cloudflare R2 ở production. Production cần `STORAGE_R2_ENDPOINT`, `STORAGE_R2_BUCKET`, `STORAGE_R2_ACCESS_KEY_ID`, `STORAGE_R2_SECRET_ACCESS_KEY`; thiếu biến sẽ fail-fast. Cấp quyền đọc/ghi object trong bucket riêng tư. API chỉ dùng filesystem tạm của container để staging upload có giới hạn 5 MiB, sau đó xóa file tạm.
 
 ## 2. Điều kiện production
 

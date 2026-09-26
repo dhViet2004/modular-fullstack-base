@@ -1,6 +1,7 @@
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { prisma } from "./core/database/prisma.js";
+import { stopEmailVerificationQueue } from "./modules/jobs/email-verification.job.js";
 
 const server = createApp({ corsOrigin: env.CORS_ORIGIN }).listen(
   env.PORT,
@@ -14,6 +15,7 @@ async function shutdown(signal: string) {
   await new Promise<void>((resolve, reject) => {
     server.close((error) => (error ? reject(error) : resolve()));
   });
+  await stopEmailVerificationQueue();
   await prisma.$disconnect();
 }
 

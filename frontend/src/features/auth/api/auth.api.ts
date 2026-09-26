@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/axios/client";
+import { apiClient, refreshAccessToken } from "@/lib/axios/client";
 import { clearAccessToken, setAccessToken } from "@/lib/auth/access-token";
 import type { RegisterFormValues } from "../schemas/register.schema";
 import type { LoginFormValues } from "../schemas/login.schema";
@@ -93,6 +93,19 @@ export async function getCurrentUser() {
     roles: response.data.data.access.roles,
     permissions: response.data.data.access.permissions,
   } satisfies AuthenticatedUser;
+}
+
+// Khôi phục access token từ HttpOnly refresh cookie rồi lấy user hiện tại.
+export async function restoreAuthenticatedSession() {
+  await refreshAccessToken();
+  return getCurrentUser();
+}
+
+// OAuth bắt đầu bằng browser navigation nên chỉ cần dựng URL backend công khai.
+export function getGoogleOAuthStartUrl() {
+  const apiOrigin =
+    process.env.NEXT_PUBLIC_API_ORIGIN ?? "http://localhost:4000";
+  return new URL("/api/v1/auth/google/start", apiOrigin).toString();
 }
 
 // Thu hồi session phía backend và luôn xóa access token khỏi bộ nhớ phía frontend.

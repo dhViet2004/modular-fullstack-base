@@ -13,6 +13,12 @@ import {
   verifyEmailController,
 } from "./email-verification/email-verification.controller.js";
 import { verifyEmailSchema } from "./email-verification/email-verification.schema.js";
+import { validateQuery } from "../../middleware/validate-query.middleware.js";
+import {
+  completeGoogleOAuthController,
+  startGoogleOAuthController,
+} from "./google/google-oauth.controller.js";
+import { googleOAuthCallbackQuerySchema } from "./google/google-oauth.schema.js";
 
 export const authRouter = Router();
 
@@ -31,4 +37,10 @@ authRouter.post(
   "/email-verification/verify",
   validateBody(verifyEmailSchema),
   verifyEmailController,
+);
+authRouter.get("/google/start", startGoogleOAuthController);
+authRouter.get(
+  "/google/callback",
+  validateQuery(googleOAuthCallbackQuerySchema),
+  completeGoogleOAuthController,
 );

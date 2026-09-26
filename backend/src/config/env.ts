@@ -58,6 +58,26 @@ const envSchema = z
     SMTP_PASSWORD: optionalNonEmptyString,
 
     MAIL_FROM: optionalNonEmptyString,
+
+    GOOGLE_CLIENT_ID: optionalNonEmptyString,
+
+    GOOGLE_CLIENT_SECRET: optionalNonEmptyString,
+
+    GOOGLE_REDIRECT_URI: z.string().url().optional(),
+
+    GOOGLE_OAUTH_ATTEMPT_TTL_MINUTES: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(10),
+
+    STORAGE_R2_ENDPOINT: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.string().url().optional(),
+    ),
+    STORAGE_R2_BUCKET: optionalNonEmptyString,
+    STORAGE_R2_ACCESS_KEY_ID: optionalNonEmptyString,
+    STORAGE_R2_SECRET_ACCESS_KEY: optionalNonEmptyString,
   })
   .superRefine((values, context) => {
     if (values.NODE_ENV === "production" && !values.PUBLIC_WEB_URL) {
@@ -91,12 +111,54 @@ const envSchema = z
         message: "SMTP_USER and SMTP_PASSWORD must be configured together",
       });
     }
+
+    if (
+      values.NODE_ENV === "production" &&
+      (!values.GOOGLE_CLIENT_ID ||
+        !values.GOOGLE_CLIENT_SECRET ||
+        !values.GOOGLE_REDIRECT_URI)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["GOOGLE_CLIENT_ID"],
+        message: "Google OAuth configuration is required in production",
+      });
+    }
+
+    if (
+      values.NODE_ENV === "production" &&
+      (!values.STORAGE_R2_ENDPOINT ||
+        !values.STORAGE_R2_BUCKET ||
+        !values.STORAGE_R2_ACCESS_KEY_ID ||
+        !values.STORAGE_R2_SECRET_ACCESS_KEY)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["STORAGE_R2_ENDPOINT"],
+        message: "Cloudflare R2 configuration is required in production",
+      });
+    }
+
+    if (
+      values.NODE_ENV === "production" &&
+      values.STORAGE_R2_ENDPOINT &&
+      new URL(values.STORAGE_R2_ENDPOINT).protocol !== "https:"
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["STORAGE_R2_ENDPOINT"],
+        message: "Cloudflare R2 endpoint must use HTTPS",
+      });
+    }
   })
   .transform((values) => ({
     ...values,
     PUBLIC_WEB_URL: values.PUBLIC_WEB_URL ?? "http://localhost:3000",
     SMTP_HOST: values.SMTP_HOST ?? "localhost",
     MAIL_FROM: values.MAIL_FROM ?? "CoreStack <no-reply@localhost>",
+    GOOGLE_REDIRECT_URI:
+      values.GOOGLE_REDIRECT_URI ??
+      "http://localhost:4000/api/v1/auth/google/callback",
   }));
 
 const parsed = envSchema.safeParse(process.env);

@@ -9,6 +9,7 @@ Database hiện lưu bốn nhóm dữ liệu:
 - Identity: `User`, `PasswordCredential`.
 - Authentication session: `Session`.
 - Email verification: `EmailVerificationToken`.
+- Google OAuth: `GoogleAccount`, `GoogleOAuthAttempt`.
 - Authorization RBAC: `Role`, `Permission`, `UserRole`, `RolePermission`.
 
 ```mermaid
@@ -16,6 +17,7 @@ erDiagram
     User ||--o| PasswordCredential : has
     User ||--o{ Session : owns
     User ||--o{ EmailVerificationToken : verifies
+    User ||--o| GoogleAccount : links
     User ||--o{ UserRole : receives
     Role ||--o{ UserRole : assigned
     Role ||--o{ RolePermission : grants
@@ -105,6 +107,35 @@ Xóa user sẽ xóa toàn bộ session của user đó nhờ `ON DELETE CASCADE`
 | `createdAt` | DateTime | Mặc định `now()` | Thời điểm phát hành token |
 
 Khi gửi lại email, token chưa dùng cũ bị xóa trước khi tạo token mới. Khi xác minh, conditional update `consumedAt = null` và cập nhật `User.emailVerifiedAt` chạy trong cùng transaction để chống sử dụng đồng thời. Xóa user sẽ xóa token theo `ON DELETE CASCADE`.
+
+### GoogleAccount
+
+`GoogleAccount` liên kết tối đa một Google identity với một `User`. `googleSubject` lấy từ claim `sub` đã xác minh, không dùng email làm định danh provider.
+
+| Field | Kiểu | Ràng buộc | Ý nghĩa |
+| --- | --- | --- | --- |
+| `id` | UUID | Primary key | Định danh liên kết |
+| `userId` | UUID | Unique, foreign key | User được liên kết |
+| `googleSubject` | `VARCHAR(255)` | Unique | Google `sub` |
+| `createdAt` | DateTime | Mặc định `now()` | Thời điểm tạo |
+| `updatedAt` | DateTime | `@updatedAt` | Thời điểm cập nhật |
+
+Xóa user sẽ xóa liên kết theo `ON DELETE CASCADE`.
+
+### GoogleOAuthAttempt
+
+`GoogleOAuthAttempt` lưu trạng thái ngắn hạn của Authorization Code + PKCE. Chỉ hash SHA-256 của state được lưu; `codeVerifier` được giữ tạm để đổi authorization code và không được log hoặc trả qua API.
+
+| Field | Kiểu | Ràng buộc | Ý nghĩa |
+| --- | --- | --- | --- |
+| `id` | UUID | Primary key | Định danh attempt |
+| `stateHash` | `VARCHAR(64)` | Unique | SHA-256 hash của state |
+| `codeVerifier` | `VARCHAR(128)` | Bắt buộc | PKCE verifier tạm thời |
+| `expiresAt` | DateTime | Index | Thời điểm hết hạn |
+| `consumedAt` | DateTime? | Nullable | Thời điểm đã dùng |
+| `createdAt` | DateTime | Mặc định `now()` | Thời điểm tạo |
+
+Attempt được consume bằng conditional update khi còn hạn và chưa dùng, nên một state chỉ thành công một lần.
 
 ## 5. Role và Permission
 

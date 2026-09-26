@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { LoginForm } from "@/features/auth/components/login-form";
+import { GoogleLoginButton } from "@/features/auth/components/google-login-button";
 
 export default function LoginPage() {
   return (
@@ -32,6 +34,9 @@ export default function LoginPage() {
         </div>
 
         <LoginForm />
+        <Suspense fallback={null}>
+          <GoogleLoginButton />
+        </Suspense>
 
         <p className="mt-6 mb-0 text-center text-sm">
           No account?{" "}

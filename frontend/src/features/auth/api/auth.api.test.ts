@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const postMock = vi.hoisted(() => vi.fn());
+const getMock = vi.hoisted(() => vi.fn());
+const refreshAccessTokenMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/axios/client", () => ({
-  apiClient: { post: postMock },
+  apiClient: { get: getMock, post: postMock },
+  refreshAccessToken: refreshAccessTokenMock,
 }));
 
 import {
@@ -13,7 +16,9 @@ import {
 } from "@/lib/auth/access-token";
 import {
   logoutUser,
+  getGoogleOAuthStartUrl,
   requestEmailVerification,
+  restoreAuthenticatedSession,
   verifyEmail,
 } from "./auth.api";
 
@@ -70,5 +75,46 @@ describe("email verification API", () => {
       "/auth/email-verification/verify",
       { token: "raw-token" },
     );
+  });
+});
+
+describe("Google OAuth frontend flow", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("starts OAuth at the backend without exposing client credentials", () => {
+    const url = getGoogleOAuthStartUrl();
+
+    expect(url).toBe("http://localhost:4000/api/v1/auth/google/start");
+    expect(url).not.toContain("client_id");
+    expect(url).not.toContain("client_secret");
+  });
+
+  it("restores the internal session after the Google callback", async () => {
+    refreshAccessTokenMock.mockResolvedValue("access-token");
+    getMock.mockResolvedValue({
+      data: {
+        data: {
+          user: {
+            id: "user-id",
+            email: "user@example.com",
+            displayName: "User",
+            status: "ACTIVE",
+            emailVerifiedAt: "2026-09-26T00:00:00.000Z",
+            createdAt: "2026-09-26T00:00:00.000Z",
+            updatedAt: "2026-09-26T00:00:00.000Z",
+          },
+          access: { roles: ["MEMBER"], permissions: [] },
+        },
+      },
+    });
+
+    await expect(restoreAuthenticatedSession()).resolves.toMatchObject({
+      id: "user-id",
+      roles: ["MEMBER"],
+    });
+    expect(refreshAccessTokenMock).toHaveBeenCalledOnce();
+    expect(getMock).toHaveBeenCalledWith("/auth/me");
   });
 });

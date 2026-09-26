@@ -37,7 +37,7 @@ export function EmailVerificationNotice() {
       </div>
       {mutation.isSuccess ? (
         <p className="mt-3 mb-0 text-sm" role="status">
-          Đã gửi email xác minh.
+          Đã nhận yêu cầu gửi email xác minh.
         </p>
       ) : null}
       {mutation.isError ? (

@@ -25,9 +25,13 @@ Thiết kế audit log: [`docs/08-MODULE-04-AUDIT.md`](docs/08-MODULE-04-AUDIT.m
 
 Thiết kế email verification: [`docs/09-MODULE-05-EMAIL-VERIFICATION.md`](docs/09-MODULE-05-EMAIL-VERIFICATION.md).
 
+Thiết kế Google OAuth: [`docs/10-MODULE-06-GOOGLE-OAUTH.md`](docs/10-MODULE-06-GOOGLE-OAUTH.md).
+
+Thiết kế Files/storage: [`docs/11-MODULE-07-FILES.md`](docs/11-MODULE-07-FILES.md).
+
 ## Yêu cầu
 
-- Node.js 22 trở lên
+- Node.js 22.12 trở lên (theo yêu cầu của pg-boss)
 - pnpm 9.15.9
 - Docker Desktop với Linux engine đang chạy
 
@@ -54,9 +58,12 @@ copy .env.example .env
 pnpm install
 pnpm db:generate
 pnpm db:migrate:deploy
+pnpm jobs:install
 pnpm db:seed
 pnpm dev
 ```
+
+Chạy worker ở terminal backend riêng bằng `pnpm worker`; API chỉ đưa job vào queue, worker mới gửi email xác minh. Khởi tạo queue bằng `pnpm jobs:install` sau Prisma migration ở mỗi môi trường trước khi mở API và worker.
 
 Sau khi đã đăng ký tài khoản cần dùng làm admin, thêm email vào `backend/.env` rồi chạy lại `pnpm db:seed`:
 
@@ -137,10 +144,11 @@ Chỉ đánh dấu `[x]` khi đã chạy lệnh kiểm chứng trên working tre
 - [x] Hoàn thiện schema nền tảng cho identity, session, RBAC và audit
 - [x] Auth password, JWT session, refresh rotation, logout và giao diện quản trị RBAC
 - [x] Email verification với public URL từ cấu hình
+- [x] Google OAuth Authorization Code + PKCE
 - [x] Authorization phía server và test ma trận route
 - [x] Audit log append-only cho sự kiện bảo mật và quản trị
-- [ ] Worker pg-boss chạy tách biệt API process
-- [ ] Files/storage với giới hạn upload trước khi buffer
+- [x] Worker pg-boss chạy tách biệt API process
+- [x] Files/storage với giới hạn upload trước khi buffer — local và Cloudflare R2 đã kiểm chứng
 - [ ] CI chạy format, lint, typecheck, test, build và migration drift check
 
 Các rủi ro và bài học từ phiên bản cũ nằm trong `review-source/`; baseline mới phải giải quyết chúng bằng test và bằng chứng kiểm chứng, không kế thừa các dấu tick cũ.

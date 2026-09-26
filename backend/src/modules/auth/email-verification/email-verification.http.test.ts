@@ -10,17 +10,17 @@ vi.mock("../session/session.service.js", () => ({
 }));
 
 vi.mock("./email-verification.service.js", () => ({
-  requestEmailVerification: vi.fn(),
   verifyEmail: vi.fn(),
+}));
+vi.mock("../../jobs/email-verification.job.js", () => ({
+  enqueueEmailVerification: vi.fn(),
 }));
 
 import { errorMiddleware } from "../../../middleware/error.middleware.js";
 import { authRouter } from "../auth.routes.js";
 import { authenticateAccessToken } from "../session/session.service.js";
-import {
-  requestEmailVerification,
-  verifyEmail,
-} from "./email-verification.service.js";
+import { verifyEmail } from "./email-verification.service.js";
+import { enqueueEmailVerification } from "../../jobs/email-verification.job.js";
 
 const user = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -32,7 +32,7 @@ const user = {
   updatedAt: new Date(),
 };
 const authenticateMock = vi.mocked(authenticateAccessToken);
-const requestVerificationMock = vi.mocked(requestEmailVerification);
+const requestVerificationMock = vi.mocked(enqueueEmailVerification);
 const verifyEmailMock = vi.mocked(verifyEmail);
 
 function createTestApp() {
@@ -73,11 +73,7 @@ describe("email verification HTTP flow", () => {
 
     expect(response.status).toBe(202);
     expect(body.data.accepted).toBe(true);
-    expect(requestVerificationMock).toHaveBeenCalledWith(
-      user.id,
-      expect.objectContaining({ userAgent: "Test Browser" }),
-      "22222222-2222-4222-8222-222222222222",
-    );
+    expect(requestVerificationMock).toHaveBeenCalledWith(user.id);
   });
 
   it("rejects a verify request without a token", async () => {

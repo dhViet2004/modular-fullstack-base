@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
+    "worker": "tsx src/worker.ts",
+    "jobs:install": "tsx src/jobs-install.ts",
     "build": "tsc -p tsconfig.build.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -22,6 +24,7 @@
   "license": "UNLICENSED",
   "type": "module",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1141.0",
     "@prisma/client": "^6.19.3",
     "argon2": "^0.45.1",
     "cors": "^2.8.6",
@@ -30,6 +33,7 @@
     "helmet": "^8.3.0",
     "jose": "^6.2.12",
     "nodemailer": "^10.0.10",
+    "pg-boss": "^12.34.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {

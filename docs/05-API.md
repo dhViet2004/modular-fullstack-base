@@ -84,8 +84,12 @@ Access token được trả trong JSON sau login/refresh. Refresh token chỉ đ
 | `GET`  | `/api/v1/auth/me`                         | Bearer access token   | Không        |
 | `POST` | `/api/v1/auth/email-verification/request` | Bearer access token   | Không        |
 | `POST` | `/api/v1/auth/email-verification/verify`  | Public                | Không        |
+| `GET`  | `/api/v1/auth/google/start`               | Public                | Không        |
+| `GET`  | `/api/v1/auth/google/callback`            | Google callback       | Không        |
 | `GET`  | `/api/v1/users`                           | Bearer access token   | `users:read` |
 | `GET`  | `/api/v1/audit-logs`                      | Bearer access token   | `audit:read` |
+| `POST` | `/api/v1/files`                           | Bearer access token   | Không        |
+| `GET`  | `/api/v1/files/:id`                       | Bearer access token   | Không        |
 
 ## 5. System API
 
@@ -369,7 +373,7 @@ Roles và permissions dùng để điều chỉnh UI. Backend vẫn kiểm tra p
 
 ### `POST /api/v1/auth/email-verification/request`
 
-Yêu cầu gửi email xác minh cho chính user đang đăng nhập. Endpoint không nhận email từ body và không trả token trong response.
+Yêu cầu đưa việc gửi email xác minh của chính user đang đăng nhập vào queue. Endpoint không nhận email từ body và không trả token trong response. `202` xác nhận job đã được nhận, không bảo đảm SMTP đã gửi thành công; worker sẽ retry khi gửi lỗi.
 
 ```http
 Authorization: Bearer <access-token>
@@ -393,7 +397,7 @@ Response `202`:
 | ------ | --------------------------------- | ---------------------------------------- |
 | `401`  | `UNAUTHENTICATED`                 | Access token thiếu hoặc không hợp lệ     |
 | `429`  | `EMAIL_VERIFICATION_RATE_LIMITED` | Yêu cầu gửi lại trong thời gian cooldown |
-| `503`  | `EMAIL_DELIVERY_UNAVAILABLE`      | SMTP tạm thời không gửi được email       |
+| `503`  | `EMAIL_DELIVERY_UNAVAILABLE`      | Queue tạm thời không nhận được yêu cầu   |
 
 ### `POST /api/v1/auth/email-verification/verify`
 
@@ -414,7 +418,21 @@ Response `200` trả user với `emailVerifiedAt` đã được cập nhật. To
 
 Backend không log hoặc trả lại raw token, token hash hay URL xác minh.
 
-## 12. Users administration
+## 12. Google OAuth
+
+### `GET /api/v1/auth/google/start`
+
+Tạo OAuth attempt có state và PKCE, sau đó redirect `302` tới Google. Frontend bắt đầu flow bằng browser navigation, không gọi endpoint này qua Axios.
+
+### `GET /api/v1/auth/google/callback`
+
+Google gọi endpoint với `code` và `state`. Backend consume state một lần, đổi code, xác minh ID token, liên kết hoặc tạo user, rồi tạo session hiện có.
+
+Thành công đặt refresh cookie `HttpOnly` và redirect tới `${PUBLIC_WEB_URL}/oauth/google/callback`. Access token nội bộ không xuất hiện trong URL.
+
+Thất bại redirect tới `${PUBLIC_WEB_URL}/login?error=google_login_failed`. Backend không trả hoặc log authorization code, state, PKCE verifier, Google token hay client secret.
+
+## 13. Users administration
 
 ### `GET /api/v1/users`
 
@@ -459,7 +477,7 @@ Các lỗi:
 | `401`  | `UNAUTHENTICATED` | Chưa đăng nhập hoặc access token không hợp lệ |
 | `403`  | `FORBIDDEN`       | Đã đăng nhập nhưng thiếu `users:read`         |
 
-## 13. Audit logs
+## 14. Audit logs
 
 ### `GET /api/v1/audit-logs`
 
@@ -520,7 +538,7 @@ Các lỗi:
 | `401`  | `UNAUTHENTICATED`  | Access token thiếu hoặc không hợp lệ |
 | `403`  | `FORBIDDEN`        | User thiếu `audit:read`              |
 
-## 14. Error codes hiện có
+## 15. Error codes hiện có
 
 | Code                               | Status thường dùng | Ý nghĩa                                        |
 | ---------------------------------- | ------------------ | ---------------------------------------------- |
@@ -533,11 +551,13 @@ Các lỗi:
 | `ACCOUNT_SUSPENDED`                | `403`              | Tài khoản bị khóa                              |
 | `USER_EMAIL_ALREADY_EXISTS`        | `409`              | Email đã được đăng ký                          |
 | `EMAIL_VERIFICATION_RATE_LIMITED`  | `429`              | Yêu cầu gửi email xác minh quá sớm             |
-| `EMAIL_DELIVERY_UNAVAILABLE`       | `503`              | SMTP tạm thời không khả dụng                   |
+| `EMAIL_DELIVERY_UNAVAILABLE`       | `503`              | Queue tạm thời không khả dụng                  |
+| `GOOGLE_OAUTH_NOT_CONFIGURED`      | `503`              | Google OAuth chưa được cấu hình                |
+| `GOOGLE_LOGIN_FAILED`              | `401`              | Callback hoặc Google identity không hợp lệ     |
 | `SERVICE_UNAVAILABLE`              | `503`              | Dependency bắt buộc chưa sẵn sàng              |
 | `INTERNAL_SERVER_ERROR`            | `500`              | Lỗi ngoài dự kiến                              |
 
-## 15. Kiểm tra bằng PowerShell
+## 16. Kiểm tra bằng PowerShell
 
 ### Đăng ký
 
@@ -636,7 +656,19 @@ Invoke-WebRequest `
   -WebSession $session
 ```
 
-## 16. Quy tắc khi thêm endpoint mới
+## 17. Files (local development/test)
+
+Cả hai endpoint yêu cầu Bearer access token và chỉ truy cập file của chính user. Development/test dùng local disk; production dùng Cloudflare R2. R2 tạm thời không khả dụng trả `503 STORAGE_UNAVAILABLE`.
+
+### `POST /api/v1/files`
+
+Request body là byte stream với `Content-Type: application/octet-stream`, tối đa 5 MiB. Backend đếm byte khi đọc stream và trả `201` với `data: { id, size }`; không nhận storage key hoặc tên file do client chọn. Body rỗng trả `400 EMPTY_FILE`, quá giới hạn trả `413 FILE_TOO_LARGE`, Content-Type khác trả `415 UNSUPPORTED_FILE_TYPE`.
+
+### `GET /api/v1/files/:id`
+
+Trả `application/octet-stream` với `Content-Disposition: attachment`. ID phải là UUID; ID sai trả `400 INVALID_FILE_ID`. File không tồn tại hoặc thuộc user khác đều trả `404 FILE_NOT_FOUND`.
+
+## 18. Quy tắc khi thêm endpoint mới
 
 Mỗi endpoint mới phải xác định rõ:
 
