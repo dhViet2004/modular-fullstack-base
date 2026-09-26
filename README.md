@@ -15,6 +15,12 @@ Thiết kế password authentication và session: [`docs/03-MODULE-02-AUTHENTICA
 
 Thiết kế role và permission RBAC: [`docs/04-MODULE-03-AUTHORIZATION.md`](docs/04-MODULE-03-AUTHORIZATION.md).
 
+Tài liệu HTTP API: [`docs/05-API.md`](docs/05-API.md).
+
+Tài liệu database: [`docs/06-DATABASE.md`](docs/06-DATABASE.md).
+
+Hướng dẫn deployment: [`docs/07-DEPLOYMENT.md`](docs/07-DEPLOYMENT.md).
+
 ## Yêu cầu
 
 - Node.js 22 trở lên
@@ -125,7 +131,7 @@ Chỉ đánh dấu `[x]` khi đã chạy lệnh kiểm chứng trên working tre
 
 - [x] Chốt kiến trúc module `route → controller → service → repository`
 - [ ] Hoàn thiện schema nền tảng cho identity, session, RBAC và audit
-- [x] Auth password, JWT session, refresh rotation và logout
+- [x] Auth password, JWT session, refresh rotation, logout và giao diện quản trị RBAC
 - [ ] Email verification với public URL từ cấu hình
 - [x] Authorization phía server và test ma trận route
 - [ ] Worker pg-boss chạy tách biệt API process

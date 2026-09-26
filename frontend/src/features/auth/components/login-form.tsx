@@ -3,8 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useLogin } from "../hooks/use-login";
+import { getPostLoginPath } from "../post-login-route";
 import {
   loginSchema,
   type LoginFormValues,
@@ -20,6 +22,7 @@ type ApiErrorResponse = {
 
 // Hiển thị form đăng nhập và chuyển lỗi API thành thông báo dễ hiểu cho người dùng.
 export function LoginForm() {
+  const router = useRouter();
   const loginMutation = useLogin();
 
   const {
@@ -38,7 +41,12 @@ export function LoginForm() {
   // Gửi form qua mutation và ánh xạ từng mã lỗi backend vào form state.
   async function onSubmit(values: LoginFormValues) {
     try {
-      await loginMutation.mutateAsync(values);
+      const user = await loginMutation.mutateAsync(values);
+      const postLoginPath = getPostLoginPath(user.permissions);
+
+      if (postLoginPath) {
+        router.replace(postLoginPath);
+      }
     } catch (error: unknown) {
       if (axios.isAxiosError<ApiErrorResponse>(error)) {
         const code = error.response?.data.error?.code;

@@ -4,9 +4,9 @@
 
 ## Trạng thái hiện tại
 
-- **Phase hiện tại:** Phase 7 — Documentation
-- **Đang làm:** Hoàn thiện tài liệu API và database sau RBAC
-- **Bước tiếp theo:** Viết API docs và database docs từ các module đã nghiệm thu
+- **Phase hiện tại:** Phase 7 — Documentation đã hoàn thành
+- **Đang làm:** Chờ chốt phạm vi module tiếp theo
+- **Bước tiếp theo:** Thiết kế Module 04 — Audit log trước khi triển khai code
 - **Blocker:** Không có
 
 ## Quy ước trạng thái
@@ -92,15 +92,16 @@
 - [x] Tạo authenticate middleware
 - [x] Tạo authorize middleware
 - [x] Viết RBAC tests
+- [x] Tự động chuyển tài khoản có `users:read` tới giao diện quản trị sau đăng nhập
 
 ## Phase 7 — Documentation
 
 - [x] Viết architecture docs nền tảng
 - [x] Viết hướng dẫn tự code Module 01 — Users foundation
-- [ ] Viết API docs
-- [ ] Viết database docs
+- [x] Viết API docs
+- [x] Viết database docs
 - [x] Viết local setup docs trong `README.md`
-- [ ] Viết deployment docs
+- [x] Viết deployment docs
 
 ## Blockers
 
