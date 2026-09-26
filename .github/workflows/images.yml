@@ -1,0 +1,50 @@
+name: Publish images
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'master' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}/backend
+            ghcr.io/${{ github.repository }}/frontend
+          tags: type=sha,format=long
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          target: migration
+          push: true
+          tags: ghcr.io/${{ github.repository }}/migration:sha-${{ github.event.workflow_run.head_sha }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: ghcr.io/${{ github.repository }}/backend:sha-${{ github.event.workflow_run.head_sha }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://core.hviet.info.vn/api/v1
+            NEXT_PUBLIC_API_ORIGIN=https://core.hviet.info.vn
+          tags: ghcr.io/${{ github.repository }}/frontend:sha-${{ github.event.workflow_run.head_sha }}
