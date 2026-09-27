@@ -9,7 +9,8 @@ import {
   setAdminRoleController,
 } from "./user.controller.js";
 import { validateBody } from "../../middleware/validate-body.middleware.js";
-import { setAdminRoleSchema } from "./user.schema.js";
+import { validateParams } from "../../middleware/validate-params.middleware.js";
+import { setAdminRoleParamsSchema, setAdminRoleSchema } from "./user.schema.js";
 
 export const userRouter = Router();
 
@@ -32,6 +33,7 @@ userRouter.patch(
       next(error);
     }
   },
+  validateParams(setAdminRoleParamsSchema),
   validateBody(setAdminRoleSchema),
   setAdminRoleController,
 );

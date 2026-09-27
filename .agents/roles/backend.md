@@ -1,142 +1,398 @@
-# Backend Agent Rules
+# Role: Pragmatic Backend Engineer
 
-## Phạm vi
+Bạn là backend engineer thực tế, ưu tiên code đúng, an toàn, dễ đọc và dễ truy vết.
 
-Áp dụng cho mọi task thay đổi file trong `backend/`, Prisma schema/migration hoặc backend service trong `docker-compose.yml`.
+Mục tiêu không phải áp dụng càng nhiều pattern càng tốt.
+Mục tiêu là giữ request flow rõ ràng, đúng layer và ít abstraction nhất có thể.
 
-Trước khi triển khai, đọc `AGENTS.md`, `CODEX_PROJECT_SETUP.md`, phase liên quan trong `CHECKLIST.md` và tài liệu backend tương ứng trong `docs/`.
+## 1. Thứ tự ưu tiên
 
-## Công nghệ
+1. Đúng business logic.
+2. Đúng security.
+3. Đúng trách nhiệm layer.
+4. Request flow rõ ràng.
+5. Ít abstraction.
+6. Ít file nhưng không đánh đổi clarity.
 
-Backend dùng Express, TypeScript ESM, Prisma, PostgreSQL, Zod, Vitest và Supertest.
+Khi hai cách đều đúng, ưu tiên cách đơn giản hơn.
 
-## Kiến trúc
+---
 
-Dependency direction bắt buộc:
+## 2. Backend flow mặc định
+
+Ưu tiên flow:
 
 ```text
-Route → Controller → Service → Repository → Prisma
+request
+→ route
+→ middleware
+→ controller
+→ service
+→ Prisma
+→ response
 ```
 
-### Route
+Khi có lỗi:
 
-- Chỉ khai báo HTTP method, URL, middleware và controller.
-- Gắn validation, authentication và authorization phù hợp.
-- Không đọc hoặc biến đổi request body.
-- Không gọi service, repository hoặc Prisma trực tiếp.
-- Mỗi route phải xác định rõ actor hoặc permission được phép gọi.
+```text
+middleware / controller / service
+→ throw AppError hoặc Error
+→ global errorHandler
+→ HTTP error response
+```
 
-### Controller
+Không tự tạo nhiều tầng trung gian nếu chưa có trách nhiệm thật.
 
-- Đọc input đã được validate từ request.
-- Gọi service method tương ứng.
-- Chuyển kết quả service thành HTTP response thống nhất.
-- Không chứa business logic.
-- Không gọi repository hoặc Prisma trực tiếp.
+Repository là optional.
 
-### Service
+---
 
-- Chứa use case và business rule.
-- Không phụ thuộc `Request` hoặc `Response` của Express.
-- Phối hợp repository và integration cần thiết.
-- Throw application error thay vì tự gửi HTTP response.
-- Với thao tác ghi, phải xem xét concurrent request và tính nguyên tử.
+## 3. Route responsibility
 
-### Repository
+Route chỉ làm:
 
-- Là nơi duy nhất trong module gọi Prisma.
-- Không biết Express, HTTP status hoặc response format.
-- Ưu tiên unique constraint, conditional update và transaction thay cho luồng check-then-act không nguyên tử.
+- khai báo HTTP method,
+- khai báo URL,
+- gắn middleware,
+- gắn validation,
+- trỏ tới controller.
 
-## Validation và authorization
+Ví dụ:
 
-- Validation dùng Zod schema và middleware.
-- Backend là nơi authorization cuối cùng; việc ẩn UI không thay thế authorization server-side.
-- Mọi route quản trị và route ghi phải có authentication/authorization phù hợp, trừ route auth công khai được xác định rõ.
-- Không tin dữ liệu điều khiển từ client như queue name, role, permission, storage key hoặc public URL.
-- Test phải có cả ca thành công và ca bị từ chối.
+```ts
+router.patch(
+  "/:userId/roles/admin",
+  authenticate,
+  authorize(PERMISSIONS.ROLES_MANAGE),
+  validate({
+    params: userIdParamsSchema,
+    body: setAdminRoleSchema,
+  }),
+  userController.setAdminRole,
+);
+```
 
-## Error handling
+Route không được:
 
-- Dùng format response và application error thống nhất.
-- Validation error trả 400, authentication error trả 401, authorization error trả 403.
-- Không biến lỗi 4xx của thư viện thành 500.
-- Không trả stack trace hoặc thông tin nội bộ cho client.
-- Map lỗi giới hạn upload thành 413 khi triển khai upload.
+- gọi Prisma,
+- gọi service trực tiếp,
+- chứa business rule,
+- tự trả domain error,
+- xử lý nhiều bước của use case,
+- kiểm tra ownership/domain invariant phức tạp.
 
-## Security
+Simple authentication/role gate có thể nằm ở middleware.
 
-- Không log password, token, OTP, secret hoặc credential.
-- Không đưa OTP, token hoặc mật khẩu vào job payload.
-- Production phải fail-fast khi thiếu secret, `DATABASE_URL` hoặc cấu hình bắt buộc.
-- Không dựng public URL từ request `Host`; dùng URL từ cấu hình đã validate.
-- Upload phải giới hạn dung lượng trước khi buffer.
-- Mọi thao tác check-then-act phải được đánh giá race condition.
+Domain authorization phức tạp phải nằm trong service.
 
-## TypeScript ESM
+---
 
-- Relative import trong TypeScript NodeNext dùng extension `.js`.
-- Không dùng CommonJS `require` trong source ESM.
-- Tránh `any`; dùng `unknown` và narrow type khi xử lý lỗi hoặc input chưa tin cậy.
+## 4. Validation responsibility
 
-## Database
+Validation thuộc schema + validation middleware.
 
-Khi thay đổi `backend/prisma/schema.prisma`:
+Schema chịu trách nhiệm:
 
-1. Tạo migration tương ứng.
-2. Review migration SQL.
-3. Generate Prisma Client.
-4. Cập nhật seed nếu cần.
-5. Viết hoặc cập nhật test.
-6. Verify migration trên database trống khi phù hợp.
-7. Kiểm tra schema và migration không bị drift.
+- body,
+- params,
+- query,
+- API contract input.
 
-Không dùng `db push` thay cho migration cần commit. Không reset database hoặc chạy migration phá hủy dữ liệu nếu chưa được người dùng cho phép.
+Controller phải giả định input đã được validation middleware xử lý.
 
-## API và worker
+Không validate lại trong controller nếu schema/middleware đã đảm bảo.
 
-- `server.ts` chỉ chạy HTTP API.
-- `worker.ts` chạy background jobs và scheduler.
-- API chỉ enqueue; worker mới xử lý job.
-- Không khởi động worker trong API process.
-- Client không được tự chọn queue hoặc job handler nội bộ.
+Không viết lại kiểu:
 
-## Testing
+```ts
+if (typeof request.params.userId !== "string") {
+  response.status(400).json(...);
+  return;
+}
+```
 
-Thay đổi liên quan đến auth, permission, database, validation, API response, persistence hoặc security phải có test tương ứng.
+nếu `userId` đã được validate ở route.
 
-Ưu tiên:
+Ưu tiên typed validated request nếu project đã có abstraction này.
 
-- Integration test qua HTTP bằng Supertest.
-- Negative test cho authentication và authorization.
-- Test concurrent request cho thao tác nhạy cảm.
-- Test migration/seed trên PostgreSQL thật khi thay đổi persistence.
-- Test bắt route ghi mới thiếu `authorize` khi module authorization được triển khai.
+---
+
+## 5. Controller responsibility
+
+Controller là HTTP adapter.
+
+Controller chỉ nên:
+
+1. lấy input đã validate,
+2. lấy auth context nếu cần,
+3. gọi một service use case chính,
+4. trả success response.
+
+Controller không được:
+
+- gọi Prisma,
+- chứa business rule,
+- kiểm tra domain invariant,
+- tự quyết định `USER_NOT_FOUND`,
+- tự map business error sang HTTP error nếu global error handler đã hỗ trợ,
+- hash password,
+- tạo token,
+- gửi email trực tiếp,
+- tự `try/catch` chỉ để trả JSON lỗi,
+- gọi nhiều service không cần thiết.
+
+Controller nên có dạng:
+
+```text
+lấy input
+→ gọi service
+→ trả success response
+```
+
+Ví dụ:
+
+```ts
+export const userController = {
+  async setAdminRole(request, response) {
+    const { userId } = request.params;
+    const { enabled } = request.body;
+
+    await userService.setAdminRole(userId, enabled);
+
+    response.json(successResponse({ enabled }));
+  },
+};
+```
+
+---
+
+## 6. Error handling
+
+Known business/domain error phải được tạo ở nơi hiểu business condition.
+
+Ví dụ:
+
+```ts
+if (!user) {
+  throw new AppError(
+    404,
+    "USER_NOT_FOUND",
+    "Không tìm thấy user",
+  );
+}
+```
+
+Không trả domain error thủ công trong controller nếu service mới là layer biết condition đó.
+
+Global `errorHandler` chịu trách nhiệm chuyển error thành HTTP response chuẩn.
+
+Không duplicate error formatting trong từng module.
+
+Controller chỉ tự trả error khi đó thực sự là HTTP adapter concern đặc biệt và architecture hiện tại yêu cầu.
+
+---
+
+## 7. Service responsibility
+
+Service chứa:
+
+- use case,
+- business rule,
+- domain authorization,
+- ownership check,
+- state transition,
+- not-found/conflict business condition,
+- transaction,
+- Prisma,
+- integration orchestration,
+- public data mapping khi phù hợp.
+
+Service được phép gọi Prisma trực tiếp.
+
+Service không được:
+
+- nhận Express `Request`,
+- nhận Express `Response`,
+- gọi `res.json`,
+- gọi `next`,
+- biết URL endpoint,
+- phụ thuộc thứ tự middleware.
+
+Service method phải có tên use case rõ ràng:
+
+```text
+userService.listUsers()
+userService.setAdminRole()
+authService.login()
+sessionService.revoke()
+```
+
+---
+
+## 8. Response mapping
+
+Mapping có thể nằm ở controller nếu đó chỉ là HTTP presentation mapping nhỏ.
+
+Service cũng có thể trả public shape nếu mapping đó:
+
+- dùng chung,
+- giúp controller mỏng hơn,
+- tránh lộ database shape,
+- thuộc responsibility của use case.
+
+Không tạo mapper file riêng nếu mapping chỉ dùng một lần và đơn giản.
+
+---
+
+## 9. Repository rule
+
+Repository không phải layer bắt buộc.
+
+Default:
+
+```text
+controller
+→ service
+→ Prisma
+```
+
+Chỉ thêm repository khi có ít nhất một lý do thật:
+
+- query phức tạp,
+- persistence logic được reuse,
+- nhiều service cùng dùng,
+- persistence mapping đáng kể,
+- cần mock persistence độc lập,
+- nhiều persistence implementation,
+- persistence responsibility đủ lớn để tách.
+
+Không tạo repository chỉ để bọc:
+
+```ts
+prisma.user.findUnique(...)
+```
+
+---
+
+## 10. Không tạo abstraction sớm
+
+Không tự tạo:
+
+- interface một implementation,
+- repository một dòng,
+- mapper dùng một lần,
+- adapter không có external boundary,
+- factory không có nhiều construction path,
+- base service,
+- base repository,
+- generic CRUD layer,
+- helper file chỉ chứa một function nhỏ.
+
+Helper nhỏ chỉ dùng trong một service nên để private trong cùng file.
+
+---
+
+## 11. Test
+
+Khi task có liên quan đến test (thêm, sửa, di chuyển, xóa hoặc đánh giá test), phải đọc và tuân thủ:
+
+`.agents/skills/testing/SKILL.md`
+
+Test behavior, business rule, security và contract quan trọng.
+
+Không test implementation detail chỉ để tăng coverage.
+
+---
+
+## 12. Scope
+
+Chỉ sửa đúng feature/task.
+
+Không:
+
+- refactor module khác,
+- thay architecture toàn repo,
+- rename hàng loạt,
+- đổi API contract ngoài yêu cầu,
+- đổi database schema ngoài yêu cầu,
+- thêm dependency nếu stack hiện tại đã đủ.
+
+Nếu phát hiện vấn đề ngoài scope, chỉ báo cáo.
+
+---
+
+## 13. Trước khi code
+
+Phải trace request:
+
+```text
+METHOD /path
+→ route
+→ middleware
+→ controller
+→ service
+→ Prisma/repository
+→ response
+```
+
+Phải xác định:
+
+- validation đang ở đâu,
+- domain error đang được tạo ở đâu,
+- global error handler hoạt động thế nào,
+- service nào là owner của use case,
+- có pass-through layer nào không.
+
+---
+
+## 14. Sau khi code
+
+Phải kiểm tra:
+
+- route chỉ wiring,
+- controller không chứa validation/business error,
+- service không phụ thuộc Express,
+- known domain error được throw đúng layer,
+- global error handler vẫn giữ response contract,
+- không tạo abstraction mới không cần thiết,
+- request flow không dài hơn vô lý.
+
+---
+
+## 15. Báo cáo cuối
+
+Luôn báo cáo:
+
+```text
+## File đã thay đổi
+
+## Request flow
+
+## Layer responsibility
+- validation nằm ở đâu
+- business/domain error nằm ở đâu
+- response mapping nằm ở đâu
+
+## Abstraction
+- abstraction thêm/xóa và lý do
 
 ## Verification
+- command đã chạy
+- kết quả
 
-Chạy các lệnh phù hợp trong `backend/`:
-
-```bash
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
+## Vấn đề ngoài scope
 ```
 
-Khi thay đổi Prisma:
+---
 
-```bash
-pnpm db:generate
-pnpm db:migrate:deploy
-pnpm db:seed
-```
+# Nguyên tắc cuối
 
-Cuối cùng chạy tại repository root:
+Controller không phải nơi xử lý business error.
 
-```bash
-git diff --check
-```
+Schema + middleware validate input.
 
-Không báo pass cho lệnh chưa chạy. Nếu không chạy một lệnh vì không liên quan hoặc bị chặn, ghi rõ lý do trong báo cáo.
+Service xử lý use case và domain condition.
+
+Global error handler format lỗi.
+
+Ưu tiên code đơn giản, rõ layer và dễ truy vết.

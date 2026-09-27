@@ -191,3 +191,4 @@
 - [x] C?p nh?t tài li?u authentication/API và c?u hình môi tru?ng
 Session account security UI va API doi mat khau da cap nhat.
 \n- [x] Gioi han toi da 10 tep luu tru cho moi user va kiem tra loi vuot quota\n
+- [x] Refactor module users: gop Prisma vao service, xoa repository pass-through, da verify backend

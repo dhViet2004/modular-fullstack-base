@@ -1,13 +1,6 @@
-import { Prisma } from "@prisma/client";
+﻿import { Prisma } from "@prisma/client";
 import { ApplicationError } from "../../core/http/application-error.js";
-
-import {
-  createUser as createUserRecord,
-  findUsers,
-  findUserByEmail,
-  findUserById,
-  setAdminRole as setAdminRoleRecord,
-} from "./user.repository.js";
+import { prisma } from "../../core/database/prisma.js";
 
 export type CreateUserInput = {
   email: string;
@@ -24,23 +17,43 @@ function normalizeDisplayName(displayName: string | null | undefined) {
 }
 
 export function getUserById(id: string) {
-  return findUserById(id);
+  return prisma.user.findUnique({ where: { id } });
 }
 
 export function getUserByEmail(email: string) {
-  return findUserByEmail(normalizeEmail(email));
+  return prisma.user.findUnique({ where: { email: normalizeEmail(email) } });
 }
 
-// Trả danh sách user đã được repository giới hạn field cho use case quản trị.
+// Limit selected fields because this result is used by the admin user list.
 export function listUsers() {
-  return findUsers();
+  return prisma.user.findMany({
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      email: true,
+      displayName: true,
+      status: true,
+      emailVerifiedAt: true,
+      createdAt: true,
+      updatedAt: true,
+      roles: {
+        select: {
+          role: {
+            select: { code: true },
+          },
+        },
+      },
+    },
+  });
 }
 
 export async function createUser(input: CreateUserInput) {
   try {
-    return await createUserRecord({
-      email: normalizeEmail(input.email),
-      displayName: normalizeDisplayName(input.displayName),
+    return await prisma.user.create({
+      data: {
+        email: normalizeEmail(input.email),
+        displayName: normalizeDisplayName(input.displayName),
+      },
     });
   } catch (error: unknown) {
     if (
@@ -50,7 +63,7 @@ export async function createUser(input: CreateUserInput) {
       throw new ApplicationError(
         409,
         "USER_EMAIL_ALREADY_EXISTS",
-        "Email này đã được đăng ký",
+        "Email người dùng đã tồn tại",
       );
     }
 
@@ -59,5 +72,23 @@ export async function createUser(input: CreateUserInput) {
 }
 
 export async function setAdminRole(userId: string, enabled: boolean) {
-  return setAdminRoleRecord(userId, enabled);
+  const [user, role] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { id: true } }),
+    prisma.role.findUniqueOrThrow({
+      where: { code: "ADMIN" },
+      select: { id: true },
+    }),
+  ]);
+  if (!user) {
+    throw new ApplicationError(404, "USER_NOT_FOUND", "Không tìm thấy user");
+  }
+  if (enabled) {
+    await prisma.userRole.upsert({
+      where: { userId_roleId: { userId, roleId: role.id } },
+      update: {},
+      create: { userId, roleId: role.id },
+    });
+  } else {
+    await prisma.userRole.deleteMany({ where: { userId, roleId: role.id } });
+  }
 }

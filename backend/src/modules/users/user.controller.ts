@@ -25,21 +25,7 @@ export const setAdminRoleController: RequestHandler = async (
   response,
 ) => {
   const { enabled } = request.body as { enabled: boolean };
-  const userId = request.params.userId;
-  if (typeof userId !== "string") {
-    response.status(400).json({
-      success: false,
-      error: { code: "VALIDATION_ERROR", message: "userId không hợp lệ" },
-    });
-    return;
-  }
-  const updated = await setAdminRole(userId, enabled);
-  if (!updated) {
-    response.status(404).json({
-      success: false,
-      error: { code: "USER_NOT_FOUND", message: "Không tìm thấy user" },
-    });
-    return;
-  }
+  const { userId } = response.locals.validatedParams as { userId: string };
+  await setAdminRole(userId, enabled);
   response.json(successResponse({ enabled }));
 };
