@@ -1,6 +1,6 @@
 # Module 07 - Files/storage
 
-Baseline local hỗ trợ upload/download tệp riêng của user đã đăng nhập. Backend nhận `application/octet-stream` và giới hạn 5 MiB khi đọc stream, trước khi giữ toàn bộ nội dung trong bộ nhớ. Mỗi tệp lưu dưới `backend/storage/<userId>/<uuid>`; client chỉ nhận UUID, không chọn đường dẫn hoặc tên file trên disk.
+Baseline local (moi user toi da 10 tep; moi tep toi da 5 MiB) hỗ trợ upload/download tệp riêng của user đã đăng nhập. Backend nhận `application/octet-stream` và giới hạn 5 MiB khi đọc stream, trước khi giữ toàn bộ nội dung trong bộ nhớ. Mỗi tệp lưu dưới `backend/storage/<userId>/<uuid>`; client chỉ nhận UUID, không chọn đường dẫn hoặc tên file trên disk.
 
 | Method | Endpoint | Kết quả |
 | --- | --- | --- |

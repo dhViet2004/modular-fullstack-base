@@ -17,6 +17,7 @@ import { env } from "../../config/env.js";
 import { ApplicationError } from "../../core/http/application-error.js";
 
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;
+export const MAX_FILES_PER_USER = 10;
 const storageRoot = join(process.cwd(), "storage");
 let r2Client: S3Client | undefined;
 

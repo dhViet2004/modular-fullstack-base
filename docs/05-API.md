@@ -693,3 +693,4 @@ Tr? các phiên dang ho?t d?ng c?a user hi?n t?i, có c? current. Yêu c?u Bearer ac
 ### DELETE /api/v1/auth/sessions/:id`n
 Thu h?i m?t phiên thu?c user hi?n t?i; tr? 204. Session ID sai tr? 400 VALIDATION_ERROR.
 POST /api/v1/auth/password/change: doi mat khau voi Bearer token; body currentPassword va newPassword (12-128 ky tu).
+\nGioi han luu tru: moi user toi da 10 tep; vuot quota tra 413 FILE_LIMIT_REACHED.\n

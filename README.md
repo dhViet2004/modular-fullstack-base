@@ -161,3 +161,4 @@ Các rủi ro và bài học từ phiên bản cũ nằm trong `review-source/`;
 
 - [x] Qu?n l� phi�n v� gi?i h?n thi?t b? ho?t d?ng theo user
 Account security UI va API doi mat khau da cap nhat.
+\n- [x] Files/storage gioi han toi da 10 tep moi user\n

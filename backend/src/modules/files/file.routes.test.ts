@@ -27,6 +27,12 @@ vi.mock("../../core/database/prisma.js", () => ({
           [...records.values()].filter((file) => file.userId === where.userId),
         ),
       ),
+      count: vi.fn(({ where }: { where: { userId: string } }) =>
+        Promise.resolve(
+          [...records.values()].filter((file) => file.userId === where.userId)
+            .length,
+        ),
+      ),
       delete: vi.fn(({ where }: { where: { id: string } }) => {
         records.delete(where.id);
         return Promise.resolve();
@@ -131,5 +137,21 @@ describe("private files", () => {
       statusCode: 413,
     });
     expect(await readdir(storageDirectory)).toEqual([]);
+  });
+
+  it("rejects uploads after ten files for a user", async () => {
+    for (let index = 0; index < 10; index += 1) {
+      const id = randomUUID();
+      records.set(id, { id, userId, name: `file-${index}`, size: 1 });
+    }
+    const response = await request(app())
+      .post("/files")
+      .set("Authorization", "Bearer test")
+      .set("Content-Type", "application/octet-stream")
+      .send(Buffer.from("file content"));
+    expect(response.status).toBe(413);
+    expect((response.body as { error: { code: string } }).error.code).toBe(
+      "FILE_LIMIT_REACHED",
+    );
   });
 });

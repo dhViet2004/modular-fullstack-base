@@ -2,7 +2,12 @@ import type { RequestHandler } from "express";
 
 import { successResponse } from "../../core/http/api-response.js";
 import { ApplicationError } from "../../core/http/application-error.js";
-import { MAX_FILE_BYTES, openFile, saveFile } from "./file.storage.js";
+import {
+  MAX_FILE_BYTES,
+  MAX_FILES_PER_USER,
+  openFile,
+  saveFile,
+} from "./file.storage.js";
 import { prisma } from "../../core/database/prisma.js";
 import { removeFile } from "./file.storage.js";
 
@@ -17,6 +22,16 @@ export const uploadFile: RequestHandler = async (request, response) => {
   const contentLength = Number(request.headers["content-length"]);
   if (contentLength > MAX_FILE_BYTES) {
     throw new ApplicationError(413, "FILE_TOO_LARGE", "Tệp vượt quá 5 MiB");
+  }
+  const fileCount = await prisma.file.count({
+    where: { userId: request.auth.user.id },
+  });
+  if (fileCount >= MAX_FILES_PER_USER) {
+    throw new ApplicationError(
+      413,
+      "FILE_LIMIT_REACHED",
+      "User đã đạt giới hạn 10 tệp",
+    );
   }
   const file = await saveFile(request.auth.user.id, request);
   const name = String(request.headers["x-file-name"] ?? file.id).slice(0, 255);
