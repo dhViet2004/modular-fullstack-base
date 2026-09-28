@@ -74,7 +74,7 @@ REFRESH_TOKEN_TTL_DAYS=30
 Backend giá»¯ luá»“ng:
 
 ```text
-Route -> Controller -> Service -> Repository -> Prisma
+Route -> Middleware -> Controller -> Service -> Prisma (repository ch? d?ng khi c?n persistence boundary)
 ```
 
 Frontend giá»¯ luá»“ng:
@@ -85,6 +85,18 @@ Provider/Component -> Hook -> Feature API -> Axios client -> Backend
 
 Module nÃ y chÆ°a triá»ƒn khai email verification, reset password, OAuth, role hoáº·c permission.
 
-## Gi?i h?n thi?t b? và qu?n lý phiên
+## Gi?i h?n thi?t b? vï¿½ qu?n lï¿½ phiï¿½n
 
-Bi?n MAX_ACTIVE_SESSIONS_PER_USER (m?c d?nh 5) gi?i h?n s? phiên ho?t d?ng c?a m?i user. Khi dang nh?p vu?t gi?i h?n, các phiên cu nh?t b? revoke; refresh token c?a chúng không còn h?p l?.
+Bi?n MAX_ACTIVE_SESSIONS_PER_USER (m?c d?nh 5) gi?i h?n s? phiï¿½n ho?t d?ng c?a m?i user. Khi dang nh?p vu?t gi?i h?n, cï¿½c phiï¿½n cu nh?t b? revoke; refresh token c?a chï¿½ng khï¿½ng cï¿½n h?p l?.
+
+
+
+## Stateless access token v? session policy
+
+M?i l?n login th?nh c?ng t?o m?t session ri?ng; kh?ng nh?n di?n ho?c reuse session theo thi?t b?. M?t user c? t?i ?a 5 session active; khi v??t gi?i h?n, session c? nh?t b? revoke.
+
+Middleware authenticate ch? verify ch? k? JWT, `exp`, issuer v? audience r?i g?n identity v?o request; kh?ng lookup session DB tr?n m?i request. Session DB ch? qu?n l? refresh lifecycle, danh s?ch session v? revoke.
+
+Revoking a session prevents future refreshes for that login session. Already-issued access tokens remain valid until their short expiration time.
+
+Session HTTP handlers ???c gom trong `session.controller.ts`; `session.schema.ts` ch? ??nh ngh?a Zod contract v? route d?ng shared `validateParams`. Repository session ???c gi? v? c? transaction audit, gi?i h?n session v? conditional refresh rotation.

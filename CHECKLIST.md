@@ -188,7 +188,9 @@
 ## Session/device limits
 
 - [x] Gi?i h?n s? phi�n ho?t d?ng theo user b?ng MAX_ACTIVE_SESSIONS_PER_USER v� revoke phi�n cu nh?t
+- [x] Access token stateless JWT; authenticate kh?ng lookup session DB, revoke ch? ch?n refresh
 - [x] C?p nh?t t�i li?u authentication/API v� c?u h�nh m�i tru?ng
 Session account security UI va API doi mat khau da cap nhat.
 - [x] Gi?i h?n t?i ?a 10 t?p l?u tr? cho m?i user v? ki?m tra l?i v??t quota
 - [x] Refactor module users: gop Prisma vao service, xoa repository pass-through, da verify backend
+- [x] Gom auth/session controllers theo capability v? ??a session ID validation v? shared middleware

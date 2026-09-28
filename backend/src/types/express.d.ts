@@ -5,7 +5,7 @@ declare global {
     interface Request {
       auth: {
         sessionId: string;
-        user: User;
+        user: Pick<User, "id"> & Partial<User>;
       };
     }
   }

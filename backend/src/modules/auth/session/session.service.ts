@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
+import type { User } from "@prisma/client";
 
 import { env } from "../../../config/env.js";
+import { prisma } from "../../../core/database/prisma.js";
 import { ApplicationError } from "../../../core/http/application-error.js";
 import {
   AUDIT_ACTIONS,
@@ -216,26 +218,15 @@ export async function revokeAuthSession(
   );
 }
 
-// Xác minh access token và kiểm tra session/user vẫn còn hiệu lực trong database.
-export async function authenticateAccessToken(token: string) {
+// Access JWT stays valid until expiry even when its refresh session is revoked.
+export async function authenticateAccessToken(
+  token: string,
+): Promise<{ sessionId: string; user: Pick<User, "id"> & Partial<User> }> {
   try {
     const claims = await verifyAccessToken(token);
-    const session = await findSessionById(claims.sessionId);
-    const now = new Date();
-
-    if (
-      !session ||
-      session.userId !== claims.userId ||
-      session.revokedAt ||
-      session.expiresAt <= now ||
-      session.user.status !== "ACTIVE"
-    ) {
-      throw unauthenticatedError();
-    }
-
     return {
-      sessionId: session.id,
-      user: session.user,
+      sessionId: claims.sessionId,
+      user: { id: claims.userId },
     };
   } catch (error: unknown) {
     // Giữ nguyên ApplicationError do chính service tạo; lỗi JOSE được đổi thành lỗi 401 chung.
@@ -245,4 +236,10 @@ export async function authenticateAccessToken(token: string) {
 
     throw unauthenticatedError();
   }
+}
+
+export async function getCurrentUser(userId: string): Promise<User> {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || user.status !== "ACTIVE") throw unauthenticatedError();
+  return user;
 }

@@ -685,12 +685,15 @@ Khi API contract thay Ä‘á»•i, cáº­p nháº­t tÃ i liá»‡u nÃ y trong cÃ¹ng task.
 
 ### Gi?i h?n thi?t b?
 
-Login t? d?ng duy trì t?i da MAX_ACTIVE_SESSIONS_PER_USER phiên ho?t d?ng cho m?i user và revoke phiên cu nh?t khi vu?t gi?i h?n.
+Login t? d?ng duy trï¿½ t?i da MAX_ACTIVE_SESSIONS_PER_USER phiï¿½n ho?t d?ng cho m?i user vï¿½ revoke phiï¿½n cu nh?t khi vu?t gi?i h?n.
+
 
 ### GET /api/v1/auth/sessions`n
-Tr? các phiên dang ho?t d?ng c?a user hi?n t?i, có c? current. Yêu c?u Bearer access token.
+Tr? cï¿½c phiï¿½n dang ho?t d?ng c?a user hi?n t?i, cï¿½ c? current. Yï¿½u c?u Bearer access token.
 
 ### DELETE /api/v1/auth/sessions/:id`n
-Thu h?i m?t phiên thu?c user hi?n t?i; tr? 204. Session ID sai tr? 400 VALIDATION_ERROR.
+Thu h?i m?t phiï¿½n thu?c user hi?n t?i; tr? 204. Session ID sai tr? 400 VALIDATION_ERROR.
+
 POST /api/v1/auth/password/change: doi mat khau voi Bearer token; body currentPassword va newPassword (12-128 ky tu).
+
 \nGioi han luu tru: moi user toi da 10 tep; vuot quota tra 413 FILE_LIMIT_REACHED.\n

@@ -3,7 +3,7 @@ import type { RequestHandler } from "express";
 import { ApplicationError } from "../core/http/application-error.js";
 import { authenticateAccessToken } from "../modules/auth/session/session.service.js";
 
-// Đọc Bearer token, xác minh session và gắn identity vào Express request.
+// Đọc Bearer token, xác minh JWT và gắn identity vào Express request.
 export const authenticate: RequestHandler = async (
   request,
   _response,
