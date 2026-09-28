@@ -10,7 +10,7 @@ Tài liệu này mô tả kiến trúc hiện tại để tự triển khai từ
 4. Không tạo sẵn hàng loạt file rỗng hoặc interface chỉ có một implementation.
 5. Route chỉ khai báo URL, middleware và controller.
 6. Controller xử lý HTTP nhưng không chứa business logic và không gọi Prisma.
-7. Service không phụ thuộc Express; repository là nơi duy nhất gọi Prisma.
+7. Service kh?ng ph? thu?c Express; service ???c ph?p g?i Prisma tr?c ti?p. Repository ch? d?ng khi c? persistence responsibility r? r?ng.
 8. Mỗi file nên dưới 300 dòng. Khi dài, tách theo trách nhiệm thay vì tách máy móc.
 
 ## 2. Phân loại module backend
@@ -210,7 +210,7 @@ Trước khi coi một endpoint hoàn thành, trả lời được:
 - Input được validate ở đâu?
 - HTTP mapping nằm ở controller nào?
 - Business rule nằm ở service nào?
-- Prisma chỉ được gọi ở repository chưa?
+7. Service kh?ng ph? thu?c Express; service ???c ph?p g?i Prisma tr?c ti?p. Repository ch? d?ng khi c? persistence responsibility r? r?ng.
 - Hai request đồng thời có làm sai dữ liệu không?
 - Có test cho một ca thành công và một ca bị từ chối chưa?
 

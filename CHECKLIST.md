@@ -1,4 +1,4 @@
-# CHECKLIST
+﻿# CHECKLIST
 
 > Theo dõi công việc theo phiên. `README.md` giữ checklist roadmap cấp sản phẩm; `CODEX_PROJECT_SETUP.md` giữ yêu cầu nền tảng.
 
@@ -174,21 +174,21 @@
 - `CHECKLIST.md` theo dõi công việc theo phiên; `README.md` theo dõi roadmap và trạng thái nghiệm thu sản phẩm.
 - `CLAUDE.md` import `AGENTS.md` để giữ một nguồn quy tắc chung.
 - Frontend và backend là hai app độc lập, không dùng monorepo workspace.
-- Backend dùng luồng `route → controller → service → repository → Prisma`.
-- Route chỉ khai báo URL/middleware; controller xử lý HTTP mapping; service chứa business logic; repository gọi Prisma.
+- Backend dùng luồng `route → middleware → controller → service → Prisma`; repository là optional khi có persistence responsibility rõ ràng.
+- Route chỉ khai báo URL/middleware; controller xử lý HTTP mapping; service chứa business logic và được phép gọi Prisma trực tiếp; repository chỉ dùng khi cần thiết.
 - Không tạo trước module hoặc file rỗng; chỉ scaffold khi bắt đầu triển khai nghiệp vụ tương ứng.
 - `server.ts` chỉ chạy HTTP API; worker chạy trong entrypoint riêng khi Phase background jobs bắt đầu.
-- [x] Giao di?n qu?n l� t?p Markdown cho t�i kho?n
-- [x] C?p nh?t b? c?c responsive, tr?ng th�i luu v� danh s�ch b?n luu cho giao di?n Files
-- [x] Th�m ch? d? Review Markdown v?i n�t bi?u tu?ng con m?t
-- [x] Gi? header navigation c? d?nh khi cu?n trang
-- [~] CRUD qu?n l� file: d� th�m metadata API v� UI t?o/c?p nh?t/x�a; backend test b? ch?n do Prisma Client native engine dang kh�a tr�n Windows
-- [x] Ho�n t?t CRUD file v?i metadata b?n v?ng, migration v� giao di?n FE
+- [x] Giao diện quản lý tệp Markdown cho tài khoản
+- [x] Cập nhật bố cục responsive, trạng thái lưu và danh sách bản lưu cho giao diện Files
+- [x] Thêm chế độ Review Markdown với nút biểu tượng con mắt
+- [x] Giữ header navigation cố định khi cuộn trang
+- [~] CRUD qu?n l? file: ?? th?m metadata API v? UI t?o/c?p nh?t/x?a; backend test b? ch?n do Prisma Client native engine ?ang kh?a tr?n Windows
+- [x] Ho?n t?t CRUD file v?i metadata b?n v?ng, migration v? giao di?n FE
 
 ## Session/device limits
 
-- [x] Gi?i h?n s? phi�n ho?t d?ng theo user b?ng MAX_ACTIVE_SESSIONS_PER_USER v� revoke phi�n cu nh?t
-- [x] C?p nh?t t�i li?u authentication/API v� c?u h�nh m�i tru?ng
+- [x] Gi?i h?n s? phi�n ho?t d?ng theo user b?ng MAX_ACTIVE_SESSIONS_PER_USER v� revoke phi�n cu nh?t
+- [x] C?p nh?t t�i li?u authentication/API v� c?u h�nh m�i tru?ng
 Session account security UI va API doi mat khau da cap nhat.
-\n- [x] Gioi han toi da 10 tep luu tru cho moi user va kiem tra loi vuot quota\n
+- [x] Gi?i h?n t?i ?a 10 t?p l?u tr? cho m?i user v? ki?m tra l?i v??t quota
 - [x] Refactor module users: gop Prisma vao service, xoa repository pass-through, da verify backend

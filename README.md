@@ -143,7 +143,7 @@ Chỉ đánh dấu `[x]` khi đã chạy lệnh kiểm chứng trên working tre
 
 ## Roadmap tiếp theo
 
-- [x] Chốt kiến trúc module `route → controller → service → repository`
+- [x] Ch?t ki?n tr?c module `route ? middleware ? controller ? service ? Prisma`; repository l? optional khi c? persistence responsibility r? r?ng
 - [x] Hoàn thiện schema nền tảng cho identity, session, RBAC và audit
 - [x] Auth password, JWT session, refresh rotation, logout và giao diện theo role/permission
 - [x] Email verification với public URL từ cấu hình
@@ -156,9 +156,9 @@ Chỉ đánh dấu `[x]` khi đã chạy lệnh kiểm chứng trên working tre
 
 Các rủi ro và bài học từ phiên bản cũ nằm trong `review-source/`; baseline mới phải giải quyết chúng bằng test và bằng chứng kiểm chứng, không kế thừa các dấu tick cũ.
 
-- [x] Giao di?n qu?n l� t?p Markdown: import, luu server v� export
-- [x] CRUD Files: danh s�ch, t?o, c?p nh?t, t?i xu?ng v� x�a file
+- [x] Giao di?n qu?n l� t?p Markdown: import, luu server v� export
+- [x] CRUD Files: danh s?ch, t?o, c?p nh?t, t?i xu?ng v? x?a file
 
-- [x] Qu?n l� phi�n v� gi?i h?n thi?t b? ho?t d?ng theo user
+- [x] Qu?n l� phi�n v� gi?i h?n thi?t b? ho?t d?ng theo user
 Account security UI va API doi mat khau da cap nhat.
-\n- [x] Files/storage gioi han toi da 10 tep moi user\n
+- [x] Files/storage gi?i h?n t?i ?a 10 t?p m?i user
