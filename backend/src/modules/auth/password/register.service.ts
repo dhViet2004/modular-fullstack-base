@@ -1,7 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { ApplicationError } from "../../../core/http/application-error.js";
+import { prisma } from "../../../core/database/prisma.js";
+import { ROLE_CODES } from "../../access/permission.catalog.js";
 import { hashPassword } from "./password-hasher.js";
-import { createPasswordUser } from "./register.repository.js";
 import type { RegisterInput } from "./register.schema.js";
 
 // Chuẩn hóa email trước khi lưu để tránh trùng do chữ hoa hoặc khoảng trắng.
@@ -21,10 +22,17 @@ export async function registerWithPassword(input: RegisterInput) {
 
   // `try/catch` cho phép bắt lỗi Prisma phát sinh trong thao tác tạo dữ liệu.
   try {
-    return await createPasswordUser({
-      email: normalizeEmail(input.email),
-      displayName: normalizeDisplayName(input.displayName),
-      passwordHash,
+    return await prisma.user.create({
+      data: {
+        email: normalizeEmail(input.email),
+        displayName: normalizeDisplayName(input.displayName),
+        passwordCredential: { create: { passwordHash } },
+        roles: { create: { role: { connect: { code: ROLE_CODES.MEMBER } } } },
+      },
+      select: {
+        id: true, email: true, displayName: true, status: true,
+        emailVerifiedAt: true, createdAt: true, updatedAt: true,
+      },
     });
   } catch (error: unknown) {
     // `unknown` buộc code kiểm tra kiểu lỗi trước khi đọc thuộc tính của nó.

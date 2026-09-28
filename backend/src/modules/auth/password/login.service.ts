@@ -1,4 +1,5 @@
 import { ApplicationError } from "../../../core/http/application-error.js";
+import { prisma } from "../../../core/database/prisma.js";
 import {
   AUDIT_ACTIONS,
   AUDIT_OUTCOMES,
@@ -9,7 +10,6 @@ import {
   type AuditRequestContext,
 } from "../../audit/audit.service.js";
 import { createAuthSession } from "../session/session.service.js";
-import { findPasswordUserByEmail } from "./login.repository.js";
 import type { LoginInput } from "./login.schema.js";
 import { verifyPassword } from "./password-hasher.js";
 
@@ -52,7 +52,14 @@ export async function loginWithPassword(
   input: LoginInput,
   context: AuditRequestContext,
 ) {
-  const user = await findPasswordUserByEmail(normalizeEmail(input.email));
+  const user = await prisma.user.findUnique({
+    where: { email: normalizeEmail(input.email) },
+    select: {
+      id: true, email: true, displayName: true, status: true,
+      emailVerifiedAt: true, createdAt: true, updatedAt: true,
+      passwordCredential: { select: { passwordHash: true } },
+    },
+  });
 
   // `?.` là optional chaining: không đọc passwordCredential nếu user là null.
   if (!user?.passwordCredential) {

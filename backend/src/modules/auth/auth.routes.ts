@@ -4,8 +4,8 @@ import { registerController } from "./password/register.controller.js";
 import { registerSchema } from "./password/register.schema.js";
 import { loginController } from "./password/login.controller.js";
 import { loginSchema } from "./password/login.schema.js";
-import { changePasswordController } from "./password/change-password.controller.js";
-import { changePasswordSchema } from "./password/change-password.schema.js";
+import { authController } from "./auth.controller.js";
+import { changePasswordSchema } from "./auth.schema.js";
 import { authenticate } from "../../middleware/authenticate.middleware.js";
 import { validateParams } from "../../middleware/validate-params.middleware.js";
 import { sessionController } from "./session/session.controller.js";
@@ -36,7 +36,7 @@ authRouter.post(
   "/password/change",
   authenticate,
   validateBody(changePasswordSchema),
-  changePasswordController,
+  authController.changePassword,
 );
 authRouter.post(
   "/email-verification/request",
