@@ -1,4 +1,4 @@
-# Module 03 - Phân quyền RBAC
+﻿# Module 03 - Phân quyền RBAC
 
 Module này bổ sung authorization cho CoreStack sau khi authentication đã xác định được người dùng và session hiện tại.
 
@@ -201,6 +201,14 @@ RBAC_SUPER_ADMIN_EMAIL=owner@example.com
 
 Nếu biến này để trống, seed chỉ tạo catalog và gán `MEMBER`; không tự chọn admin.
 
+## Phạm vi module users
+
+Module `users` hiện chỉ có hai use case quản trị:
+
+- `GET /api/v1/users`: liệt kê user cho tài khoản có `users:read`.
+- `PATCH /api/v1/users/:userId/roles/admin`: bật hoặc tắt role `ADMIN`.
+
+Module này không tự cung cấp API tạo user, lấy user theo ID hoặc chỉnh sửa hồ sơ. User được tạo qua các flow authentication. Các use case hồ sơ và quản lý role mở rộng chỉ thêm khi có yêu cầu cụ thể.
 ## 6. Cấu trúc module
 
 ```text
@@ -366,3 +374,5 @@ Module chỉ hoàn thành khi:
 - `git diff --check` pass.
 - `CHECKLIST.md` và `README.md` phản ánh đúng trạng thái đã kiểm chứng.
 
+
+Module users export một userService object gồm listUsers và setAdminRole; controller chỉ gọi use case từ object này.

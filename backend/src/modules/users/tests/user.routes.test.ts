@@ -17,13 +17,15 @@ vi.mock("../../access/access.service.js", () => ({
   assertUserIsSuperAdmin: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("../user.service.js", () => ({
-  listUsers: vi.fn().mockResolvedValue([]),
-  setAdminRole: vi.fn().mockResolvedValue(undefined),
+  userService: {
+    listUsers: vi.fn().mockResolvedValue([]),
+    setAdminRole: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
 import { errorMiddleware } from "../../../middleware/error.middleware.js";
 import { userRouter } from "../user.routes.js";
-import { setAdminRole } from "../user.service.js";
+import { userService } from "../user.service.js";
 
 describe("users routes", () => {
   it("rejects an invalid admin role path parameter", async () => {
@@ -48,6 +50,6 @@ describe("users routes", () => {
       .patch("/users/user-1/roles/admin")
       .send({ enabled: true });
 
-    expect(setAdminRole).toHaveBeenCalledWith("user-1", true);
+    expect(userService.setAdminRole).toHaveBeenCalledWith("user-1", true);
   });
 });

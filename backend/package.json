@@ -5,6 +5,7 @@
   "description": "CoreStack API",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "dev:worker": "tsx watch src/worker.ts",
     "start": "node dist/server.js",
     "worker": "tsx src/worker.ts",
     "jobs:install": "tsx src/jobs-install.ts",

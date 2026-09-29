@@ -14,6 +14,7 @@ export type RegisteredUser = {
 };
 
 export type AuthenticatedUser = RegisteredUser & {
+  hasPassword: boolean;
   roles: string[];
   permissions: string[];
 };
@@ -29,8 +30,8 @@ export async function revokeSession(id: string) {
   await apiClient.delete(`/auth/sessions/${encodeURIComponent(id)}`);
 }
 
-export async function changePassword(currentPassword: string, newPassword: string) {
-  await apiClient.post("/auth/password/change", { currentPassword, newPassword });
+export async function changePassword(newPassword: string, currentPassword?: string) {
+  await apiClient.post("/auth/password/change", { newPassword, ...(currentPassword ? { currentPassword } : {}) });
 }
 
 type RegisterResponse = {
@@ -58,7 +59,7 @@ type LoginResponse = {
 type MeResponse = {
   success: true;
   data: {
-    user: RegisteredUser;
+    user: RegisteredUser & { hasPassword: boolean };
     access: {
       roles: string[];
       permissions: string[];

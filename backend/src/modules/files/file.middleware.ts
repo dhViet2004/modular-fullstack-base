@@ -12,5 +12,10 @@ export const validateFileUpload: RequestHandler = (request, _response, next) => 
     next(new ApplicationError(413, "FILE_TOO_LARGE", "Tệp vượt quá 5 MiB"));
     return;
   }
+  const contentType = request.get("x-file-content-type");
+  if (contentType && (contentType.length > 100 || !/^[\w.+-]+\/[\w.+-]+$/.test(contentType))) {
+    next(new ApplicationError(400, "INVALID_CONTENT_TYPE", "Loại tệp không hợp lệ"));
+    return;
+  }
   next();
 };

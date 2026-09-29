@@ -193,4 +193,7 @@
 Session account security UI va API doi mat khau da cap nhat.
 - [x] Gi?i h?n t?i ?a 10 t?p l?u tr? cho m?i user v? ki?m tra l?i v??t quota
 - [x] Refactor module users: gop Prisma vao service, xoa repository pass-through, da verify backend
-- [x] Gom auth/session controllers theo capability v? ??a session ID validation v? shared middleware
+- [x] Gom session controllers theo capability v? ??a session ID validation v? shared middleware
+
+- [x] ??ng b? session refresh rotation v?i `previousRefreshTokenHash`, `lastUsedAt` v? grace period 30 gi?y.
+- [x] R?t g?n Google OAuth v? email verification: gi? controller/service/schema, g?p persistence/token helper v?o service.

@@ -216,16 +216,12 @@ Audit metadata không chứa email token, token hash hoặc URL xác minh.
 
 ```text
 backend/src/modules/auth/email-verification/
-├── email-verification-token.ts
-├── email-verification.repository.ts
-├── email-verification.service.ts
-├── email-verification.schema.ts
-├── email-verification.controller.ts
-└── email-verification.service.test.ts
+- email-verification.service.ts
+- email-verification.schema.ts
+- email-verification.controller.ts
 
 backend/src/modules/mail/
-└── email-verification-mail.ts
-```
+- email-verification-mail.ts```
 
 Không tạo interface/factory cho mail khi mới có một provider. Hàm mail cụ thể có thể được mock trực tiếp trong test.
 
@@ -304,3 +300,10 @@ Page chỉ ghép feature component. Component:
 - Mail provider failure không để token giả vờ đã được gửi.
 - Backend/frontend có test và build đạt.
 - API/database docs phản ánh implementation thật.
+## Mau email hien tai
+
+Mailer SMTP gui hai mau HTML kem plain-text fallback: kich hoat tai khoan
+(nut xac minh, link du phong, thoi han token) va chao mung sau khi xac minh
+thanh cong (nut dang nhap, link du phong). Ten hien thi va URL duoc escape
+truoc khi dua vao HTML. Neu email chao mung gui that bai, viec xac minh da
+commit van thanh cong; server ghi loi ma khong tra token hoac URL vao log.

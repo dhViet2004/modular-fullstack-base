@@ -1,35 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const sendMailMock = vi.hoisted(() => vi.fn());
-const createTransportMock = vi.hoisted(() =>
-  vi.fn(() => ({ sendMail: sendMailMock })),
-);
+const sendMail = vi.hoisted(() => vi.fn());
+vi.mock("nodemailer", () => ({ default: { createTransport: () => ({ sendMail }) } }));
 
-vi.mock("nodemailer", () => ({
-  default: { createTransport: createTransportMock },
-}));
+import { sendEmailVerification, sendWelcomeEmail } from "./email-verification-mail.js";
 
-import { env } from "../../config/env.js";
-import { sendEmailVerification } from "./email-verification-mail.js";
+describe("account email templates", () => {
+  beforeEach(() => sendMail.mockReset());
 
-describe("email verification SMTP delivery", () => {
-  beforeEach(() => {
-    sendMailMock.mockReset();
+  it("sends verification HTML and text with an escaped name and a fallback link", async () => {
+    await sendEmailVerification({ to: "user@example.com", name: "<Admin>", verificationUrl: "http://localhost:3000/verify-email?token=raw-token", expiresInMinutes: 60 });
+    const message = sendMail.mock.calls[0]?.[0] as { subject: string; html: string; text: string };
+    expect(message.subject).toBe("Kích hoạt tài khoản");
+    expect(message.html).toContain("Xin chào &lt;Admin&gt;");
+    expect(message.html).toContain("verify-email?token=raw-token");
+    expect(message.text).toContain("1 giờ");
+    expect(message.html).not.toContain("Xin chào <Admin>");
   });
 
-  it("sends the verification URL to the requested email", async () => {
-    sendMailMock.mockResolvedValue({ messageId: "message-id" });
-
-    await sendEmailVerification({
-      to: "user@example.com",
-      verificationUrl: "http://localhost:3000/verify-email?token=raw-token",
-    });
-
-    expect(sendMailMock).toHaveBeenCalledWith({
-      from: env.MAIL_FROM,
-      to: "user@example.com",
-      subject: "Xác minh địa chỉ email",
-      text: "Mở liên kết sau để xác minh email của bạn:\n\nhttp://localhost:3000/verify-email?token=raw-token\n\nNếu bạn không yêu cầu, hãy bỏ qua email này.",
-    });
+  it("sends a welcome message with the login link", async () => {
+    await sendWelcomeEmail({ to: "user@example.com", name: null });
+    const message = sendMail.mock.calls[0]?.[0] as { subject: string; html: string; text: string };
+    expect(message.subject).toContain("Chào mừng");
+    expect(message.html).toContain("/login");
+    expect(message.text).toContain("/login");
   });
 });

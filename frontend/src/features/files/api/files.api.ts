@@ -1,22 +1,22 @@
 import { apiClient } from "@/lib/axios/client";
 
 type UploadResponse = { success: true; data: { id: string; size: number } };
-export type StoredFile = { id: string; name: string; size: number; updatedAt: string };
+export type StoredFile = { id: string; name: string; size: number; contentType: string; updatedAt: string };
 
 export async function listFiles() {
   const response = await apiClient.get<{ success: true; data: StoredFile[] }>("/files");
   return response.data.data;
 }
 
-export async function uploadFile(content: string, name: string) {
-  const response = await apiClient.post<UploadResponse>("/files", content, {
-    headers: { "Content-Type": "application/octet-stream", "X-File-Name": name },
+export async function uploadFile(file: File) {
+  const response = await apiClient.post<UploadResponse>("/files", file, {
+    headers: { "Content-Type": "application/octet-stream", "X-File-Name": file.name, "X-File-Content-Type": file.type || "application/octet-stream" },
   });
   return response.data.data;
 }
 
-export async function updateFile(id: string, content: string, name: string) {
-  const response = await apiClient.patch<UploadResponse>(`/files/${id}`, content, { headers: { "Content-Type": "application/octet-stream", "X-File-Name": name } });
+export async function updateFile(id: string, file: File) {
+  const response = await apiClient.patch<UploadResponse>(`/files/${id}`, file, { headers: { "Content-Type": "application/octet-stream", "X-File-Name": file.name, "X-File-Content-Type": file.type || "application/octet-stream" } });
   return response.data.data;
 }
 

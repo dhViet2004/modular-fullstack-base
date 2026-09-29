@@ -1,5 +1,19 @@
 # Module 07 - Files/storage
 
+## Current file flow
+
+The account file picker accepts any file type and uploads the original bytes as
+`application/octet-stream`. `X-File-Name` carries the download name and
+`X-File-Content-Type` carries the browser-reported MIME type (default:
+`application/octet-stream`); the server validates and stores this metadata.
+Downloads remain attachments so the browser does not execute uploaded content.
+Each user is limited to 10 files of 5 MiB each. A new upload gets a new UUID,
+so matching filenames do not overwrite existing files.
+
+Updating a file writes a new object first, then swaps metadata in a Prisma
+transaction, then removes the old object. If the database step fails, the new
+object is removed and the old file remains available.
+
 Baseline local (moi user toi da 10 tep; moi tep toi da 5 MiB) hỗ trợ upload/download tệp riêng của user đã đăng nhập. Backend nhận `application/octet-stream` và giới hạn 5 MiB khi đọc stream, trước khi giữ toàn bộ nội dung trong bộ nhớ. Mỗi tệp lưu dưới `backend/storage/<userId>/<uuid>`; client chỉ nhận UUID, không chọn đường dẫn hoặc tên file trên disk.
 
 | Method | Endpoint | Kết quả |

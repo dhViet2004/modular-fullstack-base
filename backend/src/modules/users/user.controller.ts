@@ -1,14 +1,14 @@
 import type { RequestHandler } from "express";
 
 import { successResponse } from "../../core/http/api-response.js";
-import { listUsers, setAdminRole } from "./user.service.js";
+import { userService } from "./user.service.js";
 
 // Trả danh sách user cho actor đã vượt qua middleware authenticate và authorize.
 export const listUsersController: RequestHandler = async (
   _request,
   response,
 ) => {
-  const users = await listUsers();
+  const users = await userService.listUsers();
 
   response.json(
     successResponse({
@@ -26,6 +26,6 @@ export const setAdminRoleController: RequestHandler = async (
 ) => {
   const { enabled } = request.body as { enabled: boolean };
   const { userId } = response.locals.validatedParams as { userId: string };
-  await setAdminRole(userId, enabled);
+  await userService.setAdminRole(userId, enabled);
   response.json(successResponse({ enabled }));
 };

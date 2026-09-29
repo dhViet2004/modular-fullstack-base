@@ -1,10 +1,7 @@
 import type { RequestHandler } from "express";
 
 import { env } from "../../../config/env.js";
-import {
-  REFRESH_TOKEN_COOKIE_NAME,
-  refreshTokenCookieOptions,
-} from "../session/refresh-token-cookie.js";
+import { setRefreshTokenCookie } from "../../../core/http/refresh-token-cookie.js";
 import type { GoogleOAuthCallbackQuery } from "./google-oauth.schema.js";
 import {
   completeGoogleOAuth,
@@ -26,7 +23,7 @@ export const startGoogleOAuthController: RequestHandler = async (
   response.redirect(await startGoogleOAuth());
 };
 
-// Callback luôn redirect về frontend; không đưa access token hoặc lỗi Google vào URL.
+// Callback luÃ´n redirect vá» frontend; khÃ´ng Ä‘Æ°a access token hoáº·c lá»—i Google vÃ o URL.
 export const completeGoogleOAuthController: RequestHandler = async (
   request,
   response,
@@ -46,13 +43,12 @@ export const completeGoogleOAuthController: RequestHandler = async (
   try {
     const result = await completeGoogleOAuth(query.code, query.state, context);
 
-    response.cookie(
-      REFRESH_TOKEN_COOKIE_NAME,
-      result.session.refreshToken,
-      refreshTokenCookieOptions(result.session.refreshTokenExpiresAt),
-    );
+    if (result.session.refreshToken) {
+      setRefreshTokenCookie(response, result.session.refreshToken, result.session.refreshTokenExpiresAt);
+    }
     response.redirect(callbackSuccessUrl.toString());
-  } catch {
+  } catch (error: unknown) {
+    console.error("Google OAuth callback failed", error);
     response.redirect(callbackFailureUrl.toString());
   }
 };

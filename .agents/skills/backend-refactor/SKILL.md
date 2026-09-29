@@ -1,5 +1,7 @@
 # Skill: Refactor Backend theo hướng đơn giản hóa và đúng layer
 
+Phong cách đích là phong cách module gọn: ít indirection, mỗi layer có một trách nhiệm, service giữ trọn use case và gọi Prisma trực tiếp khi repository không tạo thêm giá trị.
+
 Dùng skill này khi module backend:
 
 - khó truy vết,

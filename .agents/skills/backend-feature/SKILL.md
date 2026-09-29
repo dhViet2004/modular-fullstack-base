@@ -26,6 +26,23 @@ Repository chỉ thêm khi có lý do thật.
 
 ---
 
+## Phong cách code mặc định
+
+Viết theo phong cách module gọn và dễ truy vết:
+
+- Giữ flow chính là `route -> middleware -> controller -> service -> Prisma -> response`.
+- Mỗi feature bắt đầu với `routes`, `controller`, `service`, `schema`; chỉ thêm file khi có trách nhiệm độc lập.
+- Service gom các use case cùng capability vào một object, ví dụ `sessionService.listActive()` và `sessionService.revokeOne()`.
+- Helper nhỏ chỉ dùng trong một capability để private gần nơi sử dụng; không tạo `utils`, `types`, `mapper` hoặc wrapper riêng chỉ để chứa vài dòng.
+- Service được gọi Prisma trực tiếp theo mặc định. Repository chỉ tồn tại khi có query phức tạp, transaction/persistence responsibility rõ ràng, hoặc nhiều consumer.
+- Controller chỉ là HTTP adapter: lấy validated input/auth context, gọi một use case chính và trả success response.
+- Tên method phải mô tả use case cụ thể; tránh `process`, `handle`, `execute`, `manage`.
+- Không tách file theo từng CRUD method nếu các method vẫn cùng một business capability.
+
+Trước khi thêm abstraction, trả lời được abstraction đó đang giải quyết vấn đề hiện tại nào và làm request flow rõ hơn ra sao. Nếu không trả lời được, giữ logic trong module hiện tại.
+
+---
+
 ## Bước 1 — Đọc rule
 
 Đọc:

@@ -1,3 +1,4 @@
+﻿import { createHash, randomBytes } from "node:crypto";
 import { Prisma } from "@prisma/client";
 
 import { env } from "../../../config/env.js";
@@ -7,21 +8,14 @@ import {
   recordAuditEvent,
   type AuditRequestContext,
 } from "../../audit/audit.service.js";
-import { createAuthSession } from "../session/session.service.js";
+import { createAuthSession } from "../../session/session.service.js";
+import { prisma } from "../../../core/database/prisma.js";
+import { ROLE_CODES } from "../../access/permission.catalog.js";
 import {
   createGoogleAuthorizationUrl,
   exchangeGoogleAuthorizationCode,
   verifyGoogleIdToken,
 } from "./google-oauth-client.js";
-import {
-  consumeGoogleOAuthAttempt,
-  createGoogleOAuthAttempt,
-  resolveGoogleUser,
-} from "./google-oauth.repository.js";
-import {
-  generateGoogleOAuthAttempt,
-  hashGoogleOAuthState,
-} from "./google-oauth-state.js";
 
 const MILLISECONDS_PER_MINUTE = 60_000;
 
@@ -29,7 +23,7 @@ function googleLoginError() {
   return new ApplicationError(
     401,
     "GOOGLE_LOGIN_FAILED",
-    "Không thể đăng nhập bằng Google",
+    "KhÃ´ng thá»ƒ Ä‘Äƒng nháº­p báº±ng Google",
   );
 }
 
@@ -41,9 +35,9 @@ export function recordGoogleOAuthFailure(context: AuditRequestContext) {
   });
 }
 
-// Tạo attempt ngắn hạn rồi trả authorization URL để controller redirect browser.
+// Táº¡o attempt ngáº¯n háº¡n rá»“i tráº£ authorization URL Ä‘á»ƒ controller redirect browser.
 export async function startGoogleOAuth(now = new Date()): Promise<string> {
-  const attempt = generateGoogleOAuthAttempt();
+  const attempt = generateOAuthAttempt();
 
   await createGoogleOAuthAttempt({
     stateHash: attempt.stateHash,
@@ -57,7 +51,6 @@ export async function startGoogleOAuth(now = new Date()): Promise<string> {
   return createGoogleAuthorizationUrl(attempt.state, attempt.codeChallenge);
 }
 
-// Consume state, xác minh Google identity, resolve user và tái sử dụng session JWT hiện có.
 export async function completeGoogleOAuth(
   code: string,
   state: string,
@@ -66,7 +59,7 @@ export async function completeGoogleOAuth(
 ) {
   try {
     const codeVerifier = await consumeGoogleOAuthAttempt(
-      hashGoogleOAuthState(state),
+      hashOAuthState(state),
       now,
     );
 
@@ -80,7 +73,7 @@ export async function completeGoogleOAuth(
       throw new ApplicationError(
         403,
         "ACCOUNT_SUSPENDED",
-        "Tài khoản đã bị tạm khóa",
+        "TÃ i khoáº£n Ä‘Ã£ bá»‹ táº¡m khÃ³a",
       );
     }
 
@@ -106,4 +99,155 @@ export async function completeGoogleOAuth(
 
     throw error;
   }
+}
+
+
+type GeneratedGoogleOAuthAttempt = {
+  state: string;
+  stateHash: string;
+  codeVerifier: string;
+  codeChallenge: string;
+};
+
+// Băm state trước khi persist để database không chứa giá trị callback dùng trực tiếp.
+function hashOAuthState(state: string): string {
+  return createHash("sha256").update(state).digest("hex");
+}
+
+function createCodeChallenge(codeVerifier: string): string {
+  return createHash("sha256").update(codeVerifier).digest("base64url");
+}
+
+// Sinh state chống CSRF và cặp PKCE S256 cho một lần bắt đầu Google OAuth.
+function generateOAuthAttempt(): GeneratedGoogleOAuthAttempt {
+  const state = randomBytes(32).toString("base64url");
+  const codeVerifier = randomBytes(32).toString("base64url");
+
+  return {
+    state,
+    stateHash: hashOAuthState(state),
+    codeVerifier,
+    codeChallenge: createCodeChallenge(codeVerifier),
+  };
+}
+
+
+type GoogleIdentity = { googleSubject: string; email: string; displayName: string | null; };
+type CreateGoogleOAuthAttemptData = {
+  stateHash: string;
+  codeVerifier: string;
+  expiresAt: Date;
+};
+
+const googleUserSelect = {
+  id: true,
+  email: true,
+  displayName: true,
+  status: true,
+  emailVerifiedAt: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.UserSelect;
+
+async function runSerializable<T>(operation: () => Promise<T>): Promise<T> {
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error: unknown) {
+      const canRetry =
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2034" &&
+        attempt < 3;
+
+      if (!canRetry) throw error;
+    }
+  }
+
+  throw new Error("Unreachable serializable transaction state");
+}
+
+// Lưu attempt ngắn hạn; raw state không đi vào database.
+function createGoogleOAuthAttempt(data: CreateGoogleOAuthAttemptData) {
+  return prisma.googleOAuthAttempt.create({ data, select: { id: true } });
+}
+
+// Consume state bằng conditional update để hai callback không thể dùng cùng attempt.
+function consumeGoogleOAuthAttempt(stateHash: string, now: Date) {
+  return prisma.$transaction(async (transaction) => {
+    const attempt = await transaction.googleOAuthAttempt.findUnique({
+      where: { stateHash },
+      select: { id: true, codeVerifier: true },
+    });
+
+    if (!attempt) return null;
+
+    const consumed = await transaction.googleOAuthAttempt.updateMany({
+      where: {
+        id: attempt.id,
+        consumedAt: null,
+        expiresAt: { gt: now },
+      },
+      data: { consumedAt: now },
+    });
+
+    return consumed.count === 1 ? attempt.codeVerifier : null;
+  });
+}
+
+// Tìm identity theo Google sub, hoặc liên kết/tạo user theo verified email nguyên tử.
+function resolveGoogleUser(identity: GoogleIdentity, verifiedAt: Date) {
+  return runSerializable(() =>
+    prisma.$transaction(
+      async (transaction) => {
+        const linkedAccount = await transaction.googleAccount.findUnique({
+          where: { googleSubject: identity.googleSubject },
+          select: { user: { select: googleUserSelect } },
+        });
+
+        if (linkedAccount) return linkedAccount.user;
+
+        const existingUser = await transaction.user.findUnique({
+          where: { email: identity.email },
+          select: {
+            id: true,
+            emailVerifiedAt: true,
+            googleAccount: { select: { id: true } },
+          },
+        });
+
+        if (existingUser) {
+          if (existingUser.googleAccount) {
+            throw new Error("User already has another Google account");
+          }
+
+          return transaction.user.update({
+            where: { id: existingUser.id },
+            data: {
+              emailVerifiedAt: existingUser.emailVerifiedAt ?? verifiedAt,
+              googleAccount: {
+                create: { googleSubject: identity.googleSubject },
+              },
+            },
+            select: googleUserSelect,
+          });
+        }
+
+        return transaction.user.create({
+          data: {
+            email: identity.email,
+            displayName: identity.displayName,
+            emailVerifiedAt: verifiedAt,
+            googleAccount: {
+              create: { googleSubject: identity.googleSubject },
+            },
+            roles: {
+              create: { role: { connect: { code: ROLE_CODES.MEMBER } } },
+            },
+          },
+          select: googleUserSelect,
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    ),
+  );
 }

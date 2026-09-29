@@ -4,7 +4,7 @@ import { successResponse } from "../../core/http/api-response.js";
 import { fileService } from "./file.service.js";
 
 export const uploadFile: RequestHandler = async (request, response) => {
-  const file = await fileService.upload(request.auth.user.id, request, request.headers["x-file-name"]);
+  const file = await fileService.upload(request.auth.user.id, request, request.headers["x-file-name"], request.get("x-file-content-type"));
   response.status(201).json(successResponse(file));
 };
 
@@ -31,6 +31,7 @@ export const updateFile: RequestHandler = async (request, response) => {
     id: (response.locals.validatedParams as { id: string }).id,
     source: request,
     fileName: request.headers["x-file-name"],
+    contentType: request.get("x-file-content-type"),
   });
   response.json(successResponse(updated));
 };

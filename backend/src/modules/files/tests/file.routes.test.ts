@@ -6,25 +6,48 @@ import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-type TestFile = { id: string; userId: string; name: string; size: number; contentType?: string };
+type TestFile = {
+  id: string;
+  userId: string;
+  name: string;
+  size: number;
+  contentType?: string;
+};
 const records = vi.hoisted(() => new Map<string, TestFile>());
 vi.mock("../../../core/database/prisma.js", () => ({
   prisma: {
     file: {
-      create: vi.fn(({ data }: { data: TestFile }) => { records.set(data.id, data); return Promise.resolve(data); }),
-      findFirst: vi.fn(({ where }: { where: { id: string; userId: string } }) => Promise.resolve([...records.values()].find((file) => file.id === where.id && file.userId === where.userId) ?? null)),
-      count: vi.fn(({ where }: { where: { userId: string } }) => Promise.resolve([...records.values()].filter((file) => file.userId === where.userId).length)),
-      delete: vi.fn(({ where }: { where: { id: string } }) => { records.delete(where.id); return Promise.resolve(); }),
+      create: vi.fn(({ data }: { data: TestFile }) => {
+        records.set(data.id, data);
+        return Promise.resolve(data);
+      }),
+      findFirst: vi.fn(({ where }: { where: { id: string; userId: string } }) =>
+        Promise.resolve(
+          [...records.values()].find(
+            (file) => file.id === where.id && file.userId === where.userId,
+          ) ?? null,
+        ),
+      ),
+      count: vi.fn(({ where }: { where: { userId: string } }) =>
+        Promise.resolve(
+          [...records.values()].filter((file) => file.userId === where.userId)
+            .length,
+        ),
+      ),
+      delete: vi.fn(({ where }: { where: { id: string } }) => {
+        records.delete(where.id);
+        return Promise.resolve();
+      }),
     },
   },
 }));
 
-vi.mock("../../auth/session/session.service.js", () => ({
+vi.mock("../../session/session.service.js", () => ({
   authenticateAccessToken: vi.fn(),
 }));
 
 import { errorMiddleware } from "../../../middleware/error.middleware.js";
-import { authenticateAccessToken } from "../../auth/session/session.service.js";
+import { authenticateAccessToken } from "../../session/session.service.js";
 import { fileRouter } from "../file.routes.js";
 import { MAX_FILE_BYTES, saveFile } from "../file.storage.js";
 
@@ -117,5 +140,20 @@ describe("private files", () => {
     });
     expect(await readdir(storageDirectory)).toEqual([]);
   });
-});
 
+  it("preserves binary uploads and their MIME type", async () => {
+    const bytes = Buffer.from([0, 255, 12, 34, 128]);
+    const uploaded = await request(app())
+      .post("/files")
+      .set("Authorization", "Bearer test")
+      .set("Content-Type", "application/octet-stream")
+      .set("X-File-Name", "image.png")
+      .set("X-File-Content-Type", "image/png")
+      .send(bytes);
+    expect(uploaded.status).toBe(201);
+    const id = (uploaded.body as { data: { id: string } }).data.id;
+    expect(records.get(id)?.contentType).toBe("image/png");
+    const downloaded = await request(app()).get(`/files/${id}`).set("Authorization", "Bearer test");
+    expect(downloaded.body).toEqual(bytes);
+  });
+});

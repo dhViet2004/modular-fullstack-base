@@ -71,6 +71,8 @@ Mỗi lần đăng nhập thành công tạo một `Session` riêng.
 | `id` | UUID | Primary key | Đồng thời là `sid` trong access token |
 | `userId` | UUID | Foreign key, index | User sở hữu session |
 | `refreshTokenHash` | `VARCHAR(64)` | Unique | SHA-256 hash của refresh token secret |
+| `previousRefreshTokenHash` | `VARCHAR(64)` nullable | Previous token hash during concurrent refresh grace period |
+| `lastUsedAt` | DateTime | Default `now()` | Last successful refresh time |
 | `expiresAt` | DateTime | Index | Thời điểm session hết hạn |
 | `revokedAt` | DateTime? | Nullable | Có giá trị khi session bị thu hồi |
 | `createdAt` | DateTime | Mặc định `now()` | Thời điểm đăng nhập |
@@ -88,6 +90,7 @@ Session được xem là không hợp lệ khi:
 
 - `revokedAt` đã có giá trị.
 - `expiresAt` nhỏ hơn hoặc bằng thời điểm hiện tại.
+- A previous refresh token used after the 30-second grace period revokes the session.
 - User không còn trạng thái `ACTIVE`.
 - Refresh token secret không khớp hash đang lưu.
 

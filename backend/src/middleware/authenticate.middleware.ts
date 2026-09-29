@@ -1,9 +1,9 @@
-import type { RequestHandler } from "express";
+﻿import type { RequestHandler } from "express";
 
 import { ApplicationError } from "../core/http/application-error.js";
-import { authenticateAccessToken } from "../modules/auth/session/session.service.js";
+import { authenticateAccessToken } from "../modules/session/session.service.js";
 
-// Đọc Bearer token, xác minh JWT và gắn identity vào Express request.
+// Äá»c Bearer token, xÃ¡c minh JWT vÃ  gáº¯n identity vÃ o Express request.
 export const authenticate: RequestHandler = async (
   request,
   _response,
@@ -12,12 +12,12 @@ export const authenticate: RequestHandler = async (
   const authorization = request.headers.authorization;
   const [scheme, token, extraPart] = authorization?.split(" ") ?? [];
 
-  // Bearer header hợp lệ phải có đúng hai phần: `Bearer <access-token>`.
+  // Bearer header há»£p lá»‡ pháº£i cÃ³ Ä‘Ãºng hai pháº§n: `Bearer <access-token>`.
   if (scheme !== "Bearer" || !token || extraPart) {
     throw new ApplicationError(
       401,
       "UNAUTHENTICATED",
-      "Bạn cần đăng nhập để tiếp tục",
+      "Báº¡n cáº§n Ä‘Äƒng nháº­p Ä‘á»ƒ tiáº¿p tá»¥c",
     );
   }
 

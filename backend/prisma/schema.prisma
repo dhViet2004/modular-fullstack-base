@@ -40,6 +40,8 @@ model Session {
   id               String    @id @default(uuid()) @db.Uuid
   userId           String    @db.Uuid
   refreshTokenHash String    @unique @db.VarChar(64)
+  previousRefreshTokenHash String? @db.VarChar(64)
+  lastUsedAt       DateTime  @default(now())
   expiresAt        DateTime
   revokedAt        DateTime?
   createdAt        DateTime  @default(now())

@@ -1,64 +1,64 @@
-# Module 02 - Xác thực bằng mật khẩu và session
+# Module 02 - XÃ¡c thá»±c báº±ng máº­t kháº©u vÃ  session
 
-Module này cung cấp đăng ký, đăng nhập và phiên đăng nhập có thể thu hồi cho CoreStack.
+Module nÃ y cung cáº¥p Ä‘Äƒng kÃ½, Ä‘Äƒng nháº­p vÃ  phiÃªn Ä‘Äƒng nháº­p cÃ³ thá»ƒ thu há»“i cho CoreStack.
 
-## Kết quả
+## Káº¿t quáº£
 
-- Đăng ký bằng email và mật khẩu Argon2id.
-- Đăng nhập tạo access token JWT RS256 sống ngắn.
-- Refresh token ngẫu nhiên được lưu trong cookie `HttpOnly`.
-- Database chỉ lưu SHA-256 hash của refresh token secret.
-- Refresh token được xoay vòng sau mỗi lần sử dụng.
-- Logout thu hồi session và xóa cookie.
-- `/auth/me` trả user của access token hợp lệ.
-- Frontend chỉ giữ access token trong bộ nhớ, không dùng `localStorage`.
+- ÄÄƒng kÃ½ báº±ng email vÃ  máº­t kháº©u Argon2id.
+- ÄÄƒng nháº­p táº¡o access token JWT RS256 sá»‘ng ngáº¯n.
+- Refresh token ngáº«u nhiÃªn Ä‘Æ°á»£c lÆ°u trong cookie `HttpOnly`.
+- Database chá»‰ lÆ°u SHA-256 hash cá»§a refresh token secret.
+- Refresh token Ä‘Æ°á»£c xoay vÃ²ng sau má»—i láº§n sá»­ dá»¥ng.
+- Logout thu há»“i session vÃ  xÃ³a cookie.
+- `/auth/me` tráº£ user cá»§a access token há»£p lá»‡.
+- Frontend chá»‰ giá»¯ access token trong bá»™ nhá»›, khÃ´ng dÃ¹ng `localStorage`.
 
 ## API
 
-| Method | Endpoint | Chức năng |
+| Method | Endpoint | Chá»©c nÄƒng |
 | --- | --- | --- |
-| `POST` | `/api/v1/auth/register` | Tạo user và password credential |
-| `POST` | `/api/v1/auth/login` | Xác minh mật khẩu, tạo session và cookie |
-| `POST` | `/api/v1/auth/refresh` | Xoay vòng refresh token và trả access token mới |
-| `POST` | `/api/v1/auth/logout` | Thu hồi session và xóa cookie |
-| `GET` | `/api/v1/auth/me` | Trả user hiện tại; yêu cầu Bearer access token |
+| `POST` | `/api/v1/auth/register` | Táº¡o user vÃ  password credential |
+| `POST` | `/api/v1/auth/login` | XÃ¡c minh máº­t kháº©u, táº¡o session vÃ  cookie |
+| `POST` | `/api/v1/auth/refresh` | Xoay vÃ²ng refresh token vÃ  tráº£ access token má»›i |
+| `POST` | `/api/v1/auth/logout` | Thu há»“i session vÃ  xÃ³a cookie |
+| `GET` | `/api/v1/auth/me` | Tráº£ user hiá»‡n táº¡i; yÃªu cáº§u Bearer access token |
 
-## Luồng đăng nhập
+## Luá»“ng Ä‘Äƒng nháº­p
 
 ```text
 Frontend
   -> POST /auth/login
-  -> Password service xác minh Argon2id
-  -> Session service tạo session
-  -> Backend trả access token trong JSON
-  -> Backend đặt refresh token trong HttpOnly cookie
+  -> authService xÃ¡c minh Argon2id
+  -> Session service táº¡o session
+  -> Backend tráº£ access token trong JSON
+  -> Backend Ä‘áº·t refresh token trong HttpOnly cookie
 ```
 
-## Luồng refresh
+## Luá»“ng refresh
 
 ```text
-Access token hết hạn
-  -> Axios nhận 401 từ request đã có Bearer token
-  -> POST /auth/refresh bằng HttpOnly cookie
-  -> Backend kiểm tra session và refresh token hash
-  -> Conditional update thay hash cũ bằng hash mới
-  -> Frontend giữ access token mới trong bộ nhớ
-  -> Axios retry request ban đầu tối đa một lần
+Access token háº¿t háº¡n
+  -> Axios nháº­n 401 tá»« request Ä‘Ã£ cÃ³ Bearer token
+  -> POST /auth/refresh báº±ng HttpOnly cookie
+  -> Backend kiá»ƒm tra session vÃ  refresh token hash
+  -> Conditional update thay hash cÅ© báº±ng hash má»›i
+  -> Frontend giá»¯ access token má»›i trong bá»™ nhá»›
+  -> Axios retry request ban Ä‘áº§u tá»‘i Ä‘a má»™t láº§n
 ```
 
-Nhiều request 401 đồng thời dùng chung một refresh Promise. Request login, register, refresh và logout không kích hoạt interceptor refresh để tránh vòng lặp.
+Nhiá»u request 401 Ä‘á»“ng thá»i dÃ¹ng chung má»™t refresh Promise. Request login, register, refresh vÃ  logout khÃ´ng kÃ­ch hoáº¡t interceptor refresh Ä‘á»ƒ trÃ¡nh vÃ²ng láº·p.
 
-## Quy tắc bảo mật
+## Quy táº¯c báº£o máº­t
 
-- Private key chỉ ký JWT; public key dùng để xác minh.
-- Access token chứa `sub` là user ID và `sid` là session ID.
-- Refresh token có dạng `sessionId.secret`; chỉ hash của `secret` được lưu.
-- Cookie dùng `HttpOnly`, `SameSite=Lax` và `Secure` trong production.
-- Logout có tính idempotent: cookie vẫn được xóa khi token thiếu hoặc không hợp lệ.
-- Middleware kiểm tra cả chữ ký JWT, session, thời hạn và trạng thái user.
-- Không log hoặc trả password hash, private key hay refresh token trong JSON.
+- Private key chá»‰ kÃ½ JWT; public key dÃ¹ng Ä‘á»ƒ xÃ¡c minh.
+- Access token chá»©a `sub` lÃ  user ID vÃ  `sid` lÃ  session ID.
+- Refresh token cÃ³ dáº¡ng `sessionId.secret`; chá»‰ hash cá»§a `secret` Ä‘Æ°á»£c lÆ°u.
+- Cookie dÃ¹ng `HttpOnly`, `SameSite=Lax` vÃ  `Secure` trong production.
+- Logout cÃ³ tÃ­nh idempotent: cookie váº«n Ä‘Æ°á»£c xÃ³a khi token thiáº¿u hoáº·c khÃ´ng há»£p lá»‡.
+- Middleware kiá»ƒm tra cáº£ chá»¯ kÃ½ JWT, session, thá»i háº¡n vÃ  tráº¡ng thÃ¡i user.
+- KhÃ´ng log hoáº·c tráº£ password hash, private key hay refresh token trong JSON.
 
-## Cấu hình môi trường
+## Cáº¥u hÃ¬nh mÃ´i trÆ°á»ng
 
 ```env
 JWT_PRIVATE_KEY_BASE64=
@@ -69,25 +69,25 @@ JWT_ACCESS_TTL_SECONDS=900
 REFRESH_TOKEN_TTL_DAYS=30
 ```
 
-## Ranh giới module
+## Ranh giá»›i module
 
-Backend giữ luồng:
+Backend giá»¯ luá»“ng:
 
 ```text
 Route -> Middleware -> Controller -> Service -> Prisma (repository ch? d?ng khi c?n persistence boundary)
 ```
 
-Frontend giữ luồng:
+Frontend giá»¯ luá»“ng:
 
 ```text
 Provider/Component -> Hook -> Feature API -> Axios client -> Backend
 ```
 
-Module này chưa triển khai email verification, reset password, OAuth, role hoặc permission.
+Module hiện đã triển khai password authentication, email verification và Google OAuth. Magic link và reset password chưa thuộc scope; role/permission nằm ở module authorization.
 
-## Gi?i h?n thi?t b? v� qu?n l� phi�n
+## Gi?i h?n thi?t b? vï¿½ qu?n lï¿½ phiï¿½n
 
-Bi?n MAX_ACTIVE_SESSIONS_PER_USER (m?c d?nh 5) gi?i h?n s? phi�n ho?t d?ng c?a m?i user. Khi dang nh?p vu?t gi?i h?n, c�c phi�n cu nh?t b? revoke; refresh token c?a ch�ng kh�ng c�n h?p l?.
+Bi?n MAX_ACTIVE_SESSIONS_PER_USER (m?c d?nh 5) gi?i h?n s? phiï¿½n ho?t d?ng c?a m?i user. Khi dang nh?p vu?t gi?i h?n, cï¿½c phiï¿½n cu nh?t b? revoke; refresh token c?a chï¿½ng khï¿½ng cï¿½n h?p l?.
 
 
 
@@ -99,4 +99,13 @@ Middleware authenticate ch? verify ch? k? JWT, `exp`, issuer v? audience r?i g?n
 
 Revoking a session prevents future refreshes for that login session. Already-issued access tokens remain valid until their short expiration time.
 
-Session HTTP handlers ???c gom trong `session.controller.ts`; `session.schema.ts` ch? ??nh ngh?a Zod contract v? route d?ng shared `validateParams`. Repository session ???c gi? v? c? transaction audit, gi?i h?n session v? conditional refresh rotation.
+On rotation, store the previous token hash in `previousRefreshTokenHash` and update `lastUsedAt`. Accept the previous token for 30 seconds; reuse after that revokes the session.
+
+Session HTTP handlers n?m trong `session.controller.ts`; token infrastructure n?m trong `session.tokens.ts`. Session service g?i Prisma tr?c ti?p v? gi? transaction audit, gi?i h?n session v? conditional refresh rotation.
+## Dat va doi mat khau
+
+`GET /api/v1/auth/me` tra `user.hasPassword` ma khong tra password hash.
+Tai khoan chua co `PasswordCredential` (vi du dang ky qua Google) co the dat
+mat khau qua `POST /api/v1/auth/password/change` khi da dang nhap: body chi can
+`newPassword` (12-128 ky tu). Tai khoan da co mat khau phai gui them
+`currentPassword` dung. Giao dien tai lai `/auth/me` sau khi dat mat khau.
