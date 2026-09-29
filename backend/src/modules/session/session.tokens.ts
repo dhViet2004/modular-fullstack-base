@@ -27,7 +27,9 @@ export async function signAccessToken(userId: string, sessionId: string) {
     .setIssuer(env.JWT_ISSUER)
     .setAudience(env.JWT_AUDIENCE)
     .setIssuedAt()
-    .setExpirationTime(Math.floor(Date.now() / 1000) + env.JWT_ACCESS_TTL_SECONDS)
+    .setExpirationTime(
+      Math.floor(Date.now() / 1000) + env.JWT_ACCESS_TTL_SECONDS,
+    )
     .sign(privateKey);
 }
 
@@ -57,15 +59,24 @@ export function parseRefreshToken(token: string) {
   ) {
     return null;
   }
-  return { sessionId: token.slice(0, separator), secret: token.slice(separator + 1) };
+  return {
+    sessionId: token.slice(0, separator),
+    secret: token.slice(separator + 1),
+  };
 }
 
 export function matchesRefreshSecret(secret: string, expectedHash: string) {
   const actualHash = hash(secret);
-  if (actualHash.length !== expectedHash.length || !/^[a-f0-9]{64}$/i.test(expectedHash)) {
+  if (
+    actualHash.length !== expectedHash.length ||
+    !/^[a-f0-9]{64}$/i.test(expectedHash)
+  ) {
     return false;
   }
-  return timingSafeEqual(Buffer.from(actualHash, "hex"), Buffer.from(expectedHash, "hex"));
+  return timingSafeEqual(
+    Buffer.from(actualHash, "hex"),
+    Buffer.from(expectedHash, "hex"),
+  );
 }
 
 function hash(value: string) {

@@ -15,6 +15,22 @@ import {
 export const fileRouter = Router();
 fileRouter.post("/", authenticate, validateFileUpload, uploadFile);
 fileRouter.get("/", authenticate, listFiles);
-fileRouter.get("/:id", authenticate, validateParams(fileIdParamsSchema), downloadFile);
-fileRouter.patch("/:id", authenticate, validateParams(fileIdParamsSchema), validateFileUpload, updateFile);
-fileRouter.delete("/:id", authenticate, validateParams(fileIdParamsSchema), deleteFile);
+fileRouter.get(
+  "/:id",
+  authenticate,
+  validateParams(fileIdParamsSchema),
+  downloadFile,
+);
+fileRouter.patch(
+  "/:id",
+  authenticate,
+  validateParams(fileIdParamsSchema),
+  validateFileUpload,
+  updateFile,
+);
+fileRouter.delete(
+  "/:id",
+  authenticate,
+  validateParams(fileIdParamsSchema),
+  deleteFile,
+);

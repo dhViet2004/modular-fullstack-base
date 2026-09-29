@@ -41,8 +41,11 @@ export const authService = {
       select: { passwordHash: true },
     });
 
-    if (credential && (!input.currentPassword ||
-      !(await verifyPassword(credential.passwordHash, input.currentPassword)))) {
+    if (
+      credential &&
+      (!input.currentPassword ||
+        !(await verifyPassword(credential.passwordHash, input.currentPassword)))
+    ) {
       throw new ApplicationError(
         400,
         "INVALID_CURRENT_PASSWORD",
@@ -52,9 +55,14 @@ export const authService = {
 
     const passwordHash = await hashPassword(input.newPassword);
     if (credential) {
-      await prisma.passwordCredential.update({ where: { userId }, data: { passwordHash } });
+      await prisma.passwordCredential.update({
+        where: { userId },
+        data: { passwordHash },
+      });
     } else {
-      await prisma.passwordCredential.create({ data: { userId, passwordHash } });
+      await prisma.passwordCredential.create({
+        data: { userId, passwordHash },
+      });
     }
   },
 };

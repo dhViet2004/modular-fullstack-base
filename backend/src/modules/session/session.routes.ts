@@ -9,4 +9,9 @@ sessionRouter.post("/refresh", sessionController.refresh);
 sessionRouter.post("/logout", sessionController.logout);
 sessionRouter.get("/me", authenticate, sessionController.me);
 sessionRouter.get("/sessions", authenticate, sessionController.list);
-sessionRouter.delete("/sessions/:id", authenticate, validateParams(sessionIdParamsSchema), sessionController.revoke);
+sessionRouter.delete(
+  "/sessions/:id",
+  authenticate,
+  validateParams(sessionIdParamsSchema),
+  sessionController.revoke,
+);

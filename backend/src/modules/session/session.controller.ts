@@ -17,7 +17,11 @@ export const sessionController = {
   async refresh(this: void, request: Request, response: Response) {
     const result = await sessionService.refresh(readRefreshToken(request));
     if (result.refreshToken) {
-      setRefreshTokenCookie(response, result.refreshToken, result.refreshTokenExpiresAt);
+      setRefreshTokenCookie(
+        response,
+        result.refreshToken,
+        result.refreshTokenExpiresAt,
+      );
     }
     response.json(
       successResponse({

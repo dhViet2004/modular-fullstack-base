@@ -4,12 +4,20 @@ import { successResponse } from "../../core/http/api-response.js";
 import { fileService } from "./file.service.js";
 
 export const uploadFile: RequestHandler = async (request, response) => {
-  const file = await fileService.upload(request.auth.user.id, request, request.headers["x-file-name"], request.get("x-file-content-type"));
+  const file = await fileService.upload(
+    request.auth.user.id,
+    request,
+    request.headers["x-file-name"],
+    request.get("x-file-content-type"),
+  );
   response.status(201).json(successResponse(file));
 };
 
 export const downloadFile: RequestHandler = async (request, response) => {
-  const file = await fileService.download(request.auth.user.id, (response.locals.validatedParams as { id: string }).id);
+  const file = await fileService.download(
+    request.auth.user.id,
+    (response.locals.validatedParams as { id: string }).id,
+  );
   response.set({
     "Content-Type": "application/octet-stream",
     "Content-Disposition": `attachment; filename="${file.name.replace(/"/g, "")}"`,
@@ -37,6 +45,9 @@ export const updateFile: RequestHandler = async (request, response) => {
 };
 
 export const deleteFile: RequestHandler = async (request, response) => {
-  await fileService.remove(request.auth.user.id, (response.locals.validatedParams as { id: string }).id);
+  await fileService.remove(
+    request.auth.user.id,
+    (response.locals.validatedParams as { id: string }).id,
+  );
   response.status(204).send();
 };

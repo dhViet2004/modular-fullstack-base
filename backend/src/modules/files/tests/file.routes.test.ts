@@ -153,7 +153,9 @@ describe("private files", () => {
     expect(uploaded.status).toBe(201);
     const id = (uploaded.body as { data: { id: string } }).data.id;
     expect(records.get(id)?.contentType).toBe("image/png");
-    const downloaded = await request(app()).get(`/files/${id}`).set("Authorization", "Bearer test");
+    const downloaded = await request(app())
+      .get(`/files/${id}`)
+      .set("Authorization", "Bearer test");
     expect(downloaded.body).toEqual(bytes);
   });
 });

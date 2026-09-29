@@ -130,8 +130,11 @@ export async function refreshAuthSession(
     session.revokedAt ||
     session.expiresAt <= now ||
     session.user.status !== "ACTIVE" ||
-    !matchesRefreshSecret(parsedToken.secret, session.refreshTokenHash) &&
-    !matchesRefreshSecret(parsedToken.secret, session.previousRefreshTokenHash ?? "")
+    (!matchesRefreshSecret(parsedToken.secret, session.refreshTokenHash) &&
+      !matchesRefreshSecret(
+        parsedToken.secret,
+        session.previousRefreshTokenHash ?? "",
+      ))
   ) {
     throw invalidRefreshTokenError();
   }
@@ -163,13 +166,30 @@ export async function refreshAuthSession(
     };
   }
 
-  if (matchesRefreshSecret(parsedToken.secret, session.previousRefreshTokenHash ?? "") &&
-      now.getTime() - session.lastUsedAt.getTime() <= REFRESH_GRACE_MS) {
-    return { accessToken, accessTokenExpiresInSeconds: env.JWT_ACCESS_TTL_SECONDS, refreshToken: null, refreshTokenExpiresAt: session.expiresAt };
+  if (
+    matchesRefreshSecret(
+      parsedToken.secret,
+      session.previousRefreshTokenHash ?? "",
+    ) &&
+    now.getTime() - session.lastUsedAt.getTime() <= REFRESH_GRACE_MS
+  ) {
+    return {
+      accessToken,
+      accessTokenExpiresInSeconds: env.JWT_ACCESS_TTL_SECONDS,
+      refreshToken: null,
+      refreshTokenExpiresAt: session.expiresAt,
+    };
   }
 
-  await prisma.session.update({ where: { id: session.id }, data: { revokedAt: now } });
-  throw new ApplicationError(401, "REFRESH_TOKEN_REUSED", "Refresh token đã bị sử dụng lại, phiên đã bị thu hồi");
+  await prisma.session.update({
+    where: { id: session.id },
+    data: { revokedAt: now },
+  });
+  throw new ApplicationError(
+    401,
+    "REFRESH_TOKEN_REUSED",
+    "Refresh token đã bị sử dụng lại, phiên đã bị thu hồi",
+  );
 }
 export async function revokeAuthSession(
   token: string,
@@ -189,8 +209,11 @@ export async function revokeAuthSession(
   if (
     !session ||
     session.revokedAt ||
-    !matchesRefreshSecret(parsedToken.secret, session.refreshTokenHash) &&
-    !matchesRefreshSecret(parsedToken.secret, session.previousRefreshTokenHash ?? "")
+    (!matchesRefreshSecret(parsedToken.secret, session.refreshTokenHash) &&
+      !matchesRefreshSecret(
+        parsedToken.secret,
+        session.previousRefreshTokenHash ?? "",
+      ))
   ) {
     return;
   }
@@ -252,7 +275,10 @@ async function getCurrentUserWithAccess(userId: string) {
   });
   if (!user || user.status !== "ACTIVE") throw unauthenticatedError();
   const { passwordCredential, ...publicUser } = user;
-  return { user: { ...publicUser, hasPassword: Boolean(passwordCredential) }, access: await getUserAccessContext(user.id) };
+  return {
+    user: { ...publicUser, hasPassword: Boolean(passwordCredential) },
+    access: await getUserAccessContext(user.id),
+  };
 }
 export const sessionService = {
   create: createAuthSession,
@@ -298,4 +324,3 @@ function createSessionWithAudit(
     return session;
   });
 }
-

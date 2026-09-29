@@ -101,7 +101,6 @@ export async function completeGoogleOAuth(
   }
 }
 
-
 type GeneratedGoogleOAuthAttempt = {
   state: string;
   stateHash: string;
@@ -131,8 +130,11 @@ function generateOAuthAttempt(): GeneratedGoogleOAuthAttempt {
   };
 }
 
-
-type GoogleIdentity = { googleSubject: string; email: string; displayName: string | null; };
+type GoogleIdentity = {
+  googleSubject: string;
+  email: string;
+  displayName: string | null;
+};
 type CreateGoogleOAuthAttemptData = {
   stateHash: string;
   codeVerifier: string;

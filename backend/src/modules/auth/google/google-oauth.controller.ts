@@ -44,7 +44,11 @@ export const completeGoogleOAuthController: RequestHandler = async (
     const result = await completeGoogleOAuth(query.code, query.state, context);
 
     if (result.session.refreshToken) {
-      setRefreshTokenCookie(response, result.session.refreshToken, result.session.refreshTokenExpiresAt);
+      setRefreshTokenCookie(
+        response,
+        result.session.refreshToken,
+        result.session.refreshTokenExpiresAt,
+      );
     }
     response.redirect(callbackSuccessUrl.toString());
   } catch (error: unknown) {

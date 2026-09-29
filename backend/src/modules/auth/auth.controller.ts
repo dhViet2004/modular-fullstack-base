@@ -20,7 +20,11 @@ export const authController = {
       userAgent: request.get("user-agent") ?? null,
     });
     if (result.session.refreshToken) {
-      setRefreshTokenCookie(response, result.session.refreshToken, result.session.refreshTokenExpiresAt);
+      setRefreshTokenCookie(
+        response,
+        result.session.refreshToken,
+        result.session.refreshTokenExpiresAt,
+      );
     }
     response.json(
       successResponse({

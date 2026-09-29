@@ -15,7 +15,10 @@ import {
   type AuditRequestContext,
 } from "../../audit/audit.service.js";
 import type { CreateAuditLogData } from "../../audit/audit.repository.js";
-import { sendEmailVerification, sendWelcomeEmail } from "../../mail/email-verification-mail.js";
+import {
+  sendEmailVerification,
+  sendWelcomeEmail,
+} from "../../mail/email-verification-mail.js";
 
 function invalidTokenError() {
   return new ApplicationError(
@@ -133,7 +136,6 @@ export async function verifyEmail(
   return user;
 }
 
-
 type GeneratedEmailVerificationToken = {
   token: string;
   tokenHash: string;
@@ -156,7 +158,6 @@ function generateEmailVerificationToken(): GeneratedEmailVerificationToken {
   };
 }
 
-
 type CreateEmailVerificationTokenData = {
   userId: string;
   tokenHash: string;
@@ -165,7 +166,12 @@ type CreateEmailVerificationTokenData = {
 };
 
 type CreateEmailVerificationTokenResult =
-  | { status: "created"; tokenId: string; email: string; displayName: string | null }
+  | {
+      status: "created";
+      tokenId: string;
+      email: string;
+      displayName: string | null;
+    }
   | { status: "already-verified" }
   | { status: "rate-limited" }
   | { status: "user-not-found" };
@@ -236,7 +242,12 @@ function createEmailVerificationToken(
           select: { id: true },
         });
 
-        return { status: "created", tokenId: token.id, email: user.email, displayName: user.displayName };
+        return {
+          status: "created",
+          tokenId: token.id,
+          email: user.email,
+          displayName: user.displayName,
+        };
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     ),
