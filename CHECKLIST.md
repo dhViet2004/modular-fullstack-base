@@ -138,6 +138,7 @@
 - [x] Tạo frontend Google login/callback flow
 - [x] Verify migration, backend, frontend và smoke test
 - [x] Đồng bộ API/database docs và roadmap
+- [x] Thêm cờ bật/tắt email xác thực toàn hệ thống, chỉ SUPER_ADMIN được quản lý
 
 ## Phase 11 — Worker pg-boss
 

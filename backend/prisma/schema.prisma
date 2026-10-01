@@ -69,6 +69,12 @@ model User {
   files                   File[]
 }
 
+model SystemSetting {
+  id                    Int      @id @default(1)
+  emailVerificationEnabled Boolean @default(false)
+  updatedAt             DateTime @updatedAt
+}
+
 model File {
   id          String   @id @default(uuid()) @db.Uuid
   userId      String   @db.Uuid

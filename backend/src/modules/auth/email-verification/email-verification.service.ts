@@ -19,6 +19,7 @@ import {
   sendEmailVerification,
   sendWelcomeEmail,
 } from "../../mail/email-verification-mail.js";
+import { isEmailVerificationEnabled } from "../../system/system.service.js";
 
 function invalidTokenError() {
   return new ApplicationError(
@@ -35,6 +36,7 @@ export async function requestEmailVerification(
   sessionId: string | null,
   now = new Date(),
 ) {
+  if (!(await isEmailVerificationEnabled())) return { accepted: false, disabled: true };
   const generated = generateEmailVerificationToken();
   const expiresAt = new Date(
     now.getTime() + env.EMAIL_VERIFICATION_TTL_MINUTES * 60_000,

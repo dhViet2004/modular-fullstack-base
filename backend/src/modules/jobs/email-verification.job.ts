@@ -3,6 +3,7 @@ import { PgBoss } from "pg-boss";
 import { env } from "../../config/env.js";
 import { ApplicationError } from "../../core/http/application-error.js";
 import { requestEmailVerification } from "../auth/email-verification/email-verification.service.js";
+import { isEmailVerificationEnabled } from "../system/system.service.js";
 
 export const EMAIL_VERIFICATION_QUEUE = "email-verification";
 
@@ -30,6 +31,7 @@ export async function stopEmailVerificationQueue() {
 }
 
 export async function enqueueEmailVerification(userId: string) {
+  if (!(await isEmailVerificationEnabled())) return { accepted: false, disabled: true };
   try {
     const jobId = await (
       await getBoss()
@@ -61,6 +63,7 @@ export async function enqueueEmailVerification(userId: string) {
 }
 
 export async function processEmailVerificationJob(data: unknown) {
+  if (!(await isEmailVerificationEnabled())) return;
   if (
     !data ||
     typeof data !== "object" ||
