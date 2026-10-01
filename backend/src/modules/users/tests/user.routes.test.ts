@@ -27,6 +27,10 @@ import { errorMiddleware } from "../../../middleware/error.middleware.js";
 import { userRouter } from "../user.routes.js";
 import { userService } from "../user.service.js";
 
+// Keep the mocked method reference explicit for the assertion.
+// eslint-disable-next-line @typescript-eslint/unbound-method
+const setAdminRoleMock = vi.mocked(userService.setAdminRole);
+
 describe("users routes", () => {
   it("rejects an invalid admin role path parameter", async () => {
     const app = express();
@@ -50,6 +54,6 @@ describe("users routes", () => {
       .patch("/users/user-1/roles/admin")
       .send({ enabled: true });
 
-    expect(userService.setAdminRole).toHaveBeenCalledWith("user-1", true);
+    expect(setAdminRoleMock).toHaveBeenCalledWith("user-1", true);
   });
 });

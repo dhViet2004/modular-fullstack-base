@@ -10,7 +10,8 @@ vi.mock("../../../core/database/prisma.js", () => ({
 import { prisma } from "../../../core/database/prisma.js";
 import { userService } from "../user.service.js";
 
-// Prisma methods are mocks; direct references are intentional test seams.`r`n// eslint-disable-next-line @typescript-eslint/unbound-method
+// Prisma methods are mocks; direct references are intentional test seams.
+// eslint-disable-next-line @typescript-eslint/unbound-method
 const findUserMock = vi.mocked(prisma.user.findUnique);
 // eslint-disable-next-line @typescript-eslint/unbound-method
 const roleMock = vi.mocked(prisma.role.findUniqueOrThrow);

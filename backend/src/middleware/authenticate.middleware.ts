@@ -3,7 +3,7 @@
 import { ApplicationError } from "../core/http/application-error.js";
 import { authenticateAccessToken } from "../modules/session/session.service.js";
 
-// Äá»c Bearer token, xÃ¡c minh JWT vÃ  gáº¯n identity vÃ o Express request.
+// Read the Bearer token, verify the JWT, and attach identity to the request.
 export const authenticate: RequestHandler = async (
   request,
   _response,
@@ -12,7 +12,7 @@ export const authenticate: RequestHandler = async (
   const authorization = request.headers.authorization;
   const [scheme, token, extraPart] = authorization?.split(" ") ?? [];
 
-  // Bearer header há»£p lá»‡ pháº£i cÃ³ Ä‘Ãºng hai pháº§n: `Bearer <access-token>`.
+  // A valid Bearer header has exactly two parts: `Bearer <access-token>`.
   if (scheme !== "Bearer" || !token || extraPart) {
     throw new ApplicationError(
       401,

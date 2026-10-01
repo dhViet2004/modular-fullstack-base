@@ -23,7 +23,7 @@ export const startGoogleOAuthController: RequestHandler = async (
   response.redirect(await startGoogleOAuth());
 };
 
-// Callback luÃ´n redirect vá» frontend; khÃ´ng Ä‘Æ°a access token hoáº·c lá»—i Google vÃ o URL.
+// Always redirect the callback to the frontend without exposing tokens or provider errors.
 export const completeGoogleOAuthController: RequestHandler = async (
   request,
   response,

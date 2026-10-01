@@ -109,3 +109,101 @@ Tai khoan chua co `PasswordCredential` (vi du dang ky qua Google) co the dat
 mat khau qua `POST /api/v1/auth/password/change` khi da dang nhap: body chi can
 `newPassword` (12-128 ky tu). Tai khoan da co mat khau phai gui them
 `currentPassword` dung. Giao dien tai lai `/auth/me` sau khi dat mat khau.
+
+## Sơ đồ tổng quan auth và session
+
+Sơ đồ này cho thấy nơi lưu từng loại token và điểm kiểm tra chính trong một request đã đăng nhập:
+
+```mermaid
+flowchart LR
+    Browser[Frontend browser]
+    API[Auth API]
+    Auth[Auth service]
+    Session[Session service]
+    DB[(PostgreSQL)]
+    Cookie[(HttpOnly refresh cookie)]
+    Memory[(Access token in memory)]
+
+    Browser -->|email + password| API
+    API --> Auth
+    Auth -->|verify Argon2id| DB
+    Auth --> Session
+    Session -->|create session + hash refresh secret| DB
+    API -->|access token JSON| Memory
+    API -->|set refresh token| Cookie
+```
+
+## Sơ đồ đăng nhập
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant R as Auth route
+    participant C as Auth controller
+    participant A as Auth service
+    participant S as Session service
+    participant D as PostgreSQL
+
+    U->>F: Submit email + password
+    F->>R: POST /auth/login
+    R->>C: Validate body
+    C->>A: login(email, password, context)
+    A->>D: Find user + password credential
+    D-->>A: User + password hash
+    A->>A: Verify Argon2id
+    A->>S: Create session
+    S->>D: Store session + refresh token hash
+    S-->>A: Access token + refresh token
+    A-->>C: Auth result
+    C-->>F: JSON access token + HttpOnly cookie
+    F->>F: Store access token in memory
+```
+
+## Sơ đồ sử dụng session và refresh
+
+```mermaid
+sequenceDiagram
+    participant F as Frontend
+    participant X as Axios client
+    participant M as Authenticate middleware
+    participant S as Session service
+    participant D as PostgreSQL
+
+    F->>X: API request with Bearer access token
+    X->>M: Forward request
+    M->>M: Verify JWT signature, exp, issuer, audience
+    M-->>X: Request accepted
+    X-->>F: API response
+
+    Note over X,M: Access token expires
+    X->>S: POST /auth/refresh + HttpOnly cookie
+    S->>D: Find active session and compare token hash
+    D-->>S: Session is valid
+    S->>D: Rotate hash and update lastUsedAt
+    S-->>X: New access token + rotated cookie
+    X->>X: Retry original request once
+```
+
+## Sơ đồ logout và thu hồi session
+
+```mermaid
+flowchart TD
+    Start[User clicks logout or revokes a session]
+    Request[POST /auth/logout or DELETE /auth/sessions/:id]
+    Owner[Check session belongs to current user]
+    Revoke[Set revokedAt and invalidate refresh token]
+    Clear[Clear refresh cookie]
+    Done[Future refresh requests fail]
+
+    Start --> Request --> Owner --> Revoke --> Clear --> Done
+```
+
+### Ý nghĩa của từng token
+
+| Thành phần | Nơi lưu | Mục đích | Khi bị thu hồi |
+| --- | --- | --- | --- |
+| Access token | Memory của frontend | Gửi trong `Authorization: Bearer` | Vẫn có hiệu lực đến khi hết hạn ngắn |
+| Refresh token | `HttpOnly` cookie | Xin access token mới | Không thể refresh thêm |
+| Refresh token hash | Database | Đối chiếu token và rotation | Bị thay bằng hash mới sau mỗi lần refresh |
+| Session record | Database | Quản lý thiết bị, revoke và giới hạn session | `revokedAt` được ghi nhận |
