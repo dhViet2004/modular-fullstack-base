@@ -31,7 +31,8 @@ export async function stopEmailVerificationQueue() {
 }
 
 export async function enqueueEmailVerification(userId: string) {
-  if (!(await isEmailVerificationEnabled())) return { accepted: false, disabled: true };
+  if (!(await isEmailVerificationEnabled()))
+    return { accepted: false, disabled: true };
   try {
     const jobId = await (
       await getBoss()

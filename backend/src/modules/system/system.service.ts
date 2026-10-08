@@ -14,4 +14,7 @@ export async function setEmailVerificationEnabled(enabled: boolean) {
   });
 }
 
-export const systemService = { isEmailVerificationEnabled, setEmailVerificationEnabled };
+export const systemService = {
+  isEmailVerificationEnabled,
+  setEmailVerificationEnabled,
+};
