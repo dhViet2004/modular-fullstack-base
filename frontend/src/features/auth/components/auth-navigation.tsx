@@ -2,44 +2,86 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useId, type ReactNode } from "react";
+import { AppShell, Sidebar } from "@/components/app-shell";
+import { Button } from "@/components/ui/button";
+import { RoleBadge } from "@/components/ui/role-badge";
 
 import { getNavigationItems, getRoleFlags } from "../permissions";
 import { getPostLoginPath } from "../post-login-route";
 import { useAuth } from "./auth-provider";
 import { LogoutButton } from "./logout-button";
 
-export function AuthNavigation() {
+export function AuthNavigation({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const accountId = useId();
   if (
     !user ||
-    !(pathname.startsWith("/account") || pathname.startsWith("/admin") || pathname.startsWith("/super-admin"))
-  ) return null;
+    !(
+      pathname.startsWith("/account") ||
+      pathname.startsWith("/admin") ||
+      pathname.startsWith("/super-admin")
+    )
+  )
+    return children;
 
   const { isSuperAdmin, isAdmin } = getRoleFlags(user.roles);
   const roleLabel = isSuperAdmin ? "SUPER ADMIN" : isAdmin ? "ADMIN" : "MEMBER";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--ink)] bg-[var(--paper)] px-[clamp(24px,6vw,88px)] py-4 shadow-[0_3px_0_rgba(21,21,15,0.12)]">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <Link className="flex items-center gap-3 font-mono text-xs font-semibold tracking-[0.12em]" href={getPostLoginPath(user.roles)}>
-          <span className="grid size-9 place-items-center bg-[var(--ink)] text-[var(--paper)]">CS</span>
-          <span>CORESTACK <span className="text-[var(--signal)]">/ {roleLabel}</span></span>
-        </Link>
-        <nav aria-label="Điều hướng tài khoản" className="flex flex-wrap gap-2">
-          {getNavigationItems(user.roles, user.permissions).map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={pathname === item.href ? "page" : undefined}
-              className={`border border-[var(--ink)] px-3 py-2 text-xs ${pathname === item.href ? "bg-[var(--ink)] text-[var(--paper)]" : "bg-[var(--paper)]"}`}
+    <AppShell
+      homeHref={getPostLoginPath(user.roles)}
+      navigation={
+        <Sidebar
+          items={getNavigationItems(user.roles, user.permissions)}
+          pathname={pathname}
+        />
+      }
+      account={
+        <>
+          <Button
+            variant="ghost"
+            className="shell-account-trigger"
+            popoverTarget={accountId}
+            aria-label="Account options"
+          >
+            <span className="shell-avatar" aria-hidden="true">
+              {(user.displayName || user.email)
+                .slice(0, 2)
+                .toLocaleUpperCase("vi-VN")}
+            </span>
+            <RoleBadge
+              role={isSuperAdmin ? "SUPER_ADMIN" : isAdmin ? "ADMIN" : "MEMBER"}
             >
-              {item.label}
+              {roleLabel}
+            </RoleBadge>
+          </Button>
+          <div
+            id={accountId}
+            popover="auto"
+            className="shell-account-menu"
+            role="group"
+            aria-label="Account options"
+          >
+            <p>{user.displayName ?? user.email}</p>
+            <p className="shell-account-email">{user.email}</p>
+            <Link
+              href="/account"
+              onClick={(event) =>
+                event.currentTarget
+                  .closest<HTMLElement>("[popover]")
+                  ?.hidePopover()
+              }
+            >
+              {"T\u00e0i kho\u1ea3n"}
             </Link>
-          ))}
-          <LogoutButton />
-        </nav>
-      </div>
-    </header>
+            <LogoutButton />
+          </div>
+        </>
+      }
+    >
+      {children}
+    </AppShell>
   );
 }

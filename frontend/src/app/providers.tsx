@@ -11,8 +11,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AuthNavigation />
-        {children}
+        <AuthNavigation>{children}</AuthNavigation>
       </AuthProvider>
     </QueryClientProvider>
   );

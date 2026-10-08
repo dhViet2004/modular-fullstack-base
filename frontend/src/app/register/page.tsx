@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
 import { RegisterForm } from "@/features/auth/components/register-form";
 
 export default function RegisterPage() {
@@ -21,7 +22,7 @@ export default function RegisterPage() {
         </Link>
       </header>
 
-      <section className="relative z-10 w-full max-w-[460px] border border-[var(--ink)] bg-[rgba(241,239,229,0.96)] p-[clamp(24px,5vw,42px)] shadow-[12px_12px_0_var(--acid)] max-sm:shadow-[7px_7px_0_var(--acid)]">
+      <Card className="relative z-10 w-full max-w-[460px]">
         <div className="mb-8">
           <p className="font-mono text-xs font-semibold tracking-[0.14em]">
             NEW ACCOUNT
@@ -41,7 +42,7 @@ export default function RegisterPage() {
             Login
           </Link>
         </p>
-      </section>
+      </Card>
     </main>
   );
 }

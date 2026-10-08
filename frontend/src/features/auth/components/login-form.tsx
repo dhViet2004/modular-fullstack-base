@@ -5,13 +5,12 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { InlineAlert } from "@/components/ui/feedback";
 import { useLogin } from "../hooks/use-login";
 import { getPostLoginPath } from "../post-login-route";
-import {
-  loginSchema,
-  type LoginFormValues,
-} from "../schemas/login.schema";
-
+import { loginSchema, type LoginFormValues } from "../schemas/login.schema";
 
 type ApiErrorResponse = {
   error?: {
@@ -98,68 +97,34 @@ export function LoginForm() {
   }
 
   return (
-    <form
-      className="grid gap-5"
-      onSubmit={handleSubmit(onSubmit)}
-      noValidate
-    >
-      <div className="grid gap-2">
-        <label
-          className="font-mono text-xs font-semibold tracking-[0.08em] uppercase"
-          htmlFor="email"
-        >
-          Email
-        </label>
-        <input
-          className="w-full rounded-none border border-[var(--ink)] bg-transparent px-3.5 py-3.25 font-[inherit] text-[var(--ink)] outline-none focus:border-[var(--signal)] focus:shadow-[4px_4px_0_rgba(237,93,42,0.24)]"
-          id="email"
-          type="email"
-          autoComplete="email"
-          placeholder="you@example.com"
-          {...register("email")}
-        />
-        {errors.email ? (
-          <p className="m-0 text-sm leading-5 text-[#b52f1d]">
-            {errors.email.message}
-          </p>
-        ) : null}
-      </div>
+    <form className="grid gap-5" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <Input
+        label="Email"
+        id="email"
+        type="email"
+        autoComplete="email"
+        placeholder="you@example.com"
+        error={errors.email?.message}
+        {...register("email")}
+      />
 
-      <div className="grid gap-2">
-        <label
-          className="font-mono text-xs font-semibold tracking-[0.08em] uppercase"
-          htmlFor="password"
-        >
-          Password
-        </label>
-        <input
-          className="w-full rounded-none border border-[var(--ink)] bg-transparent px-3.5 py-3.25 font-[inherit] text-[var(--ink)] outline-none focus:border-[var(--signal)] focus:shadow-[4px_4px_0_rgba(237,93,42,0.24)]"
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          placeholder="Your password"
-          {...register("password")}
-        />
-        {errors.password ? (
-          <p className="m-0 text-sm leading-5 text-[#b52f1d]">
-            {errors.password.message}
-          </p>
-        ) : null}
-      </div>
+      <Input
+        label="Password"
+        id="password"
+        type="password"
+        autoComplete="current-password"
+        placeholder="Your password"
+        error={errors.password?.message}
+        {...register("password")}
+      />
 
       {errors.root?.server ? (
-        <p className="m-0 text-sm leading-5 text-[#b52f1d]" role="alert">
-          {errors.root.server.message}
-        </p>
+        <InlineAlert variant="error">{errors.root.server.message}</InlineAlert>
       ) : null}
 
-      <button
-        className="min-h-12 cursor-pointer border border-[var(--ink)] bg-[var(--ink)] px-4.5 py-3 font-mono text-xs font-semibold tracking-[0.08em] text-[var(--paper)] uppercase hover:bg-[var(--signal)] hover:text-[var(--ink)] disabled:cursor-wait disabled:opacity-65"
-        type="submit"
-        disabled={loginMutation.isPending}
-      >
+      <Button type="submit" loading={loginMutation.isPending}>
         {loginMutation.isPending ? "Signing in..." : "Sign in"}
-      </button>
+      </Button>
     </form>
   );
 }

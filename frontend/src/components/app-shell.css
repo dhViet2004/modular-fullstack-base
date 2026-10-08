@@ -1,0 +1,246 @@
+@layer components {
+  .role-app-shell {
+    display: grid;
+    min-width: 0;
+    min-height: 100svh;
+    flex: 1;
+    grid-template-columns: 248px minmax(0, 1fr);
+    grid-template-rows: 64px 1fr;
+  }
+
+  .shell-sidebar {
+    position: sticky;
+    top: 0;
+    display: flex;
+    height: 100svh;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--space-24);
+    align-self: start;
+    grid-column: 1;
+    grid-row: 1 / -1;
+    overflow-y: auto;
+    border-right: 1px solid var(--border-default);
+    padding: 20px;
+    background: var(--surface-default);
+  }
+
+  .shell-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  .shell-brand-mark,
+  .shell-avatar {
+    display: inline-grid;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    place-items: center;
+    border-radius: var(--radius-8);
+    background: var(--action-primary);
+    color: var(--surface-default);
+    font-size: var(--text-xs);
+    font-weight: 600;
+  }
+
+  .shell-avatar {
+    border-radius: 50%;
+    background: var(--action-subtle);
+    color: var(--action-primary);
+  }
+
+  .shell-navigation {
+    display: grid;
+    gap: var(--space-8);
+  }
+
+  .shell-nav-item {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: var(--space-12);
+    border-radius: var(--radius-8);
+    padding: var(--space-12);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  a.shell-nav-item:hover {
+    background: var(--surface-muted);
+    color: var(--text-primary);
+  }
+
+  .shell-nav-item[aria-current="page"] {
+    background: var(--action-subtle);
+    color: var(--action-primary);
+  }
+
+  .shell-nav-item[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .shell-nav-marker {
+    width: 20px;
+    flex: none;
+    text-align: center;
+    font-size: var(--text-xs);
+  }
+
+  .shell-topbar {
+    position: sticky;
+    z-index: 40;
+    top: 0;
+    display: flex;
+    height: 64px;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-12);
+    grid-column: 2;
+    grid-row: 1;
+    border-bottom: 1px solid var(--border-default);
+    padding-inline: var(--page-gutter);
+    background: var(--surface-default);
+  }
+
+  .shell-topbar-brand {
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  .shell-account {
+    min-width: 0;
+    margin-left: auto;
+  }
+
+  .shell-account-trigger {
+    padding: var(--space-4);
+  }
+
+  .shell-account-menu {
+    position: fixed;
+    inset: 72px var(--page-gutter) auto auto;
+    width: min(288px, calc(100% - 2 * var(--page-gutter)));
+    margin: 0;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-12);
+    padding: var(--space-16);
+    background: var(--surface-default);
+    color: var(--text-primary);
+    box-shadow: var(--elevation-raised);
+    font-size: var(--text-sm);
+    overflow-wrap: anywhere;
+  }
+
+  .shell-account-menu:popover-open {
+    display: grid;
+    gap: var(--space-12);
+  }
+
+  .shell-account-menu p {
+    margin: 0;
+  }
+
+  .shell-account-menu .shell-account-email {
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+  }
+
+  .shell-account-menu a,
+  .shell-account-menu button {
+    display: block;
+    border-radius: var(--radius-8);
+    padding: var(--space-8);
+    text-align: left;
+  }
+
+  .shell-account-menu :is(a, button):not(:disabled):hover {
+    background: var(--surface-muted);
+  }
+
+  .shell-main {
+    min-width: 0;
+    grid-column: 2;
+    grid-row: 2;
+    overflow-wrap: anywhere;
+  }
+
+  .shell-drawer-trigger {
+    display: none;
+  }
+
+  .shell-drawer {
+    width: min(248px, 100%);
+    max-width: 100%;
+    height: 100svh;
+    max-height: 100svh;
+    margin: 0;
+    overflow-y: auto;
+    border: 0;
+    border-right: 1px solid var(--border-default);
+    padding: 20px;
+    background: var(--surface-default);
+    color: var(--text-primary);
+  }
+
+  .shell-drawer[open] {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+  }
+
+  .shell-drawer-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-8);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  /* UI PROPOSAL: 768/1200 boundaries await Product responsive context. */
+  @media (768px <= width < 1200px) {
+    .role-app-shell {
+      grid-template-columns: 72px minmax(0, 1fr);
+    }
+
+    .shell-sidebar .shell-brand-label,
+    .shell-sidebar .shell-nav-label {
+      display: none;
+    }
+
+    .shell-sidebar .shell-nav-item {
+      justify-content: center;
+      padding-inline: var(--space-4);
+    }
+  }
+
+  @media (width < 768px) {
+    .role-app-shell {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .shell-sidebar,
+    .shell-topbar-brand {
+      display: none;
+    }
+
+    .shell-topbar,
+    .shell-main {
+      grid-column: 1;
+    }
+
+    .shell-drawer-trigger {
+      display: inline-flex;
+    }
+  }
+}

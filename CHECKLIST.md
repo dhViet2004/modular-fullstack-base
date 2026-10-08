@@ -4,10 +4,10 @@
 
 ## Trạng thái hiện tại
 
-- **Phase hiện tại:** Phase 13 — CI
-- **Đang làm:** Kiểm chứng workflow GitHub Actions
-- **Bước tiếp theo:** Chạy workflow trên pull request hoặc push
-- **Blocker:** Không có
+- **Phase hiện tại:** Phase A.4 — Permission Guard Cleanup
+- **Đang làm:** A.1/A.2 DONE; A.3/A.4 implementation/verification VERIFIED; đối chiếu visual chi tiết PARTIAL
+- **Bước tiếp theo:** Đối chiếu chi tiết visual còn thiếu khi có nguồn Figma; chỉ triển khai Product sau khi có screenshot/context
+- **Blocker:** A.4 không có blocker; Figma MCP hết quota vẫn chặn chi tiết visual/asset và 75 frame Product & Handoff
 
 ## Quy ước trạng thái
 
@@ -136,6 +136,7 @@
 - [x] Tạo repository/service liên kết hoặc tạo user
 - [x] Tạo start/callback API và audit events
 - [x] Tạo frontend Google login/callback flow
+- [x] Sửa lỗi 404 Google OAuth local do API dự án khác chiếm cổng 4000: backend 4001/frontend 3002, đồng bộ API origin/CORS/callback; smoke test health/readiness/start/callback/link đạt và 5 frontend auth API tests pass; chưa kiểm chứng đăng nhập Google thật
 - [x] Verify migration, backend, frontend và smoke test
 - [x] Đồng bộ API/database docs và roadmap
 - [x] Thêm cờ bật/tắt email xác thực toàn hệ thống, chỉ SUPER_ADMIN được quản lý
@@ -161,6 +162,31 @@
 - [x] Frontend chạy lint, typecheck, test và build
 - [~] Kiểm chứng workflow trên GitHub Actions — actionlint và lệnh local đã đạt; chờ run trên push/PR
 
+## Phase A — Shared Design System
+
+- [x] A.1: Inter, semantic colors, typography 150%, spacing/radius và shared container co giãn tối đa 1280px; giữ nguyên layout feature hiện có
+- [x] A.1: Restyle navigation hiện tại, focus ring và skip link; không đổi authentication, RBAC, hooks hoặc API
+- [x] A.1: Frontend lint/typecheck/test/build pass; 29 test (11 contrast cases mới); Chrome headless pass 30 trường hợp trên 6 route ở 320/390/768/1280/1600px, keyboard/AX tree và tên tài khoản dài; API dùng fixture, không xác nhận integration backend thật
+- [x] A.2 — DONE: Button (6 variants), Input (text/email/password/search/native select), Card, RoleBadge, Switch, Checkbox, InlineAlert, Toast, ConfirmDialog, Skeleton và native indeterminate Progress; dùng semantic tokens và geometry đã xác minh
+- [x] A.2 — DONE: Native disabled/loading, labels/errors, keyboard/focus-visible, modal Escape/Tab/focus restore; giữ React Hook Form refs và không đổi API/hooks/schemas/RBAC
+- [x] A.2 — DONE: Refactor presentation tối thiểu LoginForm/RegisterForm, Card của hai auth page và RoleBadge trong navigation hiện có
+- [x] A.2 — DONE: Frontend lint/typecheck/test/build pass; 50 tests/7 files (16 component cases và 5 contrast cases mới); Chrome pass interactive checks và 25 route/width cases ở 320/390/768/1280/1600px, dialog fixture ở cả 5 độ rộng; login/register chống submit lặp và phục hồi sau lỗi; API fixtures, không gọi backend thật
+- [~] A.2 — PARTIAL: Đối chiếu visual từng state, per-role badge colors và assets icon gốc; dùng semantic/native/text fallback được ghi rõ trong DESIGN_SYSTEM.md, chưa xác nhận pixel fidelity
+- [x] A.3 — VERIFIED: AppShell/Sidebar dùng semantic tokens; expanded 248px, collapsed 72px, topbar 64px, avatar 32px; active/hover/disabled/focus; account dropdown dùng RoleBadge và LogoutButton hiện có
+- [x] A.3 — VERIFIED: Giữ AuthProvider, RoleDashboard, getNavigationItems, getPostLoginPath và quyền backend; ADMIN không có menu SUPER_ADMIN/email policy/cấp-gỡ ADMIN; không thêm route hoặc sửa Product content
+- [x] A.3 — VERIFIED: Drawer mobile native dialog với Escape/Tab/Shift+Tab/focus restore, đóng khi chọn route hoặc resize sang tablet; giữ skip link A.1; breakpoint <768 / 768–1199 / >=1200 được ghi UI PROPOSAL
+- [x] A.3 — VERIFIED: Frontend lint/typecheck/test/build pass; 55 tests/8 files; Chrome ở 320/390/768/1280/1600px, 25 route/width cases, 6 role-permission combinations trên mobile/desktop, active leaf, refresh thành công/thất bại và logout pending/completion cho 3 roles; API fixtures, không xác nhận backend integration thật
+- [~] A.3 — PARTIAL: Breakpoint/drawer và chi tiết visual Product chưa đối chiếu Figma; nav dùng text markers, avatar monogram, badge neutral; không xác nhận pixel fidelity hoặc assets gốc
+- [x] A.4 — VERIFIED: Sửa nguyên nhân `/super-admin` render EmailVerificationSetting là sibling ngoài guard; đưa setting thành children của RoleDashboard, chỉ render children sau khi hết loading, có user và có role SUPER_ADMIN; không ẩn bằng CSS hoặc tạo guard framework
+- [x] A.4 — VERIFIED: Phân biệt loading (`role=status`), guest/401 và thiếu quyền/403 (`role=alert`, guest có login link), SUPER_ADMIN; giữ AuthProvider/refresh/logout/API/hooks/schema/backend authorization và toàn bộ Product layout được phép
+- [x] A.4 — VERIFIED: 7 regression cases mới cho loading với/không có user, guest, MEMBER, ADMIN, SUPER_ADMIN đơn role/đa role; trước fix 5 failed/2 passed, sau fix 7 passed; frontend lint/typecheck/test/build PASS, tổng 62 tests/9 files
+- [x] A.4 — VERIFIED: Chrome production PASS tại 390/1280px cho guest/MEMBER/ADMIN/SUPER_ADMIN; giữ riêng refresh và /auth/me để chứng minh loading không gọi cấu hình, không có SUPER_ADMIN không mount/call API, có SUPER_ADMIN mới GET cấu hình; giữ checks A.3 ở 320/390/768/1280/1600px; dùng API fixtures
+- [ ] Product & Handoff — BLOCKED: 75 frame chưa có screenshot/context do quota; không triển khai screen/layout/flow từ inventory-only mapping
+
+Ghi chú A.4: `401/403` là trạng thái UI tương ứng AuthProvider, không đổi HTTP status của Next static page. Flow sau fix: refresh → /auth/me → AuthProvider → RoleDashboard guard → EmailVerificationSetting → API cấu hình khi SUPER_ADMIN; backend `authenticate → assertUserIsSuperAdmin → route handler → systemService → Prisma` giữ nguyên. Không thêm dependency, repository hoặc business rule.
+
+Ngoài scope A.4: AuthProvider hiện đưa mọi lỗi restore về `user=null`, chưa phân loại lỗi mạng/5xx riêng; giữ nguyên authentication logic theo yêu cầu. `system.routes.ts` hiện xử lý HTTP trực tiếp, không có controller riêng; không refactor backend. Figma/Product blockers ở trên vẫn giữ nguyên.
+
 ## Bổ sung phân vai giao diện
 
 - [x] Seed role `SUPER_ADMIN`, giữ `ADMIN` và `MEMBER`; kiểm tra seed trên database
@@ -168,7 +194,7 @@
 
 ## Blockers
 
-- Không có blocker hiện tại.
+- Figma MCP hết quota: chưa đọc được 75 Product & Handoff frames, native properties bổ sung, full variable dump và asset icons. Primitives A.2 và shell A.3 kiểm thử được độc lập bằng Chrome/API fixtures; visual Product vẫn BLOCKED.
 
 ## Quyết định đã chốt
 

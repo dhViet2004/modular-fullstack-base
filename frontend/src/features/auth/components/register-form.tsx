@@ -2,12 +2,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { InlineAlert } from "@/components/ui/feedback";
 import { useRegister } from "../hooks/use-register";
 import {
   registerSchema,
   type RegisterFormValues,
 } from "../schemas/register.schema";
-
 
 type ApiErrorResponse = {
   error?: {
@@ -15,7 +17,6 @@ type ApiErrorResponse = {
     message?: string;
   };
 };
-
 
 export function RegisterForm() {
   const registerMutation = useRegister();
@@ -88,94 +89,45 @@ export function RegisterForm() {
   }
 
   return (
-    <form
-      className="grid gap-5"
-      onSubmit={handleSubmit(onSubmit)}
-      noValidate
-    >
-      <div className="grid gap-2">
-        <label
-          className="font-mono text-xs font-semibold tracking-[0.08em] uppercase"
-          htmlFor="displayName"
-        >
-          Display name
-        </label>
-        <input
-          className="w-full rounded-none border border-[var(--ink)] bg-transparent px-3.5 py-3.25 font-[inherit] text-[var(--ink)] outline-none focus:border-[var(--signal)] focus:shadow-[4px_4px_0_rgba(237,93,42,0.24)]"
-          id="displayName"
-          type="text"
-          autoComplete="name"
-          placeholder="Nguyễn Văn A"
-          {...register("displayName")}
-        />
-        {errors.displayName ? (
-          <p className="m-0 text-sm leading-5 text-[#b52f1d]">
-            {errors.displayName.message}
-          </p>
-        ) : null}
-      </div>
+    <form className="grid gap-5" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <Input
+        label="Display name"
+        id="displayName"
+        type="text"
+        autoComplete="name"
+        placeholder="Nguyễn Văn A"
+        error={errors.displayName?.message}
+        {...register("displayName")}
+      />
 
-      <div className="grid gap-2">
-        <label
-          className="font-mono text-xs font-semibold tracking-[0.08em] uppercase"
-          htmlFor="email"
-        >
-          Email
-        </label>
-        <input
-          className="w-full rounded-none border border-[var(--ink)] bg-transparent px-3.5 py-3.25 font-[inherit] text-[var(--ink)] outline-none focus:border-[var(--signal)] focus:shadow-[4px_4px_0_rgba(237,93,42,0.24)]"
-          id="email"
-          type="email"
-          autoComplete="email"
-          placeholder="you@example.com"
-          {...register("email")}
-        />
-        {errors.email ? (
-          <p className="m-0 text-sm leading-5 text-[#b52f1d]">
-            {errors.email.message}
-          </p>
-        ) : null}
-      </div>
+      <Input
+        label="Email"
+        id="email"
+        type="email"
+        autoComplete="email"
+        placeholder="you@example.com"
+        error={errors.email?.message}
+        {...register("email")}
+      />
 
-      <div className="grid gap-2">
-        <label
-          className="font-mono text-xs font-semibold tracking-[0.08em] uppercase"
-          htmlFor="password"
-        >
-          Password
-        </label>
-        <input
-          className="w-full rounded-none border border-[var(--ink)] bg-transparent px-3.5 py-3.25 font-[inherit] text-[var(--ink)] outline-none focus:border-[var(--signal)] focus:shadow-[4px_4px_0_rgba(237,93,42,0.24)]"
-          id="password"
-          type="password"
-          autoComplete="new-password"
-          placeholder="At least 12 characters"
-          {...register("password")}
-        />
-        {errors.password ? (
-          <p className="m-0 text-sm leading-5 text-[#b52f1d]">
-            {errors.password.message}
-          </p>
-        ) : (
-          <p className="m-0 text-[0.82rem] opacity-65">
-            Use at least 12 characters.
-          </p>
-        )}
-      </div>
+      <Input
+        label="Password"
+        id="password"
+        type="password"
+        autoComplete="new-password"
+        placeholder="At least 12 characters"
+        hint="Use at least 12 characters."
+        error={errors.password?.message}
+        {...register("password")}
+      />
 
       {errors.root?.server ? (
-        <p className="m-0 text-sm leading-5 text-[#b52f1d]" role="alert">
-          {errors.root.server.message}
-        </p>
+        <InlineAlert variant="error">{errors.root.server.message}</InlineAlert>
       ) : null}
 
-      <button
-        className="min-h-12 cursor-pointer border border-[var(--ink)] bg-[var(--ink)] px-4.5 py-3 font-mono text-xs font-semibold tracking-[0.08em] text-[var(--paper)] uppercase hover:bg-[var(--signal)] hover:text-[var(--ink)] disabled:cursor-wait disabled:opacity-65"
-        type="submit"
-        disabled={registerMutation.isPending}
-      >
+      <Button type="submit" loading={registerMutation.isPending}>
         {registerMutation.isPending ? "Creating account..." : "Create account"}
-      </button>
+      </Button>
     </form>
   );
 }

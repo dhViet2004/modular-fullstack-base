@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const display = Space_Grotesk({
-  variable: "--font-display",
-  subsets: ["latin"],
-});
-const mono = IBM_Plex_Mono({
-  variable: "--font-mono",
-  weight: ["400", "500", "600"],
-  subsets: ["latin"],
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin", "vietnamese"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -23,8 +19,15 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="vi">
-      <body className={`${display.variable} ${mono.variable}`}>
-        <Providers>{children}</Providers>
+      <body className={`${inter.variable} app-shell`}>
+        <a className="skip-link" href="#main-content">
+          Bỏ qua điều hướng
+        </a>
+        <Providers>
+          <div className="app-content" id="main-content" tabIndex={-1}>
+            {children}
+          </div>
+        </Providers>
       </body>
     </html>
   );

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { Card } from "@/components/ui/card";
 import { LoginForm } from "@/features/auth/components/login-form";
 import { GoogleLoginButton } from "@/features/auth/components/google-login-button";
 
@@ -23,7 +24,7 @@ export default function LoginPage() {
         </Link>
       </header>
 
-      <section className="relative z-10 w-full max-w-[460px] border border-[var(--ink)] bg-[rgba(241,239,229,0.96)] p-[clamp(24px,5vw,42px)] shadow-[12px_12px_0_var(--acid)] max-sm:shadow-[7px_7px_0_var(--acid)]">
+      <Card className="relative z-10 w-full max-w-[460px]">
         <div className="mb-8">
           <p className="font-mono text-xs font-semibold tracking-[0.14em]">
             WELCOME BACK
@@ -47,7 +48,7 @@ export default function LoginPage() {
             Register
           </Link>
         </p>
-      </section>
+      </Card>
     </main>
   );
 }

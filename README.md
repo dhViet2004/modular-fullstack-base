@@ -86,6 +86,22 @@ pnpm dev
 - Backend readiness (kiểm tra PostgreSQL): `http://localhost:4000/ready`
 - API base: `http://localhost:4000/api/v1`
 
+Nếu cổng `3000`/`4000` đang được dự án khác sử dụng, có thể chạy frontend ở `3002` bằng `pnpm dev --port 3002` và backend ở `4001`. Đồng bộ cấu hình local:
+
+```env
+# backend/.env
+PORT=4001
+CORS_ORIGIN=http://localhost:3002
+PUBLIC_WEB_URL=http://localhost:3002
+GOOGLE_REDIRECT_URI=http://localhost:4001/api/v1/auth/google/callback
+
+# frontend/.env.local
+NEXT_PUBLIC_API_URL=http://localhost:4001/api/v1
+NEXT_PUBLIC_API_ORIGIN=http://localhost:4001
+```
+
+Khởi động lại backend sau khi đổi `.env`; khởi động lại frontend nếu chưa nhận cấu hình mới. Khai báo chính xác `GOOGLE_REDIRECT_URI` trong Google Cloud Console. Kiểm tra `GET http://localhost:4001/api/v1` trả tên `CoreStack API` trước khi thử Google OAuth; phản hồi `NotFoundException` có thể đến từ API của dự án khác đang chiếm cổng.
+
 Khi triển khai bằng Docker, chạy migration bằng target riêng trước khi khởi động API image:
 
 ```bash
@@ -153,6 +169,8 @@ Chỉ đánh dấu `[x]` khi đã chạy lệnh kiểm chứng trên working tre
 - [x] Worker pg-boss chạy tách biệt API process
 - [x] Files/storage với giới hạn upload trước khi buffer — local và Cloudflare R2 đã kiểm chứng
 - [~] CI chạy format, lint, typecheck, test, build và migration drift check — workflow đã tạo và lint YAML đạt; chờ run trên GitHub Actions
+- [~] Phase A — Shared Design System: A.1/A.2 DONE; A.3 AppShell/role navigation VERIFIED (lint/typecheck/test/build, 55 tests và Chrome 320/390/768/1280/1600px, drawer/session/logout); breakpoint UI PROPOSAL, visual/asset PARTIAL; Product & Handoff BLOCKED do quota, chưa thay nội dung screens
+- [x] A.4 — Permission Guard Cleanup: `/super-admin` chỉ mount cấu hình sau guard loading/user/SUPER_ADMIN; UI loading/401/403/allowed rõ ràng; lint/typecheck/test/build và Chrome PASS, 62 tests/9 files; giữ authentication/API/backend authorization
 
 Các rủi ro và bài học từ phiên bản cũ nằm trong `review-source/`; baseline mới phải giải quyết chúng bằng test và bằng chứng kiểm chứng, không kế thừa các dấu tick cũ.
 
