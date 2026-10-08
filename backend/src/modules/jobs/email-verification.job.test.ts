@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { send } = vi.hoisted(() => ({ send: vi.fn() }));
+const { send, isEmailVerificationEnabled } = vi.hoisted(() => ({
+  send: vi.fn(),
+  isEmailVerificationEnabled: vi.fn(),
+}));
 vi.mock("pg-boss", () => ({
   PgBoss: class {
     start = vi.fn().mockResolvedValue(this);
@@ -10,6 +13,9 @@ vi.mock("pg-boss", () => ({
 }));
 vi.mock("../auth/email-verification/email-verification.service.js", () => ({
   requestEmailVerification: vi.fn(),
+}));
+vi.mock("../system/system.service.js", () => ({
+  isEmailVerificationEnabled,
 }));
 
 import { ApplicationError } from "../../core/http/application-error.js";
@@ -22,7 +28,19 @@ import {
 const userId = "11111111-1111-4111-8111-111111111111";
 
 describe("email verification job", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    isEmailVerificationEnabled.mockResolvedValue(true);
+  });
+
+  it("does not enqueue when email verification is disabled", async () => {
+    isEmailVerificationEnabled.mockResolvedValue(false);
+    await expect(enqueueEmailVerification(userId)).resolves.toEqual({
+      accepted: false,
+      disabled: true,
+    });
+    expect(send).not.toHaveBeenCalled();
+  });
 
   it("queues only the user id", async () => {
     send.mockResolvedValue("job-id");
