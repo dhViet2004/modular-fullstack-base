@@ -8,6 +8,9 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import tailwind from "@tailwindcss/postcss";
 import { checkPublicAuth } from "../../../features/auth/tests/public-auth.browser-check.mjs";
+import { checkMember } from "../../../features/auth/tests/member.browser-check.mjs";
+import { checkAdmin } from "../../../features/users/tests/admin.browser-check.mjs";
+import { checkSuperAdmin } from "../../../features/system/tests/super-admin.browser-check.mjs";
 
 const frontend = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -117,9 +120,11 @@ async function key(keyName, shift = false) {
 }
 
 async function click(selector) {
-  const point = await evaluate(`(() => {
+  const point = await evaluate(`(async () => {
     const element = document.querySelector(${JSON.stringify(selector)});
     element.scrollIntoView({ block: 'center' });
+    // Native popover anchors settle after scrolling; measure the final hit target.
+    await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
     const rect = element.getBoundingClientRect();
     return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
   })()`);
@@ -151,12 +156,12 @@ async function viewport(width) {
   );
 }
 
-async function navigate(url) {
+async function navigate(url, expected = url) {
   await send("Page.navigate", { url });
   await until(
     () =>
       evaluate(
-        `location.href === ${JSON.stringify(url)} && document.readyState === 'complete'`,
+        `location.href === ${JSON.stringify(expected)} && document.readyState === 'complete'`,
       ),
     `navigate ${url}`,
   );
@@ -437,19 +442,70 @@ try {
   );
 
   if (app) {
-    await checkApp(app);
-    await send("Fetch.disable");
-    await checkPublicAuth({
-      origin: app,
-      profile,
-      socket,
-      send,
-      evaluate,
-      key,
-      click,
-      navigate,
-      until,
-    });
+    if (
+      !process.argv.includes("--member-only") &&
+      !process.argv.includes("--admin-only") &&
+      !process.argv.includes("--super-admin-only")
+    ) {
+      await checkApp(app);
+      await send("Fetch.disable");
+      await checkPublicAuth({
+        origin: app,
+        profile,
+        socket,
+        send,
+        evaluate,
+        key,
+        click,
+        navigate,
+        until,
+      });
+    }
+    if (
+      !process.argv.includes("--admin-only") &&
+      !process.argv.includes("--super-admin-only")
+    )
+      await checkMember({
+        origin: app,
+        profile,
+        socket,
+        send,
+        evaluate,
+        key,
+        click,
+        navigate,
+        until,
+      });
+    if (
+      !process.argv.includes("--member-only") &&
+      !process.argv.includes("--super-admin-only")
+    )
+      await checkAdmin({
+        origin: app,
+        profile,
+        socket,
+        send,
+        evaluate,
+        key,
+        click,
+        navigate,
+        until,
+      });
+    if (
+      !process.argv.includes("--member-only") &&
+      !process.argv.includes("--admin-only")
+    )
+      await checkSuperAdmin({
+        origin: app,
+        profile,
+        socket,
+        send,
+        evaluate,
+        key,
+        click,
+        navigate,
+        until,
+      });
     assert.deepEqual(browserErrors, [], "production runtime exceptions");
     await send("Page.captureScreenshot", {
       format: "png",
@@ -557,7 +613,7 @@ async function checkApp(origin) {
       payload = { user, access: { roles: [role], permissions } };
     } else if (url.pathname.endsWith("/auth/sessions"))
       payload = { sessions: [] };
-    else if (url.pathname.endsWith("/files")) payload = { files: [] };
+    else if (url.pathname.endsWith("/files")) payload = [];
     else if (
       url.pathname.endsWith("/users") &&
       permissions.includes("users:read")
@@ -661,20 +717,27 @@ async function checkApp(origin) {
     }
   }
 
+  const memberLinks = [
+    "/account",
+    "/account?tab=sessions",
+    "/account/files",
+    "/account?tab=security",
+  ];
   for (const [currentRole, granted, expected] of [
-    ["MEMBER", [], ["/account/files", "/account"]],
-    ["ADMIN", [], ["/admin", "/account/files", "/account"]],
+    ["MEMBER", [], memberLinks],
+    ["ADMIN", [], ["/admin", ...memberLinks]],
+    ["ADMIN", ["users:read"], ["/admin", "/admin/users", ...memberLinks]],
+    ["ADMIN", ["audit:read"], ["/admin", "/admin/audit-logs", ...memberLinks]],
     [
-      "ADMIN",
-      ["users:read"],
-      ["/admin", "/admin/users", "/account/files", "/account"],
+      "SUPER_ADMIN",
+      [],
+      [
+        "/super-admin",
+        "/super-admin?tab=email-verification",
+        "/super-admin?tab=rbac",
+        ...memberLinks,
+      ],
     ],
-    [
-      "ADMIN",
-      ["audit:read"],
-      ["/admin", "/admin/audit-logs", "/account/files", "/account"],
-    ],
-    ["SUPER_ADMIN", [], ["/super-admin", "/account/files", "/account"]],
     [
       "SUPER_ADMIN",
       ["users:read", "audit:read"],
@@ -682,8 +745,9 @@ async function checkApp(origin) {
         "/super-admin",
         "/admin/users",
         "/admin/audit-logs",
-        "/account/files",
-        "/account",
+        "/super-admin?tab=email-verification",
+        "/super-admin?tab=rbac",
+        ...memberLinks,
       ],
     ],
   ]) {
@@ -898,7 +962,7 @@ async function checkApp(origin) {
       );
       assert(
         await evaluate(
-          "!document.querySelector('.app-content').textContent.includes('EMAIL VERIFICATION')",
+          "!document.querySelector('.app-content').textContent.includes('Cài đặt xác thực email')",
         ),
       );
       holdRefresh = false;
@@ -948,9 +1012,13 @@ async function checkApp(origin) {
         await until(
           () =>
             evaluate(
-              "document.querySelector('.app-content').textContent.includes('EMAIL VERIFICATION')",
+              "document.querySelector('.app-content').textContent.includes('Cài đặt xác thực email')",
             ),
           "authorized settings mount",
+        );
+        await until(
+          () => settingsRequests().length === 1,
+          "authorized dashboard setting read",
         );
         assert.equal(settingsRequests().length, 1);
         assert.equal(settingsRequests()[0].method, "GET");
@@ -970,7 +1038,7 @@ async function checkApp(origin) {
         );
         assert(
           await evaluate(
-            "!document.querySelector('.app-content').textContent.includes('EMAIL VERIFICATION')",
+            "!document.querySelector('.app-content').textContent.includes('Cài đặt xác thực email')",
           ),
         );
         if (!role)
@@ -1132,7 +1200,7 @@ async function checkShell(width, route, origin) {
     await key("Tab", true);
     assert.equal(
       await evaluate("document.activeElement.getAttribute('href')"),
-      "/account",
+      "/account?tab=security",
     );
     await key("Tab");
     assert.equal(

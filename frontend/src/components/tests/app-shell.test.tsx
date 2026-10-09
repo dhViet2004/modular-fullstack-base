@@ -8,10 +8,12 @@ import { Sidebar } from "../app-shell";
 
 const context = vi.hoisted(() => ({
   pathname: "/account",
+  tab: null as string | null,
   user: null as AuthenticatedUser | null,
 }));
 vi.mock("next/navigation", () => ({
   usePathname: () => context.pathname,
+  useSearchParams: () => ({ get: () => context.tab }),
   useRouter: () => ({ replace: vi.fn() }),
 }));
 vi.mock("@/features/auth/components/auth-provider", () => ({
@@ -31,6 +33,7 @@ function renderNavigation() {
 describe("app shell navigation", () => {
   beforeEach(() => {
     context.pathname = "/account";
+    context.tab = null;
     context.user = {
       id: "test-user",
       email: "test@example.com",
@@ -62,12 +65,24 @@ describe("app shell navigation", () => {
     {
       role: "MEMBER",
       permissions: [],
-      expected: ["/account/files", "/account"],
+      expected: [
+        "/account",
+        "/account?tab=sessions",
+        "/account/files",
+        "/account?tab=security",
+      ],
     },
     {
       role: "ADMIN",
       permissions: ["users:read"],
-      expected: ["/admin", "/admin/users", "/account/files", "/account"],
+      expected: [
+        "/admin",
+        "/admin/users",
+        "/account",
+        "/account?tab=sessions",
+        "/account/files",
+        "/account?tab=security",
+      ],
     },
     {
       role: "SUPER_ADMIN",
@@ -76,8 +91,12 @@ describe("app shell navigation", () => {
         "/super-admin",
         "/admin/users",
         "/admin/audit-logs",
-        "/account/files",
+        "/super-admin?tab=email-verification",
+        "/super-admin?tab=rbac",
         "/account",
+        "/account?tab=sessions",
+        "/account/files",
+        "/account?tab=security",
       ],
     },
   ])(
@@ -95,6 +114,24 @@ describe("app shell navigation", () => {
       expect(html).toContain('role="group" aria-label="Account options"');
       expect(html).toContain('aria-label="Account options"');
       expect(html).toContain('aria-modal="true"');
+    },
+  );
+
+  it.each([null, "info", "sessions", "security", "unknown"])(
+    "marks exactly one sidebar view for tab %s without adding a permission gate",
+    (tab) => {
+      context.tab = tab;
+      const html = renderNavigation();
+      const navigation = html.match(/<nav[^>]*>(.*?)<\/nav>/)?.[1] ?? "";
+      const current = [
+        ...navigation.matchAll(/<a([^>]*aria-current="page"[^>]*)>/g),
+      ];
+      expect(current).toHaveLength(1);
+      const expected =
+        tab === "sessions" || tab === "security"
+          ? `/account?tab=${tab}`
+          : "/account";
+      expect(current[0][1]).toContain(`href="${expected}"`);
     },
   );
 
@@ -118,4 +155,22 @@ describe("app shell navigation", () => {
     expect(html).not.toContain('href="/unavailable"');
     expect(html).not.toContain("tabindex");
   });
+
+  it.each([null, "email-verification", "rbac", "unknown"])(
+    "marks the SUPER_ADMIN tab %s without marking its dashboard too",
+    (tab) => {
+      context.user!.roles = ["SUPER_ADMIN"];
+      context.pathname = "/super-admin";
+      context.tab = tab;
+      const html = renderNavigation();
+      const navigation = html.match(/<nav[^>]*>(.*?)<\/nav>/)?.[1] ?? "";
+      const current = [
+        ...navigation.matchAll(/<a([^>]*aria-current="page"[^>]*)>/g),
+      ];
+      expect(current).toHaveLength(1);
+      expect(current[0][1]).toContain(
+        `href="${!tab || tab === "unknown" ? "/super-admin" : `/super-admin?tab=${tab}`}"`,
+      );
+    },
+  );
 });

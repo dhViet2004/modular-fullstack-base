@@ -126,7 +126,7 @@ export async function checkPublicAuth({
         if (fileMode === "once") fileMode = "ok";
         return fulfill(requestId, 401, {}, "UNAUTHENTICATED");
       }
-      return fulfill(requestId, 200, { files: [] });
+      return fulfill(requestId, 200, []);
     }
     return fulfill(requestId, 403, {}, "FORBIDDEN");
   };
@@ -372,7 +372,7 @@ export async function checkPublicAuth({
     await text("Kết nối bị gián đoạn");
     assert(
       await evaluate(
-        "!!document.querySelector('.role-app-shell') && document.querySelector('.app-content').textContent.includes('Email đã xác thực')",
+        "!!document.querySelector('.role-app-shell') && document.querySelector('.app-content').textContent.includes('Đã xác minh')",
       ),
       "public verification updates metadata while preserving restore-error",
     );
@@ -500,7 +500,7 @@ export async function checkPublicAuth({
         await text("Kết nối bị gián đoạn");
         assert(
           await evaluate(
-            "!!document.querySelector('.role-app-shell') && document.body.textContent.includes('Kho tệp cá nhân')",
+            "!!document.querySelector('.role-app-shell') && document.body.textContent.includes('Tệp của tôi')",
           ),
           "temporary failures retain shell and content",
         );
@@ -508,11 +508,11 @@ export async function checkPublicAuth({
         await click('.role-app-shell [role="alert"] button');
         await until(
           () =>
-            evaluate("!document.querySelector('.role-app-shell [role=alert]')"),
+            evaluate("!document.querySelector('.shell-main > [role=alert]')"),
           "session retry resolves without guest",
         );
       } else {
-        await text("Kho tệp cá nhân");
+        await text("Tệp của tôi");
         assert(
           !(await evaluate(
             "document.body.textContent.includes('Phiên đăng nhập đã hết hạn')",

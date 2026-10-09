@@ -3,7 +3,11 @@ import {
   cancelSessionRefresh,
   refreshAccessToken,
 } from "@/lib/axios/client";
-import { clearAccessToken, setAccessToken } from "@/lib/auth/access-token";
+import {
+  clearAccessToken,
+  setAccessToken,
+  invalidateSessionRequests,
+} from "@/lib/auth/access-token";
 import type { RegisterFormValues } from "../schemas/register.schema";
 import type { LoginFormValues } from "../schemas/login.schema";
 
@@ -30,9 +34,10 @@ export type AuthSession = {
   current: boolean;
 };
 
-export async function getSessions() {
+export async function getSessions(signal?: AbortSignal) {
   const response = await apiClient.get<{ data: { sessions: AuthSession[] } }>(
     "/auth/sessions",
+    { signal },
   );
   return response.data.data.sessions;
 }
@@ -111,6 +116,7 @@ export async function registerUser(
 
 // Đăng nhập, giữ access token trong bộ nhớ và trả user cho AuthContext.
 export async function loginUser(values: LoginFormValues) {
+  invalidateSessionRequests();
   const response = await apiClient.post<LoginResponse>("/auth/login", values);
 
   setAccessToken(response.data.data.accessToken);

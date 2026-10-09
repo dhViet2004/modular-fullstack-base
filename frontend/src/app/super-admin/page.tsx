@@ -1,11 +1,14 @@
 import { RoleDashboard } from "@/features/auth/components/role-dashboard";
-import { EmailVerificationSetting } from "@/features/system/components/email-verification-setting";
+import { Suspense } from "react";
+import { SuperAdminWorkspace } from "@/features/system/components/super-admin-workspace";
 
 export default function SuperAdminPage() {
   return (
-    <main className="min-h-screen px-[clamp(24px,6vw,88px)] py-16">
+    <main className="admin-page">
       <RoleDashboard role="SUPER_ADMIN">
-        <EmailVerificationSetting />
+        <Suspense fallback={<p role="status">Đang tải trang...</p>}>
+          <SuperAdminWorkspace />
+        </Suspense>
       </RoleDashboard>
     </main>
   );

@@ -13,7 +13,10 @@ import {
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { isInvalidRefreshCredential } from "@/lib/axios/client";
-import { clearAccessToken } from "@/lib/auth/access-token";
+import {
+  clearAccessToken,
+  invalidateSessionRequests,
+} from "@/lib/auth/access-token";
 
 import {
   restoreAuthenticatedSession,
@@ -29,6 +32,11 @@ type AuthContextValue = {
   beginLogout: () => void;
   setAuthenticatedUser: (user: AuthenticatedUser) => void;
   updateVerifiedEmail: (user: RegisteredUser) => void;
+  updatePasswordStatus: (
+    user: Pick<AuthenticatedUser, "id" | "hasPassword"> & {
+      updatedAt?: string;
+    },
+  ) => void;
   clearAuthenticatedUser: () => void;
 };
 
@@ -65,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const beginLogout = useCallback(() => {
+    invalidateSessionRequests();
     loggingOut.current = true;
     version.current++;
     previousSession.current = false;
@@ -82,6 +91,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         : currentUser,
     );
   }, []);
+
+  const updatePasswordStatus = useCallback(
+    (
+      updatedUser: Pick<AuthenticatedUser, "id" | "hasPassword"> & {
+        updatedAt?: string;
+      },
+    ) => {
+      if (loggingOut.current) return;
+      setUser((currentUser) =>
+        currentUser?.id === updatedUser.id
+          ? {
+              ...currentUser,
+              hasPassword: updatedUser.hasPassword,
+              updatedAt: updatedUser.updatedAt ?? currentUser.updatedAt,
+            }
+          : currentUser,
+      );
+    },
+    [],
+  );
 
   const clearAuthenticatedUser = useCallback(() => {
     beginLogout();
@@ -108,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const retrySession = useCallback(() => {
     if (loggingOut.current) return;
+    invalidateSessionRequests();
     const attempt = ++version.current;
     setStatus("loading");
     void restoreAuthenticatedSession()
@@ -147,6 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       beginLogout,
       setAuthenticatedUser,
       updateVerifiedEmail,
+      updatePasswordStatus,
       clearAuthenticatedUser,
     }),
     [
@@ -156,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       beginLogout,
       setAuthenticatedUser,
       updateVerifiedEmail,
+      updatePasswordStatus,
       clearAuthenticatedUser,
     ],
   );

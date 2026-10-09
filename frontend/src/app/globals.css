@@ -2,6 +2,8 @@
 @import "../components/ui/primitives.css";
 @import "../components/app-shell.css";
 @import "../features/auth/components/auth.css";
+@import "../components/member.css";
+@import "../components/admin.css";
 
 :root {
   --background-default: #f8fafc;
@@ -19,6 +21,7 @@
   --status-danger-hover: #b91c1c;
   --surface-success: #f0fdf4;
   --surface-danger: #fef2f2;
+  --surface-warning: #fffbeb;
   --text-danger: #b91c1c;
   --text-success: #15803d;
   --text-warning: #92400e;

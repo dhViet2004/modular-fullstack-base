@@ -1,6 +1,7 @@
 export const PERMISSIONS = {
   USERS_READ: "users:read",
   AUDIT_READ: "audit:read",
+  ROLES_MANAGE: "roles:manage",
 } as const;
 
 export const ROLES = {
@@ -31,8 +32,19 @@ export function getNavigationItems(roles: string[], permissions: string[]) {
     ...(permissions.includes(PERMISSIONS.AUDIT_READ)
       ? [{ href: "/admin/audit-logs", label: "Audit log" }]
       : []),
-    { href: "/account/files", label: "Quản lý file" },
-    { href: "/account", label: "Tài khoản" },
+    ...(isSuperAdmin
+      ? [
+          {
+            href: "/super-admin?tab=email-verification",
+            label: "Xác thực email",
+          },
+          { href: "/super-admin?tab=rbac", label: "Vai trò và quyền" },
+        ]
+      : []),
+    { href: "/account", label: "Tổng quan" },
+    { href: "/account?tab=sessions", label: "Phiên đăng nhập" },
+    { href: "/account/files", label: "Tệp của tôi" },
+    { href: "/account?tab=security", label: "Bảo mật" },
   ];
 }
 

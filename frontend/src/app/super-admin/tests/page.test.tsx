@@ -15,8 +15,8 @@ const setting = vi.hoisted(() => vi.fn());
 vi.mock("@/features/auth/components/auth-provider", () => ({
   useAuth: () => auth,
 }));
-vi.mock("@/features/system/components/email-verification-setting", () => ({
-  EmailVerificationSetting: () => {
+vi.mock("@/features/system/components/super-admin-workspace", () => ({
+  SuperAdminWorkspace: () => {
     setting();
     return <section>Protected email setting</section>;
   },

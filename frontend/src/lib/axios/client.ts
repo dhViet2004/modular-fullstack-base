@@ -3,6 +3,7 @@ import axios, { type InternalAxiosRequestConfig } from "axios";
 import {
   clearAccessToken,
   getAccessToken,
+  getAuthRequestVersion,
   setAccessToken,
 } from "@/lib/auth/access-token";
 
@@ -25,6 +26,7 @@ const refreshClient = axios.create({
 
 type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _authRetry?: boolean;
+  _sessionVersion?: number;
 };
 
 type RefreshResponse = {
@@ -37,6 +39,7 @@ type RefreshResponse = {
 
 let refreshPromise: Promise<string> | null = null;
 let refreshController: AbortController | null = null;
+let refreshVersion: number | null = null;
 
 export function isInvalidRefreshCredential(error: unknown): boolean {
   return (
@@ -54,6 +57,7 @@ export function cancelSessionRefresh(): void {
   refreshController?.abort();
   refreshController = null;
   refreshPromise = null;
+  refreshVersion = null;
   clearAccessToken();
 }
 
@@ -72,25 +76,37 @@ function isAuthFlowRequest(url: string | undefined): boolean {
 
 // Gọi endpoint refresh bằng Axios client riêng để tránh interceptor tự gọi lặp vô hạn.
 export function refreshAccessToken(): Promise<string> {
+  if (refreshPromise && refreshVersion !== getAuthRequestVersion()) {
+    refreshController?.abort();
+    refreshController = null;
+    refreshPromise = null;
+  }
   if (!refreshPromise) {
     const controller = new AbortController();
     const previousToken = getAccessToken();
+    const sessionVersion = getAuthRequestVersion();
+    refreshVersion = sessionVersion;
     refreshController = controller;
     refreshPromise = refreshClient
       .post<RefreshResponse>("/auth/refresh", undefined, {
         signal: controller.signal,
       })
       .then((response) => {
-        if (controller.signal.aborted || getAccessToken() !== previousToken) {
+        if (
+          controller.signal.aborted ||
+          getAccessToken() !== previousToken ||
+          getAuthRequestVersion() !== sessionVersion
+        ) {
           throw new axios.CanceledError("Session refresh superseded");
         }
         const token = response.data.data.accessToken;
-        setAccessToken(token);
+        setAccessToken(token, true);
         return token;
       })
       .catch((error: unknown) => {
         if (
           !controller.signal.aborted &&
+          getAuthRequestVersion() === sessionVersion &&
           getAccessToken() === previousToken &&
           !axios.isCancel(error)
         ) {
@@ -107,6 +123,7 @@ export function refreshAccessToken(): Promise<string> {
         if (refreshController === controller) {
           refreshController = null;
           refreshPromise = null;
+          refreshVersion = null;
         }
       });
   }
@@ -119,6 +136,10 @@ apiClient.interceptors.request.use((config) => {
   const token = getAccessToken();
 
   if (token && !isAuthFlowRequest(config.url)) {
+    const scoped = config as RetryableRequestConfig;
+    scoped._sessionVersion ??= getAuthRequestVersion();
+    if (scoped._sessionVersion !== getAuthRequestVersion())
+      throw new axios.CanceledError("Session request superseded");
     config.headers.Authorization = `Bearer ${token}`;
   }
 
@@ -145,9 +166,16 @@ apiClient.interceptors.response.use(undefined, async (error: unknown) => {
   }
 
   config._authRetry = true;
+  const sessionVersion = config._sessionVersion;
+  if (config.signal?.aborted || sessionVersion !== getAuthRequestVersion())
+    return Promise.reject(
+      new axios.CanceledError("Session request superseded"),
+    );
 
   try {
     const token = await refreshAccessToken();
+    if (config.signal?.aborted || sessionVersion !== getAuthRequestVersion())
+      throw new axios.CanceledError("Session request superseded");
     config.headers.Authorization = `Bearer ${token}`;
     return apiClient(config);
   } catch (refreshError: unknown) {

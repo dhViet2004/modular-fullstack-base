@@ -2,16 +2,17 @@
 
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-
 import { queryKeys } from "@/lib/query/query-keys";
-import { getUsers } from "../api/users.api";
+import { getEmailVerificationSetting } from "../api/system.api";
 
-// Quản lý server state của danh sách user bằng TanStack Query.
-export function useUsers(accountId: string, enabled: boolean) {
+export function useEmailVerificationSetting(
+  accountId: string,
+  enabled: boolean,
+) {
   const client = useQueryClient();
   useEffect(
     () => () => {
-      const queryKey = queryKeys.users.list(accountId);
+      const queryKey = queryKeys.system.emailVerification(accountId);
       void client.cancelQueries({ queryKey, exact: true });
       client.removeQueries({ queryKey, exact: true });
     },
@@ -20,14 +21,16 @@ export function useUsers(accountId: string, enabled: boolean) {
   useEffect(() => {
     if (!enabled)
       void client.cancelQueries({
-        queryKey: queryKeys.users.list(accountId),
+        queryKey: queryKeys.system.emailVerification(accountId),
         exact: true,
       });
   }, [accountId, client, enabled]);
   return useQuery({
-    queryKey: queryKeys.users.list(accountId),
-    queryFn: ({ signal }) => getUsers(signal),
+    queryKey: queryKeys.system.emailVerification(accountId),
+    queryFn: ({ signal }) => getEmailVerificationSetting(signal),
     enabled,
     retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }

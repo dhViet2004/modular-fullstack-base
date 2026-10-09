@@ -9,9 +9,18 @@ import { useRequestEmailVerification } from "../hooks/use-request-email-verifica
 
 type ApiErrorResponse = { error?: { code?: string } };
 
-export function EmailVerificationNotice() {
+export function EmailVerificationNotice({
+  mutation: sharedMutation,
+  className = "",
+  title,
+}: {
+  mutation?: ReturnType<typeof useRequestEmailVerification>;
+  className?: string;
+  title?: string;
+}) {
   const { user } = useAuth();
-  const mutation = useRequestEmailVerification();
+  const ownMutation = useRequestEmailVerification();
+  const mutation = sharedMutation ?? ownMutation;
 
   if (!user || user.emailVerifiedAt) return null;
 
@@ -22,7 +31,11 @@ export function EmailVerificationNotice() {
       "EMAIL_VERIFICATION_RATE_LIMITED";
 
   return (
-    <section className="auth-email-notice" aria-label="Email chưa xác minh">
+    <section
+      className={"auth-email-notice " + className}
+      aria-label="Email chưa xác minh"
+    >
+      {title && <p>{title}</p>}
       <p>Kiểm tra hộp thư của {user.email}.</p>
       <Button
         variant="secondary"

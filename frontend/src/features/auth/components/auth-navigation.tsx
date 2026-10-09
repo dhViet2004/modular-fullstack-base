@@ -1,18 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useId, type ReactNode } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useId, type ReactNode } from "react";
 import { AppShell, Sidebar } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { RoleBadge } from "@/components/ui/role-badge";
 import { InlineAlert } from "@/components/ui/feedback";
 
 import { getNavigationItems, getRoleFlags } from "../permissions";
-import { getPostLoginPath } from "../post-login-route";
+import { getAccountTab, getPostLoginPath } from "../post-login-route";
 import { useAuth } from "./auth-provider";
 import { LogoutButton } from "./logout-button";
 import { SessionRecovery } from "./session-recovery";
+
+function AccountNavigation({
+  items,
+  pathname,
+}: {
+  items: ReturnType<typeof getNavigationItems>;
+  pathname: string;
+}) {
+  const value = useSearchParams().get("tab");
+  const tab = getAccountTab(value);
+  const activePath =
+    pathname === "/account" && tab !== "overview"
+      ? "/account?tab=" + tab
+      : pathname === "/super-admin" &&
+          (value === "email-verification" || value === "rbac")
+        ? "/super-admin?tab=" + value
+        : pathname;
+  return <Sidebar items={items} pathname={activePath} />;
+}
 
 export function AuthNavigation({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -36,15 +55,15 @@ export function AuthNavigation({ children }: { children: ReactNode }) {
 
   const { isSuperAdmin, isAdmin } = getRoleFlags(user.roles);
   const roleLabel = isSuperAdmin ? "SUPER ADMIN" : isAdmin ? "ADMIN" : "MEMBER";
+  const items = getNavigationItems(user.roles, user.permissions);
 
   return (
     <AppShell
       homeHref={getPostLoginPath(user.roles)}
       navigation={
-        <Sidebar
-          items={getNavigationItems(user.roles, user.permissions)}
-          pathname={pathname}
-        />
+        <Suspense fallback={<Sidebar items={items} pathname={pathname} />}>
+          <AccountNavigation items={items} pathname={pathname} />
+        </Suspense>
       }
       account={
         <>

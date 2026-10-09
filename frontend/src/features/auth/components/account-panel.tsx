@@ -1,47 +1,542 @@
-﻿"use client";
+"use client";
+
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { changePassword, getCurrentUser, getSessions, revokeSession, type AuthSession } from "../api/auth.api";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import axios from "axios";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { RoleBadge } from "@/components/ui/role-badge";
+import { InlineAlert, Skeleton } from "@/components/ui/feedback";
+import {
+  changePassword,
+  getCurrentUser,
+  getSessions,
+  revokeSession,
+  type AuthSession,
+  type AuthenticatedUser,
+} from "../api/auth.api";
+import { getAccountTab } from "../post-login-route";
+import { getNavigationItems } from "../permissions";
+import { useLogout } from "../hooks/use-logout";
 import { useAuth } from "./auth-provider";
 import { EmailVerificationNotice } from "./email-verification-notice";
-import { LogoutButton } from "./logout-button";
 
-type AccountTab = "overview" | "security" | "sessions";
-const tabs: { id: AccountTab; label: string; detail: string }[] = [
-  { id: "overview", label: "Tổng quan", detail: "Thông tin tài khoản" },
-  { id: "security", label: "Bảo mật", detail: "Mật khẩu và xác thực" },
-  { id: "sessions", label: "Phiên đăng nhập", detail: "Thiết bị đang hoạt động" },
-];
+function date(value: string) {
+  return new Date(value).toLocaleString("vi-VN");
+}
 
 export function AccountPanel() {
-  const { user, isLoading, setAuthenticatedUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<AccountTab>("overview");
-  const [sessions, setSessions] = useState<AuthSession[]>([]);
-  const [message, setMessage] = useState("");
-  useEffect(() => { if (user) void getSessions().then(setSessions); }, [user]);
-  if (isLoading) return <p className="font-mono text-sm">Đang khôi phục phiên...</p>;
-  if (!user) return <p>Bạn chưa đăng nhập. <Link className="underline" href="/login">Đăng nhập</Link></p>;
-  const hasPassword = user.hasPassword;
-  async function submitPassword(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const data = new FormData(event.currentTarget);
-    try {
-      await changePassword(String(data.get("newPassword")), hasPassword ? String(data.get("currentPassword")) : undefined);
-      setAuthenticatedUser(await getCurrentUser()); event.currentTarget.reset();
-      setMessage(hasPassword ? "Đã đổi mật khẩu." : "Đã đặt mật khẩu. Bạn có thể đăng nhập bằng email và mật khẩu.");
-    } catch { setMessage(hasPassword ? "Mật khẩu hiện tại không đúng hoặc mật khẩu mới chưa hợp lệ." : "Không thể đặt mật khẩu mới."); }
-  }
-  return <section className="w-full max-w-6xl">
-    <EmailVerificationNotice />
-    <header className="mt-5 border border-[var(--ink)] bg-[var(--ink)] p-6 text-[var(--paper)] sm:p-8">
-      <div className="flex flex-wrap items-start justify-between gap-6"><div><p className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--acid)]">Không gian cá nhân</p><h1 className="mt-3 text-4xl tracking-[-0.06em] sm:text-6xl">{user.displayName ?? "Tài khoản"}</h1><p className="mt-3 text-sm text-[var(--paper)]/70">{user.email}</p></div><div className="flex items-center gap-3">{user.permissions.includes("users:read") && <Link className="border border-[var(--paper)]/40 px-4 py-2 text-sm hover:bg-[var(--paper)] hover:text-[var(--ink)]" href="/admin/users">Quản trị</Link>}<LogoutButton /></div></div>
-    </header>
-    <div className="mt-5 grid gap-5 lg:grid-cols-[240px_1fr]">
-      <nav aria-label="Tùy chọn tài khoản" className="h-fit border border-[var(--ink)] bg-[var(--paper)] p-3"><p className="px-3 py-2 font-mono text-[11px] uppercase tracking-[0.16em] opacity-60">Tài khoản</p><div className="grid gap-1">{tabs.map((tab) => <button className={`flex items-center justify-between px-3 py-3 text-left transition ${activeTab === tab.id ? "bg-[var(--signal)] text-[var(--paper)]" : "hover:bg-[var(--acid)]"}`} key={tab.id} onClick={() => { setActiveTab(tab.id); setMessage(""); }} type="button"><span className="text-sm font-semibold">{tab.label}</span><span className="font-mono text-[10px] opacity-60">{tab.id === "overview" ? "01" : tab.id === "security" ? "02" : "03"}</span></button>)}</div></nav>
-      <div className="min-w-0">
-        {activeTab === "overview" && <div className="grid gap-5 sm:grid-cols-2"><article className="border border-[var(--ink)] bg-[var(--paper)] p-6 sm:col-span-2"><p className="font-mono text-xs uppercase tracking-[0.16em] opacity-60">Tổng quan</p><h2 className="mt-3 text-3xl tracking-[-0.04em]">Chào mừng trở lại.</h2><p className="mt-3 max-w-xl text-sm leading-6 opacity-70">Quản lý thông tin đăng nhập, theo dõi các phiên đang hoạt động và giữ tài khoản của bạn an toàn.</p></article><article className="border border-[var(--ink)] bg-[var(--acid)] p-6"><p className="font-mono text-xs uppercase tracking-[0.16em]">Email</p><p className="mt-8 break-all text-lg font-semibold">{user.email}</p><p className="mt-2 text-sm opacity-70">Địa chỉ dùng để đăng nhập và nhận thông báo.</p></article><article className="border border-[var(--ink)] bg-[var(--paper)] p-6"><p className="font-mono text-xs uppercase tracking-[0.16em]">Trạng thái</p><p className="mt-8 text-lg font-semibold">{user.emailVerifiedAt ? "Email đã xác thực" : "Chờ xác thực email"}</p><p className="mt-2 text-sm opacity-70">Bạn có thể cập nhật bảo mật ở tab bên cạnh.</p></article></div>}
-        {activeTab === "security" && <div className="space-y-5"><form onSubmit={submitPassword} className="border border-[var(--ink)] bg-[var(--paper)] p-6 sm:p-8"><p className="font-mono text-xs uppercase tracking-[0.16em] opacity-60">Mật khẩu</p><h2 className="mt-3 text-3xl tracking-[-0.04em]">{hasPassword ? "Đổi mật khẩu" : "Đặt mật khẩu"}</h2><div className="mt-6 grid max-w-lg gap-3">{hasPassword && <input className="border border-[var(--ink)] bg-transparent p-3 outline-none focus:ring-2 focus:ring-[var(--signal)]" name="currentPassword" type="password" placeholder="Mật khẩu hiện tại" required />}<input className="border border-[var(--ink)] bg-transparent p-3 outline-none focus:ring-2 focus:ring-[var(--signal)]" name="newPassword" type="password" minLength={12} placeholder="Mật khẩu mới (ít nhất 12 ký tự)" required /><button className="w-fit bg-[var(--ink)] px-5 py-3 text-sm font-semibold text-[var(--paper)] hover:bg-[var(--signal)] hover:text-[var(--paper)]" type="submit">{hasPassword ? "Cập nhật mật khẩu" : "Đặt mật khẩu"}</button>{message && <p className="text-sm" role="status">{message}</p>}</div></form><article className="border border-[var(--ink)] bg-[var(--paper)] p-6 sm:p-8"><p className="font-mono text-xs uppercase tracking-[0.16em] opacity-60">Xác thực 2 bước</p><h2 className="mt-3 text-2xl">Thêm một lớp bảo vệ</h2><p className="mt-2 text-sm opacity-70">Tính năng đang được chuẩn bị.</p></article></div>}
-        {activeTab === "sessions" && <article className="border border-[var(--ink)] bg-[var(--paper)] p-6 sm:p-8"><p className="font-mono text-xs uppercase tracking-[0.16em] opacity-60">Phiên đăng nhập</p><h2 className="mt-3 text-3xl tracking-[-0.04em]">Thiết bị đang hoạt động</h2><p className="mt-2 text-sm opacity-70">Thu hồi những phiên bạn không còn nhận ra hoặc sử dụng.</p><ul className="mt-8 divide-y divide-[var(--line)] border-y border-[var(--line)]">{sessions.map((session) => <li className="flex flex-wrap items-center justify-between gap-4 py-4" key={session.id}><div><p className="text-sm font-semibold">{session.current ? "Thiết bị này" : "Phiên đăng nhập"}</p><p className="mt-1 text-xs opacity-60">{new Date(session.createdAt).toLocaleString("vi-VN")}</p></div>{!session.current && <button className="text-sm underline underline-offset-4" type="button" onClick={() => void revokeSession(session.id).then(() => setSessions((items) => items.filter((item) => item.id !== session.id)))}>Thu hồi</button>}</li>)}</ul></article>}
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+  const value = useSearchParams().get("tab");
+  const tab = getAccountTab(value);
+  useEffect(() => {
+    if (value === "info") router.replace("/account", { scroll: false });
+  }, [router, value]);
+  if (isLoading)
+    return (
+      <div role="status">
+        <p>Đang khôi phục phiên...</p>
+        <Skeleton />
       </div>
-    </div>
-  </section>;
+    );
+  if (!user)
+    return (
+      <p role="alert">
+        Bạn chưa đăng nhập. <Link href="/login">Đăng nhập</Link>
+      </p>
+    );
+  return <AccountContent key={user.id} user={user} tab={tab} />;
+}
+
+function AccountContent({
+  user,
+  tab,
+}: {
+  user: AuthenticatedUser;
+  tab: ReturnType<typeof getAccountTab>;
+}) {
+  if (tab === "security") return <AccountSecurity user={user} />;
+  if (tab === "sessions") return <AccountSessions user={user} />;
+  return <AccountDashboard user={user} />;
+}
+
+function AccountDashboard({ user }: { user: AuthenticatedUser }) {
+  const shortcuts = getNavigationItems(user.roles, user.permissions).filter(
+    (item) => !item.href.startsWith("/account"),
+  );
+  return (
+    <section className="member-view" aria-labelledby="dashboard-title">
+      <header className="member-heading">
+        <h1 id="dashboard-title">Tài khoản của tôi</h1>
+        <p>Hồ sơ, quyền truy cập và bảo mật của bạn.</p>
+      </header>
+      <Card>
+        <div className="member-profile">
+          <span className="shell-avatar member-avatar" aria-hidden="true">
+            {(user.displayName || user.email)
+              .slice(0, 2)
+              .toLocaleUpperCase("vi-VN")}
+          </span>
+          <div>
+            <h2>{user.displayName ?? "Tài khoản"}</h2>
+            <p className="member-muted">{user.email}</p>
+          </div>
+        </div>
+        <div className="member-badges">
+          <span
+            className={
+              "member-badge " +
+              (user.status === "ACTIVE" ? "member-success" : "member-warning")
+            }
+          >
+            {user.status === "ACTIVE" ? "Đang hoạt động" : "Tạm khóa"} ·{" "}
+            {user.status}
+          </span>
+        </div>
+        <dl className="member-fields">
+          <div>
+            <dt>Ngày tham gia</dt>
+            <dd>{date(user.createdAt)}</dd>
+          </div>
+          <div>
+            <dt>Xác minh email</dt>
+            <dd>
+              {user.emailVerifiedAt
+                ? "Đã xác minh · " + date(user.emailVerifiedAt)
+                : "Chưa xác minh"}
+            </dd>
+          </div>
+        </dl>
+        <EmailVerificationNotice className="member-email-notice" />
+      </Card>
+      <div className="member-columns">
+        <Card>
+          <h2>Vai trò và quyền</h2>
+          <div className="member-badges">
+            {user.roles.length
+              ? user.roles.map((role) =>
+                  role === "MEMBER" ||
+                  role === "ADMIN" ||
+                  role === "SUPER_ADMIN" ? (
+                    <RoleBadge key={role} role={role} />
+                  ) : (
+                    <span key={role}>{role}</span>
+                  ),
+                )
+              : "Chưa được gán vai trò"}
+          </div>
+          <details open>
+            <summary>Xem quyền của tôi</summary>
+            {user.permissions.length ? (
+              <ul className="member-permissions">
+                {user.permissions.map((permission) => (
+                  <li key={permission}>
+                    <span className="member-badge">{permission}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="member-muted">Chưa có quyền được cấp.</p>
+            )}
+          </details>
+        </Card>
+        <Card>
+          <h2>Bảo mật tài khoản</h2>
+          <p>
+            {user.hasPassword
+              ? "Đã thiết lập mật khẩu đăng nhập."
+              : "Bạn có thể đặt mật khẩu để đăng nhập bằng email."}
+          </p>
+          <p className="member-muted">
+            Xem và thu hồi từng phiên đăng nhập của bạn.
+          </p>
+          <Link
+            className="ui-button member-fit"
+            data-variant="secondary"
+            href="/account?tab=sessions"
+          >
+            Phiên đăng nhập
+          </Link>
+          <Link className="member-text-link" href="/account?tab=security">
+            {user.hasPassword ? "Đổi mật khẩu" : "Đặt mật khẩu"}
+          </Link>
+        </Card>
+      </div>
+      <Card>
+        <h2>Truy cập nhanh</h2>
+        <div className="member-actions">
+          <Link className="ui-button" href="/account/files">
+            Tệp của tôi
+          </Link>
+          {shortcuts.map((item) => (
+            <Link
+              key={item.href}
+              className="ui-button"
+              data-variant="secondary"
+              href={item.href}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </Card>
+    </section>
+  );
+}
+
+const passwordSchema = z.object({
+  newPassword: z
+    .string()
+    .min(12, "Mật khẩu cần ít nhất 12 ký tự.")
+    .max(128, "Mật khẩu không vượt quá 128 ký tự."),
+  currentPassword: z.string().optional(),
+});
+
+function AccountSecurity({ user }: { user: AuthenticatedUser }) {
+  const { updatePasswordStatus } = useAuth();
+  const active = useRef(false);
+  const busy = useRef(false);
+  const [succeeded, setSucceeded] = useState(false);
+  const [metadataError, setMetadataError] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<z.infer<typeof passwordSchema>>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: { newPassword: "", currentPassword: "" },
+  });
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  const mutation = useMutation({
+    mutationFn: (values: z.infer<typeof passwordSchema>) =>
+      changePassword(
+        values.newPassword,
+        user.hasPassword ? values.currentPassword : undefined,
+      ),
+    onSuccess: async () => {
+      if (!active.current) return;
+      reset();
+      setSucceeded(true);
+      updatePasswordStatus({ id: user.id, hasPassword: true });
+      try {
+        const updated = await getCurrentUser();
+        if (active.current) updatePasswordStatus(updated);
+      } catch {
+        if (active.current) setMetadataError(true);
+      }
+    },
+    onSettled: () => {
+      busy.current = false;
+    },
+  });
+  return (
+    <section className="member-view" aria-labelledby="security-title">
+      <header className="member-heading">
+        <h1 id="security-title">Bảo mật tài khoản</h1>
+        <p>Mật khẩu và xác thực của bạn.</p>
+      </header>
+      <Card>
+        <h2>{user.hasPassword ? "Đổi mật khẩu" : "Đặt mật khẩu"}</h2>
+        <form
+          className="member-form"
+          onSubmit={handleSubmit((values) => {
+            if (busy.current) return;
+            busy.current = true;
+            setSucceeded(false);
+            setMetadataError(false);
+            mutation.mutate(values);
+          })}
+        >
+          {user.hasPassword && (
+            <Input
+              label="Mật khẩu hiện tại"
+              type="password"
+              autoComplete="current-password"
+              required
+              disabled={mutation.isPending}
+              {...register("currentPassword")}
+            />
+          )}
+          <Input
+            label="Mật khẩu mới"
+            type="password"
+            autoComplete="new-password"
+            hint="12–128 ký tự."
+            error={errors.newPassword?.message}
+            required
+            disabled={mutation.isPending}
+            {...register("newPassword")}
+          />
+          <Button
+            type="submit"
+            className="member-fit"
+            loading={mutation.isPending}
+          >
+            {user.hasPassword ? "Cập nhật mật khẩu" : "Đặt mật khẩu"}
+          </Button>
+          {succeeded && (
+            <InlineAlert variant="success">
+              Đã cập nhật mật khẩu. Bạn có thể đăng nhập bằng email và mật khẩu.
+            </InlineAlert>
+          )}
+          {metadataError && (
+            <p role="status">
+              Mật khẩu đã cập nhật; chưa tải lại được thông tin tài khoản.
+            </p>
+          )}
+          {mutation.isError && (
+            <InlineAlert>
+              Không thể cập nhật mật khẩu. Kiểm tra mật khẩu hiện tại và thử
+              lại.
+            </InlineAlert>
+          )}
+        </form>
+      </Card>
+    </section>
+  );
+}
+
+function AccountSessions({ user }: { user: AuthenticatedUser }) {
+  const queryClient = useQueryClient();
+  const queryKey = ["auth", "sessions", user.id];
+  const active = useRef(false);
+  const busy = useRef(false);
+  const [selected, setSelected] = useState<AuthSession | null>(null);
+  const [message, setMessage] = useState("");
+  const logout = useLogout();
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  const query = useQuery({
+    queryKey,
+    queryFn: ({ signal }) => getSessions(signal),
+    retry: false,
+  });
+  const revoke = useMutation({
+    mutationFn: revokeSession,
+    onSuccess: (_result, id) => {
+      if (!active.current) return;
+      queryClient.setQueryData<AuthSession[]>(queryKey, (items) =>
+        items?.filter((item) => item.id !== id),
+      );
+      setSelected(null);
+      setMessage("Đã thu hồi phiên đăng nhập.");
+      void queryClient.invalidateQueries({ queryKey });
+    },
+    onSettled: () => {
+      busy.current = false;
+    },
+  });
+  const pending = revoke.isPending || logout.isPending;
+  const sessions = query.data ?? [];
+  const forbidden =
+    axios.isAxiosError(query.error) && query.error.response?.status === 403;
+  const action = (session: AuthSession) => (
+    <Button
+      variant="secondary"
+      data-revoke={session.id}
+      disabled={pending}
+      onClick={() => {
+        setSelected(session);
+        revoke.reset();
+        setMessage("");
+      }}
+    >
+      Đăng xuất phiên này
+    </Button>
+  );
+  return (
+    <section className="member-view" aria-labelledby="sessions-title">
+      <header className="member-heading">
+        <h1 id="sessions-title">Phiên đăng nhập</h1>
+        <p>Quản lý từng phiên truy cập tài khoản của bạn.</p>
+      </header>
+      <div className="ui-alert member-information" role="note">
+        Chỉ các phiên của bạn
+        <br />
+        Danh sách không suy ra tên thiết bị, trình duyệt, địa chỉ IP hoặc vị trí
+        từ mã phiên.
+      </div>
+      {message && <InlineAlert variant="success">{message}</InlineAlert>}
+      {query.isPending ? (
+        <Card aria-busy="true">
+          <p role="status">Đang tải phiên đăng nhập...</p>
+          <Skeleton />
+          <Skeleton />
+        </Card>
+      ) : null}
+      {query.isError && (
+        <Card className={query.data ? "" : "member-empty"}>
+          <InlineAlert>
+            {forbidden
+              ? "Bạn không có quyền xem các phiên này."
+              : "Không tải được phiên đăng nhập. Dữ liệu chưa được cập nhật."}
+          </InlineAlert>
+          <Button
+            className="member-fit"
+            loading={query.isFetching}
+            onClick={() => void query.refetch()}
+          >
+            Thử lại
+          </Button>
+        </Card>
+      )}
+      {query.data && (
+        <Card>
+          <h2>
+            {sessions.length === 1
+              ? "Một phiên đăng nhập"
+              : "Phiên đăng nhập đang hoạt động"}
+          </h2>
+          <p className="member-muted">{sessions.length} phiên</p>
+          {query.isFetching && <p role="status">Đang cập nhật danh sách...</p>}
+          {!sessions.length ? (
+            <p>Không có phiên đăng nhập đang hoạt động.</p>
+          ) : sessions.length === 1 ? (
+            <div className="member-view">
+              <dl className="member-fields">
+                <div>
+                  <dt>Phiên</dt>
+                  <dd>{sessions[0].id}</dd>
+                </div>
+                <div>
+                  <dt>Tạo lúc</dt>
+                  <dd>{date(sessions[0].createdAt)}</dd>
+                </div>
+                <div>
+                  <dt>Hết hạn</dt>
+                  <dd>{date(sessions[0].expiresAt)}</dd>
+                </div>
+              </dl>
+              {sessions[0].current && (
+                <span className="member-badge member-current member-fit">
+                  Thiết bị này
+                </span>
+              )}
+              <div>{action(sessions[0])}</div>
+            </div>
+          ) : (
+            <>
+              <table className="member-table" aria-label="Phiên đăng nhập">
+                <thead>
+                  <tr>
+                    <th scope="col">Phiên</th>
+                    <th scope="col">Tạo lúc</th>
+                    <th scope="col">Hết hạn</th>
+                    <th scope="col">Trạng thái</th>
+                    <th scope="col">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sessions.map((session) => (
+                    <tr key={session.id}>
+                      <td>{session.id}</td>
+                      <td>{date(session.createdAt)}</td>
+                      <td>{date(session.expiresAt)}</td>
+                      <td>
+                        {session.current ? "Thiết bị này" : "Đang hoạt động"}
+                      </td>
+                      <td>{action(session)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <ul className="member-mobile-list">
+                {sessions.map((session) => (
+                  <li key={session.id}>
+                    <Card>
+                      <p>
+                        Phiên
+                        <br />
+                        {session.id}
+                      </p>
+                      {session.current && (
+                        <span className="member-badge member-current member-fit">
+                          Thiết bị này
+                        </span>
+                      )}
+                      <dl className="member-fields">
+                        <div>
+                          <dt>Tạo lúc</dt>
+                          <dd>{date(session.createdAt)}</dd>
+                        </div>
+                        <div>
+                          <dt>Hết hạn</dt>
+                          <dd>{date(session.expiresAt)}</dd>
+                        </div>
+                      </dl>
+                      {action(session)}
+                    </Card>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <p className="member-caption">
+            Thu hồi phiên hiện tại sẽ đưa bạn về trang đăng nhập. Phiên khác
+            ngừng được cấp token mới; quyền truy cập đã cấp có thể còn hiệu lực
+            đến khi hết hạn.
+          </p>
+        </Card>
+      )}
+      <ConfirmDialog
+        open={selected !== null}
+        title="Đăng xuất phiên đăng nhập này?"
+        description={
+          <div className="member-fields">
+            <p>
+              {selected?.current
+                ? "Đây là phiên hiện tại. Bạn sẽ được đưa về trang đăng nhập."
+                : "Phiên này sẽ không thể khôi phục đăng nhập. Quyền truy cập đã cấp có thể còn hiệu lực đến khi hết hạn."}
+            </p>
+            <p>
+              Mã phiên
+              <br />
+              {selected?.id}
+            </p>
+            {revoke.isError && (
+              <InlineAlert>
+                Không thể thu hồi phiên. Vui lòng thử lại.
+              </InlineAlert>
+            )}
+          </div>
+        }
+        confirmLabel="Đăng xuất phiên này"
+        cancelLabel={pending ? "Đang xử lý..." : "Hủy"}
+        confirmVariant="danger"
+        loading={pending}
+        onClose={() => {
+          if (!busy.current) setSelected(null);
+        }}
+        onConfirm={() => {
+          if (!selected || busy.current) return;
+          busy.current = true;
+          if (selected.current)
+            logout.mutate(undefined, {
+              onSettled: () => {
+                busy.current = false;
+              },
+            });
+          else revoke.mutate(selected.id);
+        }}
+      />
+    </section>
+  );
 }

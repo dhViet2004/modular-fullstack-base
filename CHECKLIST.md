@@ -4,10 +4,10 @@
 
 ## Trạng thái hiện tại
 
-- **Phase hiện tại:** Phase A.4 — Permission Guard Cleanup
-- **Đang làm:** A.1/A.2 DONE; A.3/A.4 implementation/verification VERIFIED; đối chiếu visual chi tiết PARTIAL
-- **Bước tiếp theo:** Đối chiếu chi tiết visual còn thiếu khi có nguồn Figma; chỉ triển khai Product sau khi có screenshot/context
-- **Blocker:** A.4 không có blocker; Figma MCP hết quota vẫn chặn chi tiết visual/asset và 75 frame Product & Handoff
+- **Phase hiện tại:** Phase B.4 — SUPER_ADMIN, 14/14 frame FUNCTIONAL_DONE
+- **Đang làm:** A.1–B.4 implementation/regression VERIFIED; B.1–B.4 visual VISUAL_PARTIAL
+- **Bước tiếp theo:** Phase tiếp theo chờ mapping/reference được xác nhận; đối chiếu visual gốc khi có export/context/asset
+- **Blocker:** Không có chức năng B.4 BLOCKED. 13 frame ngoài B.1–B.4 chưa triển khai; quota MCP vẫn chặn native context/asset
 
 ## Quy ước trạng thái
 
@@ -181,7 +181,7 @@
 - [x] A.4 — VERIFIED: Phân biệt loading (`role=status`), guest/401 và thiếu quyền/403 (`role=alert`, guest có login link), SUPER_ADMIN; giữ AuthProvider/refresh/logout/API/hooks/schema/backend authorization và toàn bộ Product layout được phép
 - [x] A.4 — VERIFIED: 7 regression cases mới cho loading với/không có user, guest, MEMBER, ADMIN, SUPER_ADMIN đơn role/đa role; trước fix 5 failed/2 passed, sau fix 7 passed; frontend lint/typecheck/test/build PASS, tổng 62 tests/9 files
 - [x] A.4 — VERIFIED: Chrome production PASS tại 390/1280px cho guest/MEMBER/ADMIN/SUPER_ADMIN; giữ riêng refresh và /auth/me để chứng minh loading không gọi cấu hình, không có SUPER_ADMIN không mount/call API, có SUPER_ADMIN mới GET cấu hình; giữ checks A.3 ở 320/390/768/1280/1600px; dùng API fixtures
-- [ ] Product & Handoff ngoài B.1 — BLOCKED: 58 frame còn thiếu reference/context do quota; 17 Public & Auth được người dùng xác nhận và cung cấp ảnh tổng hợp để triển khai B.1
+- [ ] Product & Handoff ngoài B.1/B.2/B.3 — BLOCKED: 27 frame còn thiếu reference/context được xác nhận; 48 frame Public & Auth/MEMBER/ADMIN đã triển khai từ ảnh tổng hợp được APPROVED
 
 Ghi chú A.4: `401/403` là trạng thái UI tương ứng AuthProvider, không đổi HTTP status của Next static page. Flow sau fix: refresh → /auth/me → AuthProvider → RoleDashboard guard → EmailVerificationSetting → API cấu hình khi SUPER_ADMIN; backend `authenticate → assertUserIsSuperAdmin → route handler → systemService → Prisma` giữ nguyên. Không thêm dependency, repository hoặc business rule.
 
@@ -207,6 +207,80 @@ Ghi nhận tại A.4: AuthProvider đưa mọi lỗi restore về `user=null`; v
 
 Không có chức năng B.1 bị BLOCKED. Đăng nhập Google thật và delivery email qua worker/SMTP chưa kiểm chứng trong phiên này; Chrome dùng fixtures, không thay thế integration backend.
 
+## Phase B.2 — MEMBER (2026-10-09)
+
+- [x] Mapping 17 frame được người dùng APPROVED; triển khai MEM-01 → MEM-02 → MEM-03 → MEM-04 từ `docs/figma/references/03 MEMBER.png`; không gọi Figma MCP
+- [x] MEM-01 Dashboard (2/2): desktop/mobile, profile/status/role/permission thực, email notice và truy cập nhanh; tái sử dụng primitives A.2 và shell A.3
+- [x] MEM-02 Info (2/2): verified/unverified, dữ liệu chỉ đọc, ngày tháng thật; đã hợp nhất với MEM-01 trên `/account`, link cũ `?tab=info` canonicalize; giữ Security tại `?tab=security`
+- [x] MEM-03 Sessions (5/5): multiple/one/confirmation/error/mobile; loading/empty/forbidden riêng, list retry; current dùng `useLogout`, phiên khác dùng DELETE và giữ phiên hiện tại
+- [x] MEM-04 Files (8/8): populated/empty/uploading/upload error/quota full/replace/delete/mobile; loading/error/forbidden và list retry độc lập; private preview/download giữ nguyên
+- [x] Deep-link query và Back/Forward; tab không tạo backend route hoặc permission; Sidebar chỉ có một active view; giữ nguyên source AppShell/Sidebar và RootLayout
+- [x] Confirmation và synchronous ref lock cho revoke/replace/delete/upload/password/resend; keyboard, Tab/Shift+Tab/Escape, focus restoration và native popover menu desktop/mobile
+- [x] Bảo toàn B.1 guest/expired/restore-error; network/5xx không xóa user/token/cache; current revoke/logout không hiển thị expired; token chỉ ở memory, sessionStorage chỉ có cờ boolean
+- [x] Query cache theo user ID + AbortSignal; component keyed theo account, callback kiểm tra lifecycle; Chrome giữ rồi trả response list/session/file/preview/mutation/password/metadata sau logout/đổi account không phục hồi dữ liệu cũ
+- [x] PATCH replace dùng ID mới và cập nhật preview; upload trùng tên giữ record riêng; upload đã thành công nhưng GET list lỗi chỉ retry list, không upload lại; timestamp chưa biết hiển thị “Đang cập nhật”
+- [x] Giới hạn 5 MiB (chấp nhận đúng boundary), không nhận tệp rỗng, quota 10 chặn upload mới nhưng cho replace; ownership missing/other-owner cùng 404; không tạo `files:*`/`sessions:*`
+- [x] Password success dùng RHF reset, lỗi /me follow-up không biến thành lỗi đổi mật khẩu; metadata update cùng user ID không đổi authentication state; Google-only vẫn đặt mật khẩu được
+- [x] Resend dùng mutation chung trên Dashboard, xử lý 202/429 và retry thủ công; không suy đoán cooldown hoặc đổi flow Verify Email/OAuth
+- [x] Frontend lint (0 warning), typecheck, tests và production build PASS: 104 tests/11 files, tăng 14 cases từ baseline 90; 15 static pages; `git diff --check` PASS
+- [x] Backend suite hiện có PASS: 25 tests/9 files. Probe tạm kiểm tra contract hiện có PASS: 11 tests (ownership GET/PATCH/DELETE, quota/replace/new ID, duplicate name, empty/size, current/revoke/refresh); chỉ mock DB, file storage local thật, không đổi backend source/schema/contract
+- [x] Chrome production A.1–B.2 PASS: B.2 17 IDs duy nhất, 51 assertions; 45 captures từng frame gồm 390/1440px và kích thước canonical, 8 captures bổ sung loading/empty/forbidden/error/menu; B.1 17 frame/45 captures tiếp tục PASS
+- [x] Nghiệm thu từng frame ở SCREEN_MAPPING mục 14; file/flow/design/tests ở DESIGN_SYSTEM mục 16; roadmap README cập nhật; artifact local `tmp/phase-b2-acceptance/` (Git-ignored) gồm manifest, screenshots và contact sheets
+- [~] B.2 — VISUAL_PARTIAL: đã đối chiếu 17 frame với ảnh tổng hợp 4670x5922 và Chrome desktop/mobile; thiếu original frame exports/native context/assets, không pixel-perfect; shell A.3 giữ nguyên theo APPROVED
+
+Không có chức năng B.2 PARTIAL/BLOCKED. Technical debt được giữ ngoài scope: count-before-save quota check của backend không atomic khi upload đồng thời. Chrome dùng API fixtures; không xác nhận Google/SMTP/R2 thật hoặc PostgreSQL live integration từ các screenshots.
+
+## Phase B.3 — ADMIN (2026-10-09)
+
+- [x] Mapping 14/14 frame được APPROVED; triển khai ADM-01 → ADM-02 → ADM-03 từ `docs/figma/references/04 ADMIN.png`, không gọi Figma MCP
+- [x] ADM-01 (2/2 FUNCTIONAL_DONE): Dashboard Desktop/Mobile; notice chỉ đọc, bốn cards dùng navigation/permission hiện có, không gọi API để tạo KPI
+- [x] ADM-02 (6/6 FUNCTIONAL_DONE): Populated, Empty Search, Details Drawer, Loading, Forbidden, Mobile; search tên/email trim/case-insensitive, role filter xét toàn bộ roles[], status và sort tên cục bộ
+- [x] Users phân biệt empty dataset/empty search; loading/error/retry/403 riêng; drawer lấy dữ liệu list, không có detail endpoint hoặc server pagination
+- [x] ADMIN không mount cấp/gỡ ADMIN hoặc cấu hình hệ thống; SUPER_ADMIN giữ PATCH hiện có và cần đồng thời SUPER_ADMIN + roles:manage; ref lock chặn double-submit và bỏ callback muộn sau unmount
+- [x] ADM-03 (6/6 FUNCTIONAL_DONE): Populated, Filtered, Details Drawer, Load More, Empty, Mobile; RHF/Zod kiểm tra action catalog, actor UUID, limit nguyên 1–100 (mặc định 50)
+- [x] Audit dùng applied filters trong query key theo account; đổi hoặc quay lại filters bắt đầu cursor đầu, bỏ pages cũ; nextCursor opaque, không thêm outcome/date/name filtering
+- [x] Load More lỗi giữ pages và Retry đúng cursor/filters; loading/error/retry/403 riêng; JSON/UUID/nullable fields lấy từ API, metadata escaped text, copy ID có success/error
+- [x] Query Users/Audit nhận AbortSignal; cancel/remove scoped cache khi unmount/mất quyền/đổi filters; loading xác minh phiên ẩn protected data, không đổi AuthProvider/interceptor/useLogout
+- [x] Native DetailsDrawer dùng chung cho hai màn: inert background, accessible name, Escape, Tab/Shift+Tab, focus return hoặc heading fallback khi trigger mất sau refetch
+- [x] Giữ nguyên backend runtime/Prisma/contracts/RBAC/auth và AppShell/Sidebar; regression A.1–B.2 gồm Security, Files preview/limits/ownership và OAuth/verification tiếp tục PASS
+- [x] Frontend lint/typecheck/test/build PASS: 127 tests/14 files (+23 so với B.2), 15 static pages; backend lint/typecheck/test/build/format:check PASS: 41 tests/10 files (+16 contract tests, chỉ mock auth/DB boundaries)
+- [x] Chrome production A.1–B.3 PASS, không runtime exception; B.3 14 IDs/104 assertions/36 frame captures + 6 captures bổ sung, desktop 1440/mobile 390/states 720 và 320/768/1280/1600
+- [x] Chrome ADMIN/SUPER_ADMIN/MEMBER, 401/403, filters/cursor/retry, keyboard/copy/focus, logout/account switch không logout, permission revocation và late role/query responses PASS; API fixtures được ghi rõ
+- [x] Nghiệm thu từng frame tại SCREEN_MAPPING mục 15; file/flow/design/tests tại DESIGN_SYSTEM mục 17; README và checklist cập nhật; artifact local `tmp/phase-b3-acceptance/` Git-ignored
+- [~] B.3 VISUAL_PARTIAL: đã so ảnh tổng hợp 4670x4969 với Chrome; thiếu original frame exports/native context/assets, không pixel-perfect; giữ shell A.3, text icon/neutral badge fallback, state specimens 720 khác full shell runtime
+
+Không có frame B.3 chức năng PARTIAL/BLOCKED. Chrome fixtures không chứng minh JWT/RBAC/PostgreSQL live hoặc OAuth/SMTP/R2 thật; contract tests chạy guards/schema/controller/service thật với authentication và DB mock. Quota upload đồng thời tiếp tục là technical debt B.2, không sửa backend.
+
+## Phase B.4 — SUPER_ADMIN (2026-10-09)
+
+- [x] Mapping 14/14 frame APPROVED; triển khai SUP-01 → SUP-02 → SUP-03 → SUP-04 từ `05 SUPER_ADMIN.png`, không gọi Figma MCP
+- [x] SUP-01 (2/2 FUNCTIONAL_DONE): Dashboard Desktop/Mobile; năm cards theo navigation/permissions hiện có, trạng thái email từ GET thực, loading/error/retry, không thêm KPI/API
+- [x] Giữ `/super-admin`, `/admin/users`, query `tab=email-verification` / `tab=rbac`; sidebar active state, deep links, unknown-tab fallback và Back/Forward PASS; AppShell/Security/Files/OAuth giữ nguyên
+- [x] SUP-02 (5/5 FUNCTIONAL_DONE): Grant Confirm, Revoke Confirm, Pending, Success, Forbidden; chỉ SUPER_ADMIN AND roles:manage mount controls; ADMIN/MEMBER không gửi PATCH dù có permission
+- [x] Role mutation luôn confirmation + synchronous ref lock + retry false + AbortSignal; kiểm tra target còn trong list; thành công PATCH và lỗi GET tách biệt, retry list không gửi lại PATCH, updated-user chỉ lấy từ GET thành công
+- [x] SUP-03 (6/6 FUNCTIONAL_DONE): On, Off, Confirm, Saving, Error, Mobile; controlled Switch, confirmation; chỉ GET/PATCH sau xác minh SUPER_ADMIN; read-error/mutation-error/unknown/403 riêng
+- [x] Email timeout/network/5xx giữ giá trị cuối đã xác minh và GET reconcile; reconcile lỗi khóa switch/ghi, retry chỉ GET; GET đúng target thành success, GET khác target cho retry với confirmation mới; không suy đoán rollback
+- [x] SUP-04 (1/1 FUNCTIONAL_DONE): bảy dòng RBAC read-only từ catalog đã xác minh; ghi rõ default catalog khác permission runtime DB; ADMIN có roles:manage nhưng role action vẫn có SUPER_ADMIN gate; không có editor/endpoint
+- [x] Query system theo account + cancellation/removal scoped cache; request version trong interceptor chặn retry dưới session/account khác trước/sau refresh; cùng session vẫn single-flight rotation; không thêm auth framework/storage token
+- [x] Logout/account switch/restoration/mất quyền đóng dialog, abort request và chặn stale UI; Chrome kiểm tra mutation trực tiếp, mutation chờ 401 refresh, query cache và permission revocation; AbortSignal không được coi là rollback server
+- [x] ConfirmDialog native: accessible name, cancel initial focus, Escape, Tab/Shift+Tab, focus return hoặc heading fallback khi trigger bị refetch xóa; loading chặn double-submit, long text/mobile không tràn
+- [x] Frontend lint/typecheck/test/build PASS: 154 tests/15 files (+27 từ B.3), 15 static pages; backend lint/typecheck/test/build/format:check PASS: 56 tests/11 files (+15, chỉ thêm tests)
+- [x] Backend contract tests chạy routes/guards/services thật với auth/DB mock: setting SUPER_ADMIN gate/boolean/default false/response, grant/revoke `{ enabled }`, missing target; giữ contract 500 hiện có cho invalid setting body và ghi debt
+- [x] Chrome production A.1–B.4 PASS, không runtime exception; B.4 14 IDs/104 assertions/36 frame captures + 8 captures bổ sung = 44 screenshots; 1440/390/states 720, API fixtures
+- [x] Đối chiếu đủ 14 frame trong contact sheet và screenshots chi tiết desktop/mobile/720; SCREEN_MAPPING mục 16, DESIGN_SYSTEM mục 18, README và artifacts local `tmp/phase-b4-acceptance/` cập nhật; root diff check PASS
+- [~] B.4 VISUAL_PARTIAL: thiếu original per-frame exports/native properties/icons; giữ shell/icon/badge fallbacks, dialog runtime có backdrop và dữ liệu nền; không pixel-perfect
+
+Không có frame chức năng B.4 PARTIAL/BLOCKED. Fixtures không xác nhận JWT/RBAC/PostgreSQL/SMTP/OAuth/R2 live. Technical debt: invalid email-setting body trả 500 thay vì validation 4xx (không ghi DB); setting chưa có version/ETag; GET users trả toàn bộ list; quota upload đồng thời B.2 chưa atomic. Không sửa backend runtime, Prisma, schema, API contracts, permission catalog hoặc dependencies.
+
+## Hợp nhất Account Dashboard/Info (2026-10-09)
+
+- [x] Rà soát toàn bộ link `?tab=info`: runtime chỉ có navigation entry; các references còn lại là tests/tài liệu. Dashboard/Info cùng dùng AuthProvider nên không cần API mới
+- [x] `/account` giữ hồ sơ, trạng thái, roles/permissions, ngày tham gia/xác minh, bảo mật/đổi mật khẩu/phiên và quick links; xóa view Info và actions trùng, chỉ một resend notice
+- [x] Sidebar bỏ mục Info trùng Tổng quan; link cũ `/account?tab=info` dùng `router.replace` về `/account`; giữ Sessions/Files/Security và menu ADMIN/SUPER_ADMIN
+- [x] Cập nhật regression cho profile chỉ xuất hiện một lần, permission-aware shortcuts, một resend, active state, canonicalization, deep links/Back/Forward và không thêm requests; keyboard/responsive 320px/390px/1440px PASS
+- [x] Frontend typecheck/lint/test/build PASS: 158 tests/16 files, 15 static pages. Chrome production A.1–B.4 PASS với API fixtures; MEMBER 17 frame/57 assertions/54 screenshots. Bằng chứng: `tmp/account-merge-acceptance/`; mapping MEM-01/MEM-02 cùng route tại `docs/figma/SCREEN_MAPPING.md` mục 14
+- [~] VISUAL_PARTIAL: composition hợp nhất theo yêu cầu; đã xem Chrome desktop/mobile/320px nhưng thiếu original per-frame exports, không pixel-perfect. Fixtures không chứng minh live backend integration; backend/AuthProvider/hooks/API/RBAC giữ nguyên
+
 ## Bổ sung phân vai giao diện
 
 - [x] Seed role `SUPER_ADMIN`, giữ `ADMIN` và `MEMBER`; kiểm tra seed trên database
@@ -214,7 +288,7 @@ Không có chức năng B.1 bị BLOCKED. Đăng nhập Google thật và delive
 
 ## Blockers
 
-- Figma MCP hết quota: 75 Product & Handoff frames vẫn thiếu context gốc, native properties bổ sung, full variable dump và asset icons. B.1 gồm 17 frame đã triển khai từ reference được người dùng xác nhận, visual VISUAL_PARTIAL; 58 frame ngoài B.1 vẫn BLOCKED.
+- Figma MCP hết quota: 75 Product & Handoff frames vẫn thiếu context gốc, native properties bổ sung, full variable dump và asset icons. B.1–B.4 đã triển khai 62 frame từ reference được người dùng xác nhận, visual VISUAL_PARTIAL; 13 frame ngoài bốn phase chưa triển khai.
 
 ## Quyết định đã chốt
 
@@ -237,7 +311,7 @@ Không có chức năng B.1 bị BLOCKED. Đăng nhập Google thật và delive
 - [x] Gi?i h?n s? phi�n ho?t d?ng theo user b?ng MAX_ACTIVE_SESSIONS_PER_USER v� revoke phi�n cu nh?t
 - [x] Access token stateless JWT; authenticate kh?ng lookup session DB, revoke ch? ch?n refresh
 - [x] C?p nh?t t�i li?u authentication/API v� c?u h�nh m�i tru?ng
-Session account security UI va API doi mat khau da cap nhat.
+      Session account security UI va API doi mat khau da cap nhat.
 - [x] Gi?i h?n t?i ?a 10 t?p l?u tr? cho m?i user v? ki?m tra l?i v??t quota
 - [x] Refactor module users: gop Prisma vao service, xoa repository pass-through, da verify backend
 - [x] Gom session controllers theo capability v? ??a session ID validation v? shared middleware

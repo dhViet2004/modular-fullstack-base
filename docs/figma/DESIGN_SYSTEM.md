@@ -8,7 +8,7 @@ Nguồn: [file Figma](https://www.figma.com/design/w7niXpOtilM8YR13A2nrsF/Untitl
 
 Cập nhật triển khai: người dùng đã cho phép Phase A chỉ dựa trên 5 frame Design System đã đọc. **A.1 Foundations & shared layout đã implement và verify** trên working tree; chi tiết ở mục 12. A.2 Shared UI Primitives ở mục 13; A.3 App Shell & Role-based Navigation ở mục 14. Implementation/verification được phân biệt với đối chiếu visual; trạng thái PARTIAL ở trên vẫn áp dụng cho việc phân tích toàn bộ file Figma.
 
-Cập nhật 2026-10-09: **B.1 Public & Auth đã triển khai và verify đủ 17 frame chức năng** từ mapping người dùng xác nhận và [ảnh tổng hợp](references/02%20Public%20%26%20Auth.png); visual **VISUAL_PARTIAL**. Báo cáo B.1 nằm ở mục 15. Quota MCP/context/asset gốc vẫn thiếu; 58 frame ngoài B.1 tiếp tục BLOCKED.
+Cập nhật 2026-10-09: **B.1 Public & Auth, B.2 MEMBER, B.3 ADMIN và B.4 SUPER_ADMIN đã triển khai và verify 62/62 frame chức năng** từ mapping APPROVED và ảnh tổng hợp; visual **VISUAL_PARTIAL**. Báo cáo B.1–B.4 ở mục 15–18. Quota MCP/context/asset gốc vẫn thiếu; 13 frame ngoài bốn phase chưa triển khai. Không gọi Figma MCP trong B.2–B.4.
 
 ## 1. Bằng chứng và giới hạn
 
@@ -544,15 +544,15 @@ Luồng backend trên là source hiện có, chỉ được đọc để trace. 
 
 Các lệnh thực tế, chạy trong `frontend/` trừ git check ở root:
 
-| Command | Kết quả |
-| --- | --- |
-| `corepack pnpm lint` | PASS, không warning |
-| `corepack pnpm typecheck` | PASS |
-| `corepack pnpm test` | PASS, 90 tests/10 files; 28 cases mới |
-| `corepack pnpm build` | PASS, 15 static pages |
-| `corepack pnpm start --port 3002` | Production server chạy để verify Chrome |
+| Command                                                                           | Kết quả                                                                 |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `corepack pnpm lint`                                                              | PASS, không warning                                                     |
+| `corepack pnpm typecheck`                                                         | PASS                                                                    |
+| `corepack pnpm test`                                                              | PASS, 90 tests/10 files; 28 cases mới                                   |
+| `corepack pnpm build`                                                             | PASS, 15 static pages                                                   |
+| `corepack pnpm start --port 3002`                                                 | Production server chạy để verify Chrome                                 |
 | `node src/components/ui/tests/primitives.browser-check.mjs http://127.0.0.1:3002` | PASS, A.2–A.4 và B.1; 17 frame/45 screenshots, không runtime exceptions |
-| `git diff --check` | PASS |
+| `git diff --check`                                                                | PASS                                                                    |
 
 Formatter dùng Prettier đã cài trong backend để format các file frontend đã sửa; không cài package mới. Artifact local: `C:/Users/Hoang Viet/AppData/Local/Temp/corebase-phase-a2-3UmauF/`, gồm `b1-frames.json`, `b1-contact-sheet.png` và PNGs. Mỗi lần chạy runner tạo directory mới; metadata ghi node ID/viewport/filename cho từng frame và captures desktop/mobile.
 
@@ -562,3 +562,357 @@ Formatter dùng Prettier đã cài trong backend để format các file frontend
 - **PARTIAL (resend countdown):** UI xử lý 429 đầy đủ nhưng không tái tạo con số 45 trong ảnh; chỉ thêm countdown khi API cung cấp thời hạn đáng tin cậy.
 - **BLOCKED ngoài B.1:** 58 Product & Handoff frames còn thiếu reference/context; native DS variables/asset details vẫn bị MCP quota chặn.
 - Google login thật và SMTP/worker delivery chưa kiểm chứng trong phiên này; API fixtures không chứng minh integration thật. Không sửa backend hoặc HTTP API contract để khắc phục các phần này.
+
+## 16. Phase B.2 - MEMBER
+
+Ngày: 2026-10-09 (Asia/Saigon). **PASS: 17/17 frame chức năng MEM-01 (2), MEM-02 (2), MEM-03 (5), MEM-04 (8). VISUAL_PARTIAL: cả 17 frame. Không có chức năng PARTIAL/BLOCKED.** Mapping từng frame, route/API/permission và bằng chứng nằm ở [SCREEN_MAPPING.md](SCREEN_MAPPING.md), mục 14. Mapping, query routes và current-session logout được người dùng APPROVED trước khi triển khai.
+
+MEM-01/MEM-02 hiện đã hợp nhất trên `/account`; link cũ `?tab=info` canonicalize bằng replace. Số liệu tests/artifacts của B.2 dưới đây là nghiệm thu ban đầu; refactor và verification mới ở mục 19.
+
+### Visual và reuse
+
+Nguồn là [03 MEMBER.png](references/03%20MEMBER.png), 4670x5922. Đã xem đủ 17 crop/reference và Chrome desktop/mobile; 45 captures theo node ID (desktop 1440/mobile 390/canonical) và 8 captures loading/empty/forbidden/list error/menu. [Contact sheet so sánh](../../tmp/phase-b2-acceptance/b2-comparison-contact-sheet.png) giữ cặp reference composite/Chrome. Thiếu original exports/native context/assets, không pixel-perfect; không gọi Figma MCP hoặc nâng inventory thành DETAIL_OK.
+
+[member.css](../../frontend/src/components/member.css) chỉ áp dụng MEMBER composition: padding theo page gutter, heading 32 desktop/24 mobile, card heading 20, grid hai cột Dashboard, table desktop/card list dưới 768px, readonly fields, dropzone/quota và preview. Selector heading có scope đủ để không bị baseline `.app-content h1/h2` ghi đè. Màu `--surface-warning` dùng Amber 50 đã có trong palette A.1; không tạo theme mới.
+
+Tiếp tục dùng bộ 11 primitives A.2, cụ thể Button/Input/Card/RoleBadge/ConfirmDialog/InlineAlert/Skeleton/Progress theo nhu cầu; không tạo primitive trùng. Dùng native details cho permissions, meter cho quota, file input + drop cho upload, popover + CSS anchor positioning cho file actions (fallback fixed khi browser thiếu support). Menu có label/keyboard/Escape; confirm dialog dùng native modal/inert/focus trap/focus restoration hiện có. Progress không suy đoán phần trăm tải lên. File symbol SVG có `ponytail:` vì thiếu asset gốc.
+
+Source AppShell/Sidebar, CSS shell và RootLayout giữ nguyên; chỉ composition navigation và active path đọc query thay đổi. Không thêm breadcrumb/avatar/icon mới vào shell. Reference frame nhỏ có content-only specimen, Chrome giữ shell và dữ liệu nền thật khi mở modal; native modal có backdrop/focus. Wrapping của fixtures, row height và composition empty/error/dropzone còn khác ảnh tổng hợp, nằm trong VISUAL_PARTIAL.
+
+### File đã thay đổi
+
+- Page composition: [account/page.tsx](../../frontend/src/app/account/page.tsx), [account/files/page.tsx](../../frontend/src/app/account/files/page.tsx), [globals.css](../../frontend/src/app/globals.css), thêm [member.css](../../frontend/src/components/member.css).
+- Account/navigation: [account-panel.tsx](../../frontend/src/features/auth/components/account-panel.tsx), [auth-navigation.tsx](../../frontend/src/features/auth/components/auth-navigation.tsx), [permissions.ts](../../frontend/src/features/auth/permissions.ts), [post-login-route.ts](../../frontend/src/features/auth/post-login-route.ts).
+- Metadata/API/resend: [auth-provider.tsx](../../frontend/src/features/auth/components/auth-provider.tsx), [auth.api.ts](../../frontend/src/features/auth/api/auth.api.ts), [email-verification-notice.tsx](../../frontend/src/features/auth/components/email-verification-notice.tsx), [use-request-email-verification.ts](../../frontend/src/features/auth/hooks/use-request-email-verification.ts).
+- Files: [files.api.ts](../../frontend/src/features/files/api/files.api.ts), [markdown-file-manager.tsx](../../frontend/src/features/files/components/markdown-file-manager.tsx).
+- Tests: thêm [files.api.test.ts](../../frontend/src/features/files/tests/files.api.test.ts) và [member.browser-check.mjs](../../frontend/src/features/auth/tests/member.browser-check.mjs); sửa [app-shell.test.tsx](../../frontend/src/components/tests/app-shell.test.tsx), [public-auth.browser-check.mjs](../../frontend/src/features/auth/tests/public-auth.browser-check.mjs), [primitives.browser-check.mjs](../../frontend/src/components/ui/tests/primitives.browser-check.mjs); chuyển/cập nhật permissions test từ cạnh source sang [auth/tests/permissions.test.ts](../../frontend/src/features/auth/tests/permissions.test.ts).
+- Tài liệu: [CHECKLIST.md](../../CHECKLIST.md), [README.md](../../README.md), [SCREEN_MAPPING.md](SCREEN_MAPPING.md) và tài liệu này. Screenshots/manifests/probe nằm trong `tmp/phase-b2-acceptance/` Git-ignored; không thêm dependency/lockfile hoặc thay backend/Prisma/RBAC/API contracts.
+
+### Request flow
+
+```text
+GET /api/v1/auth/me
+→ AuthProvider restore / login → auth.api → Axios
+→ session.routes → authenticate → sessionController.me
+→ sessionService.me → Prisma/access context → response
+→ Dashboard / Info / Security (query tab chỉ chọn view)
+
+GET /api/v1/auth/sessions
+→ AccountSessions → user-keyed Query + AbortSignal → auth.api/Axios
+→ session.routes → authenticate → sessionController.list
+→ sessionService.list(userId, JWT sessionId) → Prisma → response
+
+DELETE /api/v1/auth/sessions/:id (phiên khác)
+→ confirmation → ref lock → revokeSession/Axios
+→ session.routes → authenticate/validateParams → sessionController.revoke
+→ sessionService.revoke(userId, id) → Prisma → 204
+→ cập nhật/invalidate danh sách; giữ user, token, current session
+
+POST /api/v1/auth/logout (phiên hiện tại)
+→ confirmation → useLogout.beginLogout → logoutUser/cancelSessionRefresh
+→ session.routes → sessionController.logout → sessionService.logout
+→ Prisma → clear HttpOnly cookie + response
+→ useLogout.clear user/token/marker/query cache → /login
+
+POST /api/v1/auth/password/change
+→ Security RHF/Zod → ref lock → changePassword/Axios
+→ auth.routes → authenticate/validateBody → authController.changePassword
+→ authService.changePassword → password hash + Prisma → 204
+→ RHF reset + success + metadata update; /me lỗi không đổi success thành failure
+
+POST /api/v1/auth/email-verification/request
+→ profile notice trên /account → useRequestEmailVerification + ref lock
+→ auth.api/Axios → auth.routes → authenticate → requestEmailVerificationController
+→ enqueueEmailVerification/pg-boss → 202 accepted hoặc 429
+→ UI báo response; không đặt timer hoặc tự xác minh
+
+GET/POST /api/v1/files; GET/PATCH/DELETE /api/v1/files/:id
+→ MyFiles query/mutation/preview/download → files.api → Axios
+→ file.routes → authenticate/validateParams nếu cần → file.controller
+→ fileService (self ownership/quota) → Prisma + file.storage
+→ response (POST/PATCH: ID + size; download: octet-stream)
+→ user-keyed cache → separate GET list refresh; PATCH preview theo ID mới
+```
+
+Luồng backend được trace từ source hiện có, không refactor layer hoặc thêm endpoint. Ownership và session.current tiếp tục do service/backend quyết định. Revoke ngăn refresh của phiên, không vô hiệu ngay JWT stateless đã cấp; UI nói rõ giới hạn này.
+
+### Quyết định thiết kế và authentication state
+
+- Business logic, RBAC/ownership/quota và persistence giữ ở backend services; client chỉ kiểm tra input boundary zero-byte/5 MiB, khóa thao tác và hiển thị contract. Không tạo `files:*`/`sessions:*`. Query tab không phải permission. Không dùng/thêm repository ở frontend hoặc backend.
+- AccountPanel giữ các view private trong cùng file; page vẫn mỏng. FileActions phục vụ table và mobile list, dùng Button/native popover; không có generic auth state/store, file adapter/factory hoặc component framework mới. Styles MEMBER dùng tokens/primitives đang có.
+- Giữ nguyên AuthProvider states B.1 và Axios interceptor/useLogout. `updatePasswordStatus` chỉ merge hasPassword/updatedAt cho user cùng ID, bỏ update khi logout đang chạy, không đổi status/bằng chứng phiên/restore version. /me follow-up lỗi vẫn giữ password success và thông báo metadata chưa tải được.
+- Query keys có user ID, queryFn nhận AbortSignal; content keyed theo user, unmount flag và preview attempt chặn stale response. Logout hiện có clear cache/hủy refresh. Response session/file/list/preview/upload/password/metadata đến muộn không repopulate cache/preview hoặc ghi đè account mới.
+- Upload/replace/delete cùng mutation với action discriminant, ref lock chặn cùng tick; confirm current revoke dùng useLogout, other revoke dùng DELETE. Mutation success cập nhật cache từ ID/size đã xác nhận, sau đó invalidate list riêng; GET thất bại không lặp side effect. Pending metadata không bịa timestamp. Quota đầy vẫn cho replace, cùng tên không suy ra overwrite.
+- Private text/Markdown preview vẫn dùng escaped pre; binary preview giữ octet-stream, iframe sandbox chặn active content. Object URLs được thu hồi khi đổi/đóng preview/unmount; download có lock và không kích hoạt download muộn sau logout. Không đưa token vào localStorage/sessionStorage; sessionStorage chỉ giữ cờ B.1.
+- Trang `/account` hợp nhất chỉ có một resend notice, dùng hook/ref lock hiện có để chặn double submit. 202/429 và manual retry giữ B.1; Verify Email không tự consume token, OAuth không thêm delay. Google-only vẫn đặt mật khẩu từ security tab được.
+
+### Test đã thêm/cập nhật
+
+- `files.api.test.ts`: 9 cases cho empty/size boundary, binary headers, replacement new ID, same-name POST riêng, AbortSignal/list array contract và 404 propagation.
+- `auth/tests/permissions.test.ts`: sửa kỳ vọng 5 self-service links, giữ admin grants; chuyển đúng folder test. `app-shell.test.tsx`: thêm 5 query cases (default/info/sessions/security/unknown) để chỉ có một active leaf, không tự thêm permission.
+- `member.browser-check.mjs`: 17 frame và 51 assertions cho deep link/Back/Forward/mobile, resend 202/429/same-tick, password reset + /me lỗi + Google-only, current/other revoke, keyboard/focus, file limits/quota/new ID/preview/duplicate name/list retry, 404/403 và stale responses sau logout/account switch. Reuse Chrome/CDP đã có; không thêm framework hoặc package.
+- Runner primitives gọi suite Member sau suite A.1–B.1; có `--member-only` để chạy regression liên quan. Fixture files sửa thành mảng đúng contract backend; assertion B.1 về session retry chỉ kiểm tra auth banner, vì list error độc lập còn cần retry riêng. Không sửa B.1 assertion thành việc xóa lỗi/dữ liệu Files.
+- Probe 11 tests kiểm tra service/storage backend hiện có (DB mock, local storage thật). File chạy tạm trong `backend/tmp/`, sau đó bỏ khỏi backend và lưu bản probe ở artifact local; backend tracked files không đổi. Cover missing/other-owner GET/PATCH/DELETE đều 404, quota/full replace, same-name new records, empty/exact/oversized, current flag, other revoke và refresh bị từ chối sau revoke.
+
+Không thêm unit test lặp lại từng JSX/style/helper hoặc framework dialog/RHF/TanStack. Behavior tương tác được kiểm tra bằng production Chrome; backend giữ tests hiện có, không đổi source để phục vụ test.
+
+### Kiểm tra
+
+| Command / phạm vi                                                                              | Kết quả                                                                                       |
+| ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `corepack pnpm typecheck` tại frontend                                                         | PASS                                                                                          |
+| `corepack pnpm lint` tại frontend                                                              | PASS, 0 error / 0 warning                                                                     |
+| `corepack pnpm test -- src/features/auth/tests src/features/files/tests src/components/tests`  | PASS, kiểm tra liên quan trước suite toàn bộ                                                  |
+| `corepack pnpm test` tại frontend                                                              | PASS, 104 tests / 11 files, tăng 14 so với B.1                                                |
+| `corepack pnpm build` tại frontend                                                             | PASS, production Turbopack, 15 static pages                                                   |
+| `corepack pnpm test` tại backend                                                               | PASS, 25 tests / 9 files hiện có                                                              |
+| `corepack pnpm exec vitest run tmp/b2-contract.verify.test.ts` tại backend                     | PASS, 11 tests / 1 probe tạm                                                                  |
+| `node src/components/ui/tests/primitives.browser-check.mjs http://127.0.0.1:3002` tại frontend | PASS A.1–B.2, production Chrome, không runtime exception; B.1 17 frame và B.2 17 frame        |
+| Runner cùng command thêm `--member-only`                                                       | PASS, 17 B.2 frames / 51 assertions; dùng để tạo artifact sau chuẩn hóa screenshot modal/menu |
+| `git diff --check` tại root                                                                    | PASS                                                                                          |
+
+Artifact B.2 local: [manifest 17 frames](../../tmp/phase-b2-acceptance/b2-frames.json), [51 assertions + 8 captures bổ sung](../../tmp/phase-b2-acceptance/b2-regressions.json), [Chrome sheet](../../tmp/phase-b2-acceptance/b2-chrome-contact-sheet.png), [comparison sheet](../../tmp/phase-b2-acceptance/b2-comparison-contact-sheet.png). 45 frame captures + 8 state/menu captures = **53 screenshots B.2**. Modal và captures bổ sung dùng viewport để fixed header/top layer không xuất hiện lệch vị trí trong ảnh full-page; pages dùng full-page. Lượt Chrome regression toàn bộ PASS nằm tại `C:/Users/Hoang Viet/AppData/Local/Temp/corebase-phase-a2-rmPAnj/`; B.1 manifest giữ 45 captures ở cùng lượt. Browser APIs là fixtures, không lấy dữ liệu/credential người dùng thật.
+
+### Vấn đề ngoài scope / PARTIAL / BLOCKED
+
+- **VISUAL_PARTIAL:** ảnh tổng hợp đủ để triển khai các state; thiếu export/native properties/assets gốc để đối chiếu đầy đủ, không tuyên bố pixel-perfect. Giữ visual fallbacks A.3 theo APPROVED; dùng SVG/native CSS tối thiểu trong MEMBER.
+- **Technical debt:** quota count-before-save ở backend không atomic với các upload đồng thời. B.2 khóa double submit trong một view, không đảm bảo quota với nhiều tab/client; không tự sửa transaction/database.
+- **Giới hạn verification:** DB mock không chứng minh PostgreSQL transaction/concurrency live; local storage thật đã chạy nhưng không chạy R2 thật. Google OAuth và worker/SMTP delivery thật chưa chạy trong phiên này; giữ flow và kiểm tra frontend qua fixtures.
+- **Ngoài B.2:** 41 Product & Handoff frames còn chờ reference/mapping; native context/variables/icons vẫn bị MCP quota chặn. Không có blocker chức năng cho 17 frame MEMBER.
+
+## 17. Phase B.3 - ADMIN
+
+Ngày: 2026-10-09 (Asia/Saigon). **14/14 FUNCTIONAL_DONE: ADM-01 (2), ADM-02 (6), ADM-03 (6). 14/14 VISUAL_PARTIAL. Không có chức năng PARTIAL/BLOCKED.** Người dùng APPROVED mapping trước triển khai; nghiệm thu từng node/route/API/permission tại [SCREEN_MAPPING.md](SCREEN_MAPPING.md), mục 15.
+
+### Visual và reuse
+
+Nguồn [04 ADMIN.png](references/04%20ADMIN.png), 4670x4969; không gọi MCP. Dùng semantic tokens A.1 và 11 primitives A.2 hiện có, cụ thể Button/Input/Card/RoleBadge/InlineAlert/Skeleton theo nhu cầu. [admin.css](../../frontend/src/components/admin.css) scope ADMIN: heading 32 desktop/24 mobile, page gutter/padding 32 desktop/24 mobile, Dashboard hai cột/một cột, Users/Audit table desktop và cards dưới 768px, filters, readonly fields, status text và long-text wrapping.
+
+AppShell/Sidebar, shell CSS, AuthProvider/interceptor/useLogout và RootLayout giữ nguyên. Dashboard dùng getNavigationItems để chọn đúng bốn capability cards; Users/Audit links theo permission hiện có. Không tạo KPI, charts, system config hoặc backend capability từ permission catalog.
+
+[DetailsDrawer](../../frontend/src/components/ui/details-drawer.tsx) là một component native dialog cho hai consumer Users/Audit thật; không tạo dialog framework hoặc duplicate confirmation primitive. Reuse showModal/inert/Tab/Escape/focus pattern A.2/A.3; initial focus Close, return trigger khi còn visible, fallback heading nếu trigger mất sau refetch. Geometry width cap 560/full-height/right edge và backdrop là quyết định presentation, không phải native Figma properties đã đọc. Metadata pre wrap, escaped strings, UUID/null giữ đúng API.
+
+42 screenshots gồm 36 captures của 14 frame ở 1440/390/720 và 6 loading/error/empty/forbidden bổ sung; kiểm tra thêm 320/768/1280/1600. Đã xem contact sheet reference/Chrome cùng ảnh chi tiết desktop/mobile/720; heading mobile được chỉnh theo token A.1 sau đối chiếu. Text card markers có ponytail cho icons chưa có bản gốc. Neutral role badges và shell brand/avatar fallbacks A.3 tiếp tục VISUAL_PARTIAL.
+
+### File đã thay đổi
+
+- Page composition: [admin/page.tsx](../../frontend/src/app/admin/page.tsx), [admin/users/page.tsx](../../frontend/src/app/admin/users/page.tsx), [admin/audit-logs/page.tsx](../../frontend/src/app/admin/audit-logs/page.tsx); [globals.css](../../frontend/src/app/globals.css) import [admin.css](../../frontend/src/components/admin.css).
+- Dashboard/UI gate: [role-dashboard.tsx](../../frontend/src/features/auth/components/role-dashboard.tsx), [permissions.ts](../../frontend/src/features/auth/permissions.ts) chỉ thêm tên hằng roles:manage đã tồn tại; bảo toàn SUPER_ADMIN guard/children.
+- Users: [admin-users.tsx](../../frontend/src/features/users/components/admin-users.tsx), [use-users.ts](../../frontend/src/features/users/hooks/use-users.ts), [users.api.ts](../../frontend/src/features/users/api/users.api.ts).
+- Audit: [admin-audit-logs.tsx](../../frontend/src/features/audit/components/admin-audit-logs.tsx), [use-audit-logs.ts](../../frontend/src/features/audit/hooks/use-audit-logs.ts), [audit.api.ts](../../frontend/src/features/audit/api/audit.api.ts).
+- Shared details/query: thêm [details-drawer.tsx](../../frontend/src/components/ui/details-drawer.tsx); [query-keys.ts](../../frontend/src/lib/query/query-keys.ts) và [query-keys.test.ts](../../frontend/src/lib/query/query-keys.test.ts) phân tách account/applied filters.
+- Tests: thêm [admin-users.test.tsx](../../frontend/src/features/users/tests/admin-users.test.tsx), [users.api.test.ts](../../frontend/src/features/users/tests/users.api.test.ts), [audit.api.test.ts](../../frontend/src/features/audit/tests/audit.api.test.ts), [admin.browser-check.mjs](../../frontend/src/features/users/tests/admin.browser-check.mjs), [admin.contract.test.ts](../../backend/tests/integration/admin.contract.test.ts); cập nhật [primitives.browser-check.mjs](../../frontend/src/components/ui/tests/primitives.browser-check.mjs).
+- Tài liệu: [CHECKLIST.md](../../CHECKLIST.md), [README.md](../../README.md), [SCREEN_MAPPING.md](SCREEN_MAPPING.md), tài liệu này. Artifact `tmp/phase-b3-acceptance/` Git-ignored. Không thêm dependency/lockfile hoặc sửa backend runtime/Prisma/database/API contracts.
+
+Các thay đổi B.2 có sẵn trong working tree được giữ nguyên; danh sách trên là phạm vi B.3.
+
+### Request flow
+
+```text
+GET /api/v1/auth/me
+→ AuthProvider restore/login → auth.api/Axios
+→ authRouter/sessionRouter → authenticate → sessionController.me
+→ sessionService.me → Prisma + accessService/accessRepository
+→ user/access response → RoleDashboard guard → ADMIN cards
+
+GET /api/v1/users
+→ AdminUsers permission gate → UsersContent keyed account
+→ useUsers/query key + AbortSignal → users.api/Axios
+→ user.routes → authenticate → authorize(users:read)
+→ listUsersController → userService.listUsers → Prisma
+→ users response → local search/filter/sort + readonly selected record
+
+PATCH /api/v1/users/:userId/roles/admin { enabled }
+→ SUPER_ADMIN AND roles:manage UI controls → ref lock → setAdminRole/Axios
+→ user.routes → authenticate → authorize(roles:manage)
+→ assertUserIsSuperAdmin → validateParams/validateBody
+→ setAdminRoleController → userService.setAdminRole → Prisma
+→ response → guarded feedback + invalidate exact account list
+
+GET /api/v1/audit-logs?limit&action&actorUserId&cursor
+→ AdminAuditLogs permission gate → AuditContent/RHF/Zod Apply
+→ useAuditLogs(account, applied filters) + AbortSignal → audit.api/Axios
+→ audit.routes → authenticate → authorize(audit:read) → validateQuery
+→ listAuditLogsController → listAuditLogs
+→ auditRepository.findAuditLogs → Prisma (createdAt desc, id desc)
+→ auditLogs + nextCursor → table/cards, readonly details, load more/retry
+```
+
+Routes/controllers/services/backend repository ở trên là source hiện có, không sửa. Backend tiếp tục kiểm tra quyền thực từ database; việc không mount nút không thay backend authorization.
+
+### Quyết định thiết kế và authentication state
+
+- Business rules/permission enforcement/persistence vẫn ở backend. Users chỉ có list + role mutation SUPER_ADMIN đang có; không suy ra sửa/khóa user từ users:update/users:suspend hoặc thêm detail/search/pagination endpoint.
+- Users search trim/case-insensitive trên tên/email, role xét mọi roles[], status kết hợp, sort trên array mới. UserRoles/UserStatus là private presentation dùng chung cho table/cards/details; không tạo users repository/adapter/helper layer.
+- Audit chỉ hỗ trợ action catalog/actor UUID/limit 1–100/default 50 và nextCursor. Frontend API gửi whitelist params; test đối chiếu action options với backend catalog. RHF/Zod tách draft và applied filters. Không decode cursor, thêm date/outcome/name filters hoặc dựng số trang/total.
+- Query keys chứa account và applied filters; API nhận AbortSignal. Unmount/mất quyền/đổi filter hủy và remove exact scoped key; quay lại filter set cũ vẫn lấy trang đầu. Tạm xác minh phiên chỉ cancel/ẩn protected content, giữ cache cùng account và auth state. Không dùng previous-account placeholder data.
+- Initial/refetch error có retry riêng, 403 ẩn cached rows/drawer. Next-page 503 giữ các pages và retry cursor trước đó; synchronous ref lock + isFetching chặn load-more lặp. Role mutation cũng có ref lock, lifecycle guard, success/error và invalidate đúng account. Không clear cache toàn cục ngoài logout/expired đã có.
+- AuthProvider states loading/authenticated/guest/expired/restore-error, refresh single-flight và HttpOnly cookie giữ nguyên. Network/5xx không xóa phiên, refresh thành công retry bình thường, logout không expired. Token chỉ memory; Web Storage chỉ có boolean marker B.1.
+- DetailsDrawer phục vụ hai module, dùng platform native; không sửa ConfirmDialog/Shell hoặc tạo state framework. Clipboard lỗi có hướng dẫn chọn ID thủ công. Dữ liệu không được render thành HTML hay thay bằng fixtures Figma.
+
+### Test đã thêm/cập nhật
+
+- `admin-users.test.tsx`: 16 cases cho ADMIN không mount role actions dù có roles:manage, SUPER_ADMIN AND permission, guest/permission/query mount, hiding cached data khi verify hoặc 403, transient errors giữ data/retry, empty dataset, Dashboard card gates và SUPER_ADMIN child guard.
+- `users.api.test.ts`: 3 cases cho list response/AbortSignal/no server query params và enabled true/false payload. `audit.api.test.ts`: 3 cases cho catalog parity, whitelist filters/cursor/AbortSignal và initial request không cursor.
+- `query-keys.test.ts`: 2 cases bảo vệ account/filter/page-size isolation, thay kỳ vọng keys cũ không có identity. Tổng frontend tăng 23 từ baseline 104 lên 127.
+- `admin.contract.test.ts`: 16 tests với routes/guards/schema/controller/service thật; auth/JWT boundary và Prisma mock. Cover 401/403, flattened roles/response shape, audit supported filters + cursor/order/default limit + empty page + invalid input và mutation gate cần cả SUPER_ADMIN/roles:manage. Không mock từng controller/service hoặc đổi runtime để phục vụ test.
+- `admin.browser-check.mjs`: 104 assertions, 14 frames/42 captures, ADMIN/SUPER_ADMIN/MEMBER, 401/403, Users filters/sort/empty/retry, Audit valid/invalid inputs, cursor/next error/retry/filter races, metadata XSS-as-text/copy ID, native dialog keyboard/AX/focus/fallback, late queries/mutations, permission revocation, logout và account switch không logout.
+- Runner dùng lại Chrome/CDP hiện có; thêm `--admin-only` để debug riêng. Click driver đợi hai animation frames sau scroll để native popover anchor ổn định; regression Files từng timeout do click đo sớm, suite cuối PASS mà không sửa runtime MEMBER.
+
+Không thêm test lặp từng JSX/style/private helper hoặc framework. Tests tương tác cần DOM chạy trong Chrome production; không coi SSR assertions là bằng chứng keyboard/focus. Không chạy migration/seed hoặc gọi dữ liệu người dùng thật.
+
+### Kiểm tra
+
+| Command / phạm vi                                                                                                       | Kết quả                                                                                       |
+| ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `corepack pnpm typecheck` tại frontend                                                                                  | PASS                                                                                          |
+| `corepack pnpm lint` tại frontend                                                                                       | PASS, 0 error / 0 warning                                                                     |
+| `corepack pnpm test -- src/features/users/tests src/features/audit/tests src/lib/query/query-keys.test.ts` tại frontend | PASS, checks liên quan trước suite toàn bộ                                                    |
+| `corepack pnpm test` tại frontend                                                                                       | PASS, 127 tests / 14 files                                                                    |
+| `corepack pnpm build` tại frontend                                                                                      | PASS, production Turbopack, 15 static pages                                                   |
+| `corepack pnpm lint`, `typecheck`, `build`, `format:check` tại backend                                                  | PASS                                                                                          |
+| `corepack pnpm test -- tests/integration/admin.contract.test.ts` tại backend                                            | PASS, 16 contract tests                                                                       |
+| `corepack pnpm test` tại backend                                                                                        | PASS, 41 tests / 10 files                                                                     |
+| `node src/components/ui/tests/primitives.browser-check.mjs http://127.0.0.1:3002` tại frontend                          | PASS A.1–B.3, 0 runtime exception; B.1 17 frames, B.2 17/51 assertions, B.3 14/104 assertions |
+| Runner cùng command thêm `--admin-only`                                                                                 | PASS trước lượt toàn bộ; dùng API fixtures                                                    |
+| `git diff --check` tại root                                                                                             | PASS                                                                                          |
+
+Artifacts local: [manifest](../../tmp/phase-b3-acceptance/b3-frames.json), [regressions](../../tmp/phase-b3-acceptance/b3-regressions.json), [verification](../../tmp/phase-b3-acceptance/verification.json), [Chrome sheet](../../tmp/phase-b3-acceptance/b3-chrome-contact-sheet.png), [reference/Chrome sheet](../../tmp/phase-b3-acceptance/b3-comparison-contact-sheet.png). Runner production dùng `corepack pnpm start --port 3002`; full passing profile `C:/Users/HOANGV~1/AppData/Local/Temp/corebase-phase-a2-ZyKx4c/`. Captures gốc được giữ cùng manifest; sheets chỉ giúp so bố cục/state.
+
+### Vấn đề ngoài scope / PARTIAL / BLOCKED
+
+- **VISUAL_PARTIAL:** chỉ có composite, thiếu original per-frame exports/native properties/assets. Shell/icon/neutral badges, drawer width/backdrop, table rows/fixture sorting/locale dates và wrapping còn khác reference; không pixel-perfect. Các frame 720 là content specimens, page thật giữ shell/filters nên chiều cao khác; mobile list thật không bị giới hạn theo số record mẫu trong ảnh.
+- **Verification limits:** Chrome HTTP fixtures cố tình dùng pages nhỏ để exercise UI; backend tests mock JWT/auth và DB, không xác nhận live PostgreSQL/RBAC/cursor persistence. Google/SMTP/worker/R2 thật chưa chạy; các frontend flows cũ được regression qua fixtures.
+- **Existing technical debt:** GET users trả toàn bộ danh sách, không có server pagination; B.3 không thêm endpoint/virtualization. Quota upload đồng thời count-before-save B.2 vẫn không atomic, không sửa backend.
+- **BLOCKED ngoài B.3:** 27 Product & Handoff frames chưa có mapping/reference được xác nhận; native context/variables/assets còn quota chặn. Không có blocker chức năng của 14 frame ADMIN.
+
+## 18. Phase B.4 - SUPER_ADMIN
+
+Ngày: 2026-10-09 (Asia/Saigon). Mapping và triển khai được người dùng **APPROVED**. **14/14 FUNCTIONAL_DONE: SUP-01 (2), SUP-02 (5), SUP-03 (6), SUP-04 (1). 14/14 VISUAL_PARTIAL. Không có frame chức năng PARTIAL/BLOCKED.** Nghiệm thu từng node/route/API/permission ở [SCREEN_MAPPING.md](SCREEN_MAPPING.md), mục 16.
+
+### Visual và reuse
+
+Nguồn [05 SUPER_ADMIN.png](references/05%20SUPER_ADMIN.png), 4670x4944; không gọi MCP. AppShell, layout/semantic tokens/typography A.1 và primitives A.2 tiếp tục được tái sử dụng. Dashboard dùng Card/Button, hai cột desktop/một cột mobile, năm cards Users/Audit/Email/Account/Files. Link visibility lấy từ navigation hiện có; trạng thái email lấy từ GET, có loading/error/retry. Không thêm KPI hoặc API.
+
+Email view dùng controlled Switch với accessible label, native ConfirmDialog, Card/InlineAlert/Skeleton/Progress. Switch không optimistic; giữ boolean cuối đã xác minh và disable khi saving/reconciling/unknown/read-error. Mobile đặt switch dưới phần trạng thái. On/Off không hardcode theo Figma. ConfirmDialog thêm optional heading fallback; giữ Escape/cancel/Tab pattern đã có. Cancel đóng presentation, không hủy thao tác server đã xử lý. DetailsDrawer B.3 được giữ nguyên trong Users; không có dialog hoặc drawer duplicate.
+
+RBAC dùng native table/caption/row-column headers trong region có accessible name, keyboard focus và horizontal scroll ở mobile. Đây là default catalog source, không phải quyền runtime DB; production không import backend runtime hoặc fetch endpoint mới. Literal snapshot bảy permission chỉ dành cho reference, có `ponytail:` và test đối chiếu với backend catalog. Không dùng matrix để quyết định authorization.
+
+Đã xem sheet so sánh đủ 14 frame và screenshots chi tiết desktop/mobile/720. Có 36 frame captures + 8 captures bổ sung = **44 screenshots B.4**. Các crops trong comparison lấy từ composite người dùng cung cấp, không phải original Figma exports. Specimens 720 khác runtime có AppShell/backdrop/list nền; giữ text icon/brand/avatar/badge fallbacks A.3. Geometry, wrapping, icon, fixture data và current verified state tiếp tục VISUAL_PARTIAL; không pixel-perfect.
+
+### File đã thay đổi
+
+- SUPER_ADMIN composition: [super-admin/page.tsx](../../frontend/src/app/super-admin/page.tsx), [role-dashboard.tsx](../../frontend/src/features/auth/components/role-dashboard.tsx), thêm [super-admin-workspace.tsx](../../frontend/src/features/system/components/super-admin-workspace.tsx). RoleDashboard SUPER_ADMIN giữ guard và render children; ADMIN composition giữ B.3.
+- System feature: [email-verification-setting.tsx](../../frontend/src/features/system/components/email-verification-setting.tsx), [system.api.ts](../../frontend/src/features/system/api/system.api.ts), thêm [use-email-verification-setting.ts](../../frontend/src/features/system/hooks/use-email-verification-setting.ts) cho Dashboard và setting; [query-keys.ts](../../frontend/src/lib/query/query-keys.ts) thêm account key.
+- Users/UI: [admin-users.tsx](../../frontend/src/features/users/components/admin-users.tsx), [users.api.ts](../../frontend/src/features/users/api/users.api.ts), [confirm-dialog.tsx](../../frontend/src/components/ui/confirm-dialog.tsx), [admin.css](../../frontend/src/components/admin.css) chỉ thêm system setting/matrix styles.
+- Navigation và request isolation: [permissions.ts](../../frontend/src/features/auth/permissions.ts) chỉ thêm SA navigation links, không đổi PERMISSIONS/ROLES; [auth-navigation.tsx](../../frontend/src/features/auth/components/auth-navigation.tsx), [access-token.ts](../../frontend/src/lib/auth/access-token.ts), [client.ts](../../frontend/src/lib/axios/client.ts), [auth.api.ts](../../frontend/src/features/auth/api/auth.api.ts), [auth-provider.tsx](../../frontend/src/features/auth/components/auth-provider.tsx).
+- Frontend tests: thêm [super-admin.test.tsx](../../frontend/src/features/system/tests/super-admin.test.tsx), [super-admin.browser-check.mjs](../../frontend/src/features/system/tests/super-admin.browser-check.mjs); cập nhật [client.test.ts](../../frontend/src/lib/axios/tests/client.test.ts), [page.test.tsx](../../frontend/src/app/super-admin/tests/page.test.tsx), [app-shell.test.tsx](../../frontend/src/components/tests/app-shell.test.tsx), [permissions.test.ts](../../frontend/src/features/auth/tests/permissions.test.ts), [query-keys.test.ts](../../frontend/src/lib/query/query-keys.test.ts), [users.api.test.ts](../../frontend/src/features/users/tests/users.api.test.ts), [admin.browser-check.mjs](../../frontend/src/features/users/tests/admin.browser-check.mjs), [primitives.browser-check.mjs](../../frontend/src/components/ui/tests/primitives.browser-check.mjs).
+- Backend tests only: thêm [system.contract.test.ts](../../backend/tests/integration/system.contract.test.ts), cập nhật [admin.contract.test.ts](../../backend/tests/integration/admin.contract.test.ts) thêm grant/revoke response shape và missing target.
+- Tài liệu: [CHECKLIST.md](../../CHECKLIST.md), [README.md](../../README.md), [SCREEN_MAPPING.md](SCREEN_MAPPING.md), tài liệu này. Artifact `tmp/phase-b4-acceptance/` Git-ignored. Không đổi backend runtime/Prisma/schema/API/catalog/dependency/lockfile. Các thay đổi B.2/B.3 có sẵn được bảo toàn.
+
+### Request flow
+
+```text
+GET /api/v1/auth/me
+→ AuthProvider restore/login → auth.api/Axios
+→ auth/session routes → authenticate → sessionController.me
+→ sessionService.me → Prisma + accessService/accessRepository
+→ verified user/access → RoleDashboard SUPER_ADMIN → Workspace tab
+
+GET /api/v1/users
+→ AdminUsers users:read gate → useUsers(account ID, AbortSignal)
+→ users.api/Axios → user.routes → authenticate → authorize(users:read)
+→ listUsersController → userService.listUsers → Prisma
+→ real list → search/filter/sort/DetailsDrawer/role target
+
+PATCH /api/v1/users/:userId/roles/admin { enabled }
+→ SUPER_ADMIN AND roles:manage → ConfirmDialog → ref lock + AbortSignal
+→ users.api/Axios (request version + guarded 401 refresh/replay)
+→ user.routes → authenticate → authorize(roles:manage)
+→ assertUserIsSuperAdmin → validateParams/validateBody
+→ setAdminRoleController → userService.setAdminRole → Prisma
+→ { enabled } → mutation success → exact account GET /users
+→ GET success: updated record; GET failure: separate list retry, no PATCH replay
+
+GET /api/v1/system/email-verification
+→ verified SUPER_ADMIN → useEmailVerificationSetting(account ID, AbortSignal)
+→ system.api/Axios → system.routes → authenticate → assertUserIsSuperAdmin
+→ existing inline HTTP handler → systemService.isEmailVerificationEnabled
+→ Prisma singleton → { enabled } → verified Switch/Dashboard value
+
+PATCH /api/v1/system/email-verification { enabled }
+→ Switch intent → ConfirmDialog → ref lock + AbortSignal → system.api/Axios
+→ system.routes → authenticate → assertUserIsSuperAdmin → existing boolean schema
+→ existing inline HTTP handler → systemService.setEmailVerificationEnabled
+→ Prisma singleton upsert → { enabled } → exact account verified cache
+→ timeout/network/5xx: GET reconcile → success/error/unknown; no automatic PATCH retry
+
+/super-admin?tab=rbac
+→ existing auth/role guard → local verified default-catalog reference → readonly table
+→ no API, editor or permission mutation
+```
+
+System routes hiện đã dùng inline handler/schema; B.4 không tạo controller hoặc refactor backend. Authorization tiếp tục do DB role/permission checks thực thi; ẩn nút không bảo vệ thay backend.
+
+### Quyết định thiết kế và authentication state
+
+- Business rules và persistence vẫn ở backend. Frontend chỉ làm presentation, confirmation, trạng thái request và lifecycle isolation. Không tạo repository/service/framework mới; hook system có hai consumer thật, dùng query keys/account/cancellation hiện có.
+- Giữ bốn pathname/query views đã chốt. Tab chỉ chọn view, không tạo backend route, permission hoặc capability. SUPER_ADMIN email setting cần role, không thêm roles:manage gate cho system API. Role action cần SUPER_ADMIN và roles:manage; Users list vẫn users:read.
+- Role success và list refetch success độc lập. Response `{ enabled }` không đủ để dựng user mới; lấy updated record từ GET. Mutation ref lock chặn same-tick submit, retry false; GET failure không gửi lại PATCH. Revoke không ảnh hưởng đến roles khác vì backend contract giữ nguyên.
+- Email write dùng boolean server trả về. Definite rejection có mutation-error; timeout/network/5xx đưa vào unknown và GET reconcile. Trong lúc chưa đọc lại được, giá trị cũ chỉ để tham khảo và ghi bị khóa. Recheck chỉ GET; GET đúng target cho success, khác target mở retry qua confirmation mới. Không gọi trạng thái lỗi là rollback hoặc thay verification status của người dùng cũ.
+- AuthProvider giữ năm states cũ; vẫn phân biệt guest/expired/restore-error, transient failure không clear token và intentional logout không tạo expired. Thêm request invalidation trên login/logout/explicit restoration; integer version cùng native event `auth:requests-invalidated` hủy stale pending UI. Không thêm token storage hoặc auth state model.
+- Interceptor stamp/check version trước refresh, sau refresh và trước replay. Same-session refresh không tăng version nên concurrent requests vẫn dùng một rotation. Refresh cũ không overwrite/clear token mới và không phá single-flight của restoration mới. Request/mutation A không replay với token B; signal abort và version/lifecycle checks chặn late feedback/refetch/cache writes.
+- Pending verification ẩn old setting/list; account switch unmount keyed content và remove exact account cache. Mất quyền/403 đóng modal, ẩn mutation controls/protected setting; list chỉ giữ khi users:read còn hiệu lực. AbortSignal không thu hồi write đã được server xử lý, GET chỉ xác minh giá trị ở thời điểm đọc.
+
+### Test đã thêm/cập nhật
+
+- `super-admin.test.tsx`: 14 cases về role/query mount gates, On/Off/current setting, loading/restore-error/read error/403/cache read-only, route fallback/link permissions, actual GET/PATCH boolean + AbortSignal và static catalog khớp backend. SSR tests không kiểm tra effects/focus; phần đó do Chrome.
+- `client.test.ts`: thêm 9 regression cases delayed 401 sau logout/login/restore, replay config cũ, mutation bị logout/login/abort khi refresh pending, same-session concurrent retry và restoration mới không bị old refresh phá. Các classification/network/5xx tests cũ tiếp tục PASS.
+- `app-shell.test.tsx`: bốn query active-state cases; navigation/route-guard/query-key/API tests cập nhật theo Workspace và optional signal, không nới permission assertions.
+- `system.contract.test.ts`: 12 cases với system routes/role gate/service thật, auth/Prisma mocks. Cover unauthenticated/forbidden, SUPER_ADMIN không cần roles:manage, default false, boolean On/Off response/write và invalid body không ghi DB. Invalid body hiện trả generic 500 do inline ZodError; test ghi đúng contract hiện có.
+- `admin.contract.test.ts`: thêm ba cases grant/revoke chỉ trả enabled và missing user → 404 không mutation, giữ 16 B.3 cases. Backend runtime không chỉnh để phục vụ tests.
+- `super-admin.browser-check.mjs`: 104 assertions, đủ 14 frames/44 captures; native keyboard/name/focus/fallback, pending/double-submit, role 200/403/500 + refetch failure, email loading/read-error/403/mutation-error/timeout/5xx/network/reconcile/retry, Back/Forward, ADMIN/MEMBER denial, account switch/logout khi PATCH hoặc 401 refresh pending và permission revocation.
+- Runner A.1–B.3 cập nhật để confirm trước role actions, đợi provider commit và chấp nhận CDP request đã bị cancellation. Không đổi runtime MEMBER/Audit để làm tests pass. Không thêm test framework/dependency; các checks dùng convention tests hiện có.
+
+### Kiểm tra
+
+| Command / phạm vi                                                                                                      | Kết quả                                                                                                       |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `corepack pnpm lint` tại frontend                                                                                      | PASS, 0 error / 0 warning                                                                                     |
+| `corepack pnpm typecheck` tại frontend                                                                                 | PASS                                                                                                          |
+| `corepack pnpm test` tại frontend                                                                                      | PASS, 154 tests / 15 files (+27 từ B.3)                                                                       |
+| `corepack pnpm build` tại frontend                                                                                     | PASS, Turbopack production, 15 static pages                                                                   |
+| `corepack pnpm lint`, `typecheck`, `build`, `format:check` tại backend                                                 | PASS                                                                                                          |
+| `corepack pnpm test -- tests/integration/system.contract.test.ts tests/integration/admin.contract.test.ts` tại backend | PASS, 31 contract tests                                                                                       |
+| `corepack pnpm test` tại backend                                                                                       | PASS, 56 tests / 11 files (+15 từ B.3)                                                                        |
+| `node src/components/ui/tests/primitives.browser-check.mjs http://127.0.0.1:3002 --super-admin-only` tại frontend      | PASS, 14 B.4 frames / 104 assertions                                                                          |
+| Runner cùng command thêm `--admin-only`                                                                                | PASS, 14 B.3 frames / 104 assertions                                                                          |
+| Runner không thêm options tại frontend                                                                                 | PASS A.1–B.4, 0 runtime exception; B.1 17, B.2 17/51 assertions, B.3 14/104 assertions, B.4 14/104 assertions |
+| `git diff --check` tại root                                                                                            | PASS                                                                                                          |
+
+Artifacts: [manifest](../../tmp/phase-b4-acceptance/b4-frames.json), [regressions](../../tmp/phase-b4-acceptance/b4-regressions.json), [verification](../../tmp/phase-b4-acceptance/verification.json), [Chrome sheet](../../tmp/phase-b4-acceptance/b4-chrome-contact-sheet.png), [reference/Chrome sheet](../../tmp/phase-b4-acceptance/b4-comparison-contact-sheet.png). Production runner dùng `corepack pnpm start --port 3002`; full passing profile `C:/Users/HOANGV~1/AppData/Local/Temp/corebase-phase-a2-WNSKL3/`. Local artifacts không chứa dữ liệu/credentials người dùng thật.
+
+### Vấn đề ngoài scope / PARTIAL / BLOCKED
+
+- **VISUAL_PARTIAL:** thiếu original frame exports/native properties/icons; composite đủ đối chiếu bố cục/state nhưng không chứng minh pixel-perfect. Current data và error/reconcile copy đúng flow thực, không copy dữ liệu mẫu hoặc rollback assumption từ Figma.
+- **Verification limits:** HTTP fixtures và auth/DB mocks không xác nhận live JWT/RBAC/PostgreSQL/SMTP/OAuth/worker/R2. Cần integration với môi trường thật để xác nhận delivery/persistence/concurrency.
+- **Technical debt hiện có:** invalid system setting body trả 500 thay vì validation 4xx do inline ZodError (không ghi DB); setting không có version/ETag cho concurrent updates; GET users trả toàn bộ dataset; quota upload đồng thời B.2 chưa atomic. Không sửa backend trong B.4.
+- **BLOCKED ngoài B.4:** 13 Product & Handoff frames chưa triển khai; native context/variables/assets vẫn quota chặn. Không có chức năng B.4 BLOCKED.
+
+## 19. Hợp nhất Account Dashboard/Info
+
+Ngày: 2026-10-09. **FUNCTIONAL_DONE; VISUAL_PARTIAL.** MEM-01 (`4:40847`, `4:40924`) và MEM-02 (`4:40985`, `4:40999`) cùng dùng `AccountDashboard` tại `/account`. Không còn view Info riêng; `/account?tab=info` là alias tương thích được `router.replace` về `/account`, không thêm history entry. Sidebar chỉ giữ Tổng quan cho trang này; Sessions/Files/Security và menu ADMIN/SUPER_ADMIN giữ route và permission gates hiện có.
+
+File thay đổi trong refactor này:
+
+- UI/routing: [account-panel.tsx](../../frontend/src/features/auth/components/account-panel.tsx), [permissions.ts](../../frontend/src/features/auth/permissions.ts), [post-login-route.ts](../../frontend/src/features/auth/post-login-route.ts).
+- Tests: thêm [account-panel.test.tsx](../../frontend/src/features/auth/tests/account-panel.test.tsx); cập nhật [permissions.test.ts](../../frontend/src/features/auth/tests/permissions.test.ts), [app-shell.test.tsx](../../frontend/src/components/tests/app-shell.test.tsx), [member.browser-check.mjs](../../frontend/src/features/auth/tests/member.browser-check.mjs), [primitives.browser-check.mjs](../../frontend/src/components/ui/tests/primitives.browser-check.mjs).
+- Tài liệu: [CHECKLIST.md](../../CHECKLIST.md), [README.md](../../README.md), [SCREEN_MAPPING.md](SCREEN_MAPPING.md), tài liệu này; screenshots/manifests local ở `tmp/account-merge-acceptance/`.
+
+Composition dùng nguyên Card, RoleBadge, Button styling, InlineAlert, native details, `member.css` và AppShell: một profile với tên/email/trạng thái/ngày tham gia/xác minh; một card roles/permissions; một card bảo mật có password status và links Sessions/Security; quick links Files và các mục quản trị từ `getNavigationItems`. Chỉ một EmailVerificationNotice cho user chưa xác minh. Xóa component Info và resend action trùng, không thêm CSS, primitive, abstraction hoặc dependency.
+
+Data flow giữ `GET /api/v1/auth/me → session.routes → authenticate → sessionController.me → sessionService.me/Prisma → AuthProvider → AccountDashboard`. Việc gộp/canonicalize không gọi lại `/me`; overview không prefetch Sessions/Files. AuthProvider, hooks, query isolation, backend, API contracts, RBAC và business logic giữ nguyên; password/revoke/files vẫn ở view chức năng hiện có.
+
+Verification: frontend `corepack pnpm typecheck`, `lint`, `test`, `build` PASS (158 tests/16 files, 15 static pages). Bốn test mới bảo vệ dữ liệu hợp nhất, một profile/resend và shortcuts theo permission; tests navigation/Chrome cập nhật kỳ vọng không có Info link. Chrome production runner A.1–B.4 PASS với API fixtures; MEMBER 17 frame/57 assertions/54 screenshots, gồm canonicalization/Back/Forward/request counts và responsive/keyboard ở 320/390/1440px.
+
+Đã xem screenshots profile verified desktop, unverified mobile và focus disclosure ở 320px, không overflow ngang. Composition hợp nhất theo yêu cầu người dùng, dùng tokens/patterns hiện có; ảnh Figma tổng hợp không đủ chứng minh pixel-perfect. Fixtures không xác nhận live auth/OAuth/SMTP/DB/R2; không chạy backend checks vì không đổi backend/contracts. Technical debt setting validation/concurrency và quota upload đồng thời vẫn ngoài scope. Bằng chứng: [verification](../../tmp/account-merge-acceptance/verification.json), [regressions](../../tmp/account-merge-acceptance/b2-regressions.json), [desktop](../../tmp/account-merge-acceptance/b2-4-40985-account-verified-1440.png), [mobile](../../tmp/account-merge-acceptance/b2-4-40924-dashboard-mobile.png), [320px](../../tmp/account-merge-acceptance/b2-account-320.png).

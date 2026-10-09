@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  type ReactNode,
+  type RefObject,
+} from "react";
 
 import { Button, type ButtonProps } from "./button";
 
@@ -14,6 +20,7 @@ export type ConfirmDialogProps = {
   loading?: boolean;
   onConfirm: () => void;
   onClose: () => void;
+  fallbackFocusRef?: RefObject<HTMLElement | null>;
 };
 
 export function ConfirmDialog({
@@ -26,6 +33,7 @@ export function ConfirmDialog({
   loading = false,
   onConfirm,
   onClose,
+  fallbackFocusRef,
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const id = useId();
@@ -35,16 +43,22 @@ export function ConfirmDialog({
     if (!open || !dialog) return;
 
     const trigger = document.activeElement;
+    const fallback = fallbackFocusRef?.current;
     // Native modal dialogs provide the top layer and inert background.
     dialog.showModal();
     dialog.querySelector<HTMLButtonElement>("[data-dialog-cancel]")?.focus();
 
     return () => {
       dialog.close();
-      if (trigger instanceof HTMLElement && trigger.isConnected)
+      if (
+        trigger instanceof HTMLElement &&
+        trigger.isConnected &&
+        trigger.checkVisibility()
+      )
         trigger.focus();
+      else if (fallback?.isConnected) fallback.focus();
     };
-  }, [open]);
+  }, [open, fallbackFocusRef]);
 
   useEffect(() => {
     if (open && loading) {
