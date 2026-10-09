@@ -10,9 +10,10 @@ import { useAuth } from "../components/auth-provider";
 export function useLogout() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { clearAuthenticatedUser } = useAuth();
+  const { beginLogout, clearAuthenticatedUser } = useAuth();
 
   return useMutation({
+    onMutate: beginLogout,
     mutationFn: logoutUser,
     onSettled: () => {
       clearAuthenticatedUser();

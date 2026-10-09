@@ -5,12 +5,14 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InlineAlert } from "@/components/ui/feedback";
 import { useLogin } from "../hooks/use-login";
 import { getPostLoginPath } from "../post-login-route";
 import { loginSchema, type LoginFormValues } from "../schemas/login.schema";
+import { GoogleLoginButton } from "./google-login-button";
 
 type ApiErrorResponse = {
   error?: {
@@ -48,7 +50,7 @@ export function LoginForm() {
       }
     } catch (error: unknown) {
       if (axios.isAxiosError<ApiErrorResponse>(error)) {
-        const code = error.response?.data.error?.code;
+        const code = error.response?.data?.error?.code;
 
         if (code === "INVALID_CREDENTIALS") {
           setError("root.server", {
@@ -81,15 +83,11 @@ export function LoginForm() {
 
     return (
       <section aria-live="polite">
-        <p className="font-mono text-xs font-semibold tracking-[0.14em]">
-          CREDENTIALS VERIFIED
+        <h1>Đăng nhập thành công</h1>
+        <p className="auth-description">
+          Đang chuyển đến trang phù hợp với quyền của bạn.
         </p>
-        <h2 className="my-2.5 text-3xl">Welcome back.</h2>
-        <p className="mb-0 leading-6">{loginMutation.data.email}</p>
-        <Link
-          className="mt-5 inline-block font-semibold underline decoration-[var(--signal)] decoration-2 underline-offset-4"
-          href={postLoginPath}
-        >
+        <Link className="ui-button auth-link-button mt-6" href={postLoginPath}>
           Mở trang của bạn
         </Link>
       </section>
@@ -97,34 +95,54 @@ export function LoginForm() {
   }
 
   return (
-    <form className="grid gap-5" onSubmit={handleSubmit(onSubmit)} noValidate>
-      <Input
-        label="Email"
-        id="email"
-        type="email"
-        autoComplete="email"
-        placeholder="you@example.com"
-        error={errors.email?.message}
-        {...register("email")}
-      />
+    <>
+      <header className="auth-heading">
+        <h1>Chào mừng trở lại</h1>
+        <p className="auth-description">
+          Đăng nhập để quản lý tài khoản và tệp của bạn.
+        </p>
+      </header>
+      <form
+        className="auth-form"
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        aria-busy={loginMutation.isPending}
+      >
+        {errors.root?.server ? (
+          <InlineAlert variant="error">
+            {errors.root.server.message}
+          </InlineAlert>
+        ) : null}
+        <Input
+          label="Email"
+          id="email"
+          type="email"
+          autoComplete="email"
+          placeholder="Nhập email"
+          error={errors.email?.message}
+          {...register("email")}
+        />
 
-      <Input
-        label="Password"
-        id="password"
-        type="password"
-        autoComplete="current-password"
-        placeholder="Your password"
-        error={errors.password?.message}
-        {...register("password")}
-      />
+        <Input
+          label="Mật khẩu"
+          id="password"
+          type="password"
+          autoComplete="current-password"
+          placeholder="Nhập mật khẩu"
+          error={errors.password?.message}
+          {...register("password")}
+        />
 
-      {errors.root?.server ? (
-        <InlineAlert variant="error">{errors.root.server.message}</InlineAlert>
-      ) : null}
-
-      <Button type="submit" loading={loginMutation.isPending}>
-        {loginMutation.isPending ? "Signing in..." : "Sign in"}
-      </Button>
-    </form>
+        <Button type="submit" loading={loginMutation.isPending}>
+          {loginMutation.isPending ? "Đang đăng nhập..." : "Đăng nhập"}
+        </Button>
+      </form>
+      <Suspense fallback={null}>
+        <GoogleLoginButton />
+      </Suspense>
+      <p className="auth-switch">
+        <Link href="/register">Chưa có tài khoản? Đăng ký</Link>
+      </p>
+    </>
   );
 }

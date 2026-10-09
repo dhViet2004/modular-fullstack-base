@@ -136,7 +136,7 @@
 - [x] Tạo repository/service liên kết hoặc tạo user
 - [x] Tạo start/callback API và audit events
 - [x] Tạo frontend Google login/callback flow
-- [x] Sửa lỗi 404 Google OAuth local do API dự án khác chiếm cổng 4000: backend 4001/frontend 3002, đồng bộ API origin/CORS/callback; smoke test health/readiness/start/callback/link đạt và 5 frontend auth API tests pass; chưa kiểm chứng đăng nhập Google thật
+- [x] Đồng bộ Google OAuth local về backend 4000/frontend 3000, đồng bộ API origin/CORS/callback; smoke test health/readiness/start/callback/link đạt và 5 frontend auth API tests pass; chưa kiểm chứng đăng nhập Google thật
 - [x] Verify migration, backend, frontend và smoke test
 - [x] Đồng bộ API/database docs và roadmap
 - [x] Thêm cờ bật/tắt email xác thực toàn hệ thống, chỉ SUPER_ADMIN được quản lý
@@ -181,11 +181,31 @@
 - [x] A.4 — VERIFIED: Phân biệt loading (`role=status`), guest/401 và thiếu quyền/403 (`role=alert`, guest có login link), SUPER_ADMIN; giữ AuthProvider/refresh/logout/API/hooks/schema/backend authorization và toàn bộ Product layout được phép
 - [x] A.4 — VERIFIED: 7 regression cases mới cho loading với/không có user, guest, MEMBER, ADMIN, SUPER_ADMIN đơn role/đa role; trước fix 5 failed/2 passed, sau fix 7 passed; frontend lint/typecheck/test/build PASS, tổng 62 tests/9 files
 - [x] A.4 — VERIFIED: Chrome production PASS tại 390/1280px cho guest/MEMBER/ADMIN/SUPER_ADMIN; giữ riêng refresh và /auth/me để chứng minh loading không gọi cấu hình, không có SUPER_ADMIN không mount/call API, có SUPER_ADMIN mới GET cấu hình; giữ checks A.3 ở 320/390/768/1280/1600px; dùng API fixtures
-- [ ] Product & Handoff — BLOCKED: 75 frame chưa có screenshot/context do quota; không triển khai screen/layout/flow từ inventory-only mapping
+- [ ] Product & Handoff ngoài B.1 — BLOCKED: 58 frame còn thiếu reference/context do quota; 17 Public & Auth được người dùng xác nhận và cung cấp ảnh tổng hợp để triển khai B.1
 
 Ghi chú A.4: `401/403` là trạng thái UI tương ứng AuthProvider, không đổi HTTP status của Next static page. Flow sau fix: refresh → /auth/me → AuthProvider → RoleDashboard guard → EmailVerificationSetting → API cấu hình khi SUPER_ADMIN; backend `authenticate → assertUserIsSuperAdmin → route handler → systemService → Prisma` giữ nguyên. Không thêm dependency, repository hoặc business rule.
 
-Ngoài scope A.4: AuthProvider hiện đưa mọi lỗi restore về `user=null`, chưa phân loại lỗi mạng/5xx riêng; giữ nguyên authentication logic theo yêu cầu. `system.routes.ts` hiện xử lý HTTP trực tiếp, không có controller riêng; không refactor backend. Figma/Product blockers ở trên vẫn giữ nguyên.
+Ghi nhận tại A.4: AuthProvider đưa mọi lỗi restore về `user=null`; việc phân loại này đã được xử lý trong B.1 theo xác nhận mới của người dùng. `system.routes.ts` xử lý HTTP trực tiếp, không có controller riêng; vẫn ngoài scope và không refactor backend.
+
+## Phase B.1 — Public & Auth (2026-10-09)
+
+- [x] Mapping 17 frame đã được người dùng xác nhận; triển khai theo thứ tự Login → Register → Verify Email → OAuth Callback → Session Expired, dùng `docs/figma/references/02 Public & Auth.png`
+- [x] Login: Desktop Default, Error, Loading, Mobile; tái sử dụng RHF/Zod/Input/Button/InlineAlert, Google OAuth và điều hướng theo role
+- [x] Register: Desktop Default, Validation, Success, Mobile; confirmPassword client-only phải khớp password, API chỉ gửi email/password/displayName; success có nút đăng nhập
+- [x] Verify Email: Pending sau thao tác xác nhận thủ công, Success, Invalid, Resend; giữ public token verification và request có Bearer; lỗi network/5xx thử lại được, `202` chỉ xác nhận yêu cầu đã được nhận
+- [x] OAuth Callback: Loading, Success chuyển tiếp ngay, Failure; dùng chung lần restore của AuthProvider, không gọi refresh/me hai lần hoặc trì hoãn redirect để giữ Success
+- [x] Session Expired: Desktop/Mobile chỉ khi refresh trả `401 INVALID_REFRESH_TOKEN/REFRESH_TOKEN_REUSED` và có bằng chứng phiên trước; guest, network/5xx, unknown 401 và lỗi /me có state riêng
+- [x] AuthProvider/interceptor: giữ token trong memory, chỉ lưu cờ boolean trong sessionStorage; refresh thành công retry bình thường; network/5xx giữ user/token/cache/nội dung và shell; retry thủ công; logout hủy refresh, xóa bằng chứng, không kích hoạt expired; bỏ response cũ sau login/logout
+- [x] Verify public chỉ cập nhật metadata của user hiện tại cùng ID; không dùng setter đăng nhập để xóa restore-error, đổi bằng chứng phiên hoặc khôi phục user sau logout; Chrome regression PASS
+- [x] Giữ AppShell/Sidebar A.3, RBAC, route, backend/schema/Prisma và HTTP API contract; fallback auth giữ `#main-content`/skip link; không thêm dependency hoặc auth state framework
+- [x] Regression: 28 cases mới, tổng 90 tests/10 files; auth API và Axios tests liên quan đặt trong `tests/`; bảo vệ payload, manual verification, lỗi body thiếu JSON, classification, stale refresh và logout race
+- [x] Frontend `corepack pnpm lint`, `typecheck`, `test`, `build` PASS; lint không warning; production build 15 static pages; root `git diff --check` PASS
+- [x] Chrome production PASS: đủ 17 frame, 45 screenshots gồm từng state ở 390/1440px và các kích thước frame 620px; giữ regression primitives/shell/guard A.2–A.4 và 320/390/768/1280/1600px; dùng API fixtures
+- [x] Cập nhật DESIGN_SYSTEM.md, SCREEN_MAPPING.md và README.md; manifest `b1-frames.json`/contact sheet nằm trong thư mục artifact local ghi ở tài liệu
+- [~] B.1 — VISUAL_PARTIAL: ảnh tổng hợp 4520x4156 đã đối chiếu; thiếu export/context/asset gốc riêng từng frame do Figma MCP hết quota, không tuyên bố pixel-perfect; password toggle Show/Hide và SVG/CSS symbols là fallback
+- [~] AUTH-03 Resend cooldown — PARTIAL cho countdown trong Figma: backend không trả deadline/Retry-After đáng tin cậy; hiện hiển thị phản hồi `429`, cho retry thủ công và không hardcode 45 giây
+
+Không có chức năng B.1 bị BLOCKED. Đăng nhập Google thật và delivery email qua worker/SMTP chưa kiểm chứng trong phiên này; Chrome dùng fixtures, không thay thế integration backend.
 
 ## Bổ sung phân vai giao diện
 
@@ -194,7 +214,7 @@ Ngoài scope A.4: AuthProvider hiện đưa mọi lỗi restore về `user=null`
 
 ## Blockers
 
-- Figma MCP hết quota: chưa đọc được 75 Product & Handoff frames, native properties bổ sung, full variable dump và asset icons. Primitives A.2 và shell A.3 kiểm thử được độc lập bằng Chrome/API fixtures; visual Product vẫn BLOCKED.
+- Figma MCP hết quota: 75 Product & Handoff frames vẫn thiếu context gốc, native properties bổ sung, full variable dump và asset icons. B.1 gồm 17 frame đã triển khai từ reference được người dùng xác nhận, visual VISUAL_PARTIAL; 58 frame ngoài B.1 vẫn BLOCKED.
 
 ## Quyết định đã chốt
 

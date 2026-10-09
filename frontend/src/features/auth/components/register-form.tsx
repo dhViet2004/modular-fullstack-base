@@ -1,6 +1,7 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ export function RegisterForm() {
     defaultValues: {
       email: "",
       password: "",
+      confirmPassword: "",
       displayName: "",
     },
   });
@@ -40,7 +42,7 @@ export function RegisterForm() {
       await registerMutation.mutateAsync(values);
     } catch (error: unknown) {
       if (axios.isAxiosError<ApiErrorResponse>(error)) {
-        const code = error.response?.data.error?.code;
+        const code = error.response?.data?.error?.code;
 
         if (code === "USER_EMAIL_ALREADY_EXISTS") {
           setError(
@@ -58,7 +60,7 @@ export function RegisterForm() {
         setError("root.server", {
           type: "server",
           message:
-            error.response?.data.error?.message ??
+            error.response?.data?.error?.message ??
             "Đăng ký thất bại. Vui lòng thử lại.",
         });
 
@@ -75,59 +77,95 @@ export function RegisterForm() {
   if (registerMutation.isSuccess) {
     return (
       <section aria-live="polite">
-        <p className="font-mono text-xs font-semibold tracking-[0.14em]">
-          ACCOUNT CREATED
-        </p>
-        <h2 className="my-2.5 text-3xl">
-          Welcome, {registerMutation.data.displayName ?? "new user"}.
-        </h2>
-        <p className="mb-0 leading-6">
-          Your account is ready. Login will be added in the next step.
-        </p>
+        <header className="auth-heading">
+          <h1>Tạo tài khoản</h1>
+          <p className="auth-description">
+            Bắt đầu với không gian tài khoản riêng của bạn.
+          </p>
+        </header>
+        <InlineAlert variant="success">
+          <strong>Tạo tài khoản thành công</strong>
+          <br />
+          Bạn có thể đăng nhập bằng email vừa đăng ký.
+        </InlineAlert>
+        <Link className="ui-button auth-link-button mt-6" href="/login">
+          Đăng nhập
+        </Link>
       </section>
     );
   }
 
   return (
-    <form className="grid gap-5" onSubmit={handleSubmit(onSubmit)} noValidate>
-      <Input
-        label="Display name"
-        id="displayName"
-        type="text"
-        autoComplete="name"
-        placeholder="Nguyễn Văn A"
-        error={errors.displayName?.message}
-        {...register("displayName")}
-      />
+    <>
+      <header className="auth-heading">
+        <h1>Tạo tài khoản</h1>
+        <p className="auth-description">
+          Bắt đầu với không gian tài khoản riêng của bạn.
+        </p>
+      </header>
+      <form
+        className="auth-form"
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        aria-busy={registerMutation.isPending}
+      >
+        <Input
+          label="Họ tên hiển thị (không bắt buộc)"
+          id="displayName"
+          type="text"
+          autoComplete="name"
+          placeholder="Nhập họ tên"
+          error={errors.displayName?.message}
+          {...register("displayName")}
+        />
 
-      <Input
-        label="Email"
-        id="email"
-        type="email"
-        autoComplete="email"
-        placeholder="you@example.com"
-        error={errors.email?.message}
-        {...register("email")}
-      />
+        <Input
+          label="Email"
+          id="email"
+          type="email"
+          autoComplete="email"
+          placeholder="Nhập email"
+          error={errors.email?.message}
+          {...register("email")}
+        />
 
-      <Input
-        label="Password"
-        id="password"
-        type="password"
-        autoComplete="new-password"
-        placeholder="At least 12 characters"
-        hint="Use at least 12 characters."
-        error={errors.password?.message}
-        {...register("password")}
-      />
+        <Input
+          label="Mật khẩu"
+          id="password"
+          type="password"
+          autoComplete="new-password"
+          placeholder="Nhập mật khẩu"
+          hint="Từ 12–128 ký tự."
+          error={errors.password?.message}
+          {...register("password")}
+        />
 
-      {errors.root?.server ? (
-        <InlineAlert variant="error">{errors.root.server.message}</InlineAlert>
-      ) : null}
+        <Input
+          label="Nhập lại mật khẩu"
+          id="confirmPassword"
+          type="password"
+          autoComplete="new-password"
+          placeholder="Nhập lại mật khẩu"
+          hint="Chỉ dùng để xác nhận trên giao diện."
+          error={errors.confirmPassword?.message}
+          {...register("confirmPassword")}
+        />
 
-      <Button type="submit" loading={registerMutation.isPending}>
-        {registerMutation.isPending ? "Creating account..." : "Create account"}
-      </Button>
-    </form>
+        {errors.root?.server ? (
+          <InlineAlert variant="error">
+            {errors.root.server.message}
+          </InlineAlert>
+        ) : null}
+
+        <Button type="submit" loading={registerMutation.isPending}>
+          {registerMutation.isPending
+            ? "Đang tạo tài khoản..."
+            : "Tạo tài khoản"}
+        </Button>
+      </form>
+      <p className="auth-switch">
+        <Link href="/login">Đã có tài khoản? Đăng nhập</Link>
+      </p>
+    </>
   );
 }

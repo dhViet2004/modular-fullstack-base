@@ -6,6 +6,8 @@ Ngày phân tích: 2026-10-08 (Asia/Saigon). Figma file key: `w7niXpOtilM8YR13A2
 
 Nguồn Figma: [toàn bộ file](https://www.figma.com/design/w7niXpOtilM8YR13A2nrsF/Untitled). Tokens/layout/components đã đọc được ghi trong [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md). Bước phân tích ban đầu chỉ tạo hai tài liệu; kết quả triển khai A.1 ở mục 11 và A.2/A.3 ở mục 12. Trạng thái đọc Figma và mức độ xác minh của Product mapping không thay đổi.
 
+Cập nhật 2026-10-09: người dùng đã xác nhận mapping **17 frame B.1 Public & Auth** và cung cấp [ảnh tham chiếu](references/02%20Public%20%26%20Auth.png). Mapping hiện hành và kết quả triển khai nằm ở mục 13; các bảng source trước đó mô tả snapshot 2026-10-08. B.1 đã verify chức năng, visual **VISUAL_PARTIAL**; 58 frame Product & Handoff còn lại chưa được triển khai. Số frame đọc context qua MCP vẫn là 6, không đổi thành DETAIL_OK chỉ từ ảnh tổng hợp.
+
 ## 1. Quy ước bằng chứng và lỗi MCP
 
 - `DETAIL_OK`: context có thông tin giao diện/style/layout và screenshot đã xem. Không dùng screenshot làm asset triển khai.
@@ -348,3 +350,53 @@ A.2 Shared UI Primitives đã implement và verify; A.3 chỉ thay shell điều
 - **BLOCKED:** 75 Product & Handoff frames và native/asset details vẫn chờ quota. Không tạo route riêng cho sessions, email policy hoặc cấp/gỡ ADMIN; không thay các mapping Route/API/Permission hoặc trạng thái inventory (6 DETAIL_OK / 1 Q_REJECTED / 74 Q_DEFERRED).
 
 Phát hiện A.3 về EmailVerificationSetting nằm ngoài guard của RoleDashboard **đã xử lý trong A.4**: page `/super-admin` đặt setting bên trong RoleDashboard, chỉ mount khi loading hoàn tất, có user và role SUPER_ADMIN; Chrome xác nhận guest/MEMBER/ADMIN/loading không gọi API cấu hình. AuthProvider/API/hooks/backend SUPER_ADMIN gate giữ nguyên. Không đổi Route/API/Permission mapping hoặc trạng thái đọc Figma.
+
+## 13. Phase B.1 - Mapping hiện hành và nghiệm thu 17 frame
+
+Ngày: 2026-10-09 (Asia/Saigon). Mapping được người dùng xác nhận trước khi triển khai. Nguồn visual là ảnh tổng hợp `references/02 Public & Auth.png` (4520x4156); probe `get_screenshot(4:40414)` vẫn bị MCP quota từ chối. Không đổi trạng thái inventory/context gốc.
+
+**17/17 frame FUNCTIONAL_VERIFIED; toàn bộ visual VISUAL_PARTIAL.** Không có chức năng B.1 BLOCKED. Countdown resend trong ảnh còn PARTIAL vì API không cung cấp thời hạn đáng tin cậy; OAuth Success chỉ là state chuyển tiếp tự nhiên.
+
+| Node ID | Frame | Route hiện hành | Trigger và kết quả đã verify |
+| --- | --- | --- | --- |
+| `4:40414` | AUTH-01 Login / Desktop / Default | `/login` | Form RHF/Zod, email/password, Google link và link đăng ký |
+| `4:40463` | AUTH-01 Login / Error | `/login` | `INVALID_CREDENTIALS` có InlineAlert; form dùng lại được sau lỗi |
+| `4:40497` | AUTH-01 Login / Loading | `/login` | Mutation pending, Button spinner/disabled; không gửi lặp bằng click/Enter |
+| `4:40530` | AUTH-01 Login / Mobile | `/login` | Một cột, form full-width; keyboard/labels/password visibility giữ primitives A.2 |
+| `4:40564` | AUTH-02 Register / Desktop / Default | `/register` | displayName tùy chọn, email/password/confirmPassword |
+| `4:40619` | AUTH-02 Register / Validation | `/register` | Lỗi từng field, mật khẩu không khớp không gửi API; focus field lỗi đầu |
+| `4:40658` | AUTH-02 Register / Success | `/register` | `201` tạo tài khoản, InlineAlert success và CTA đăng nhập; không tự đăng nhập |
+| `4:40673` | AUTH-02 Register / Mobile | `/register` | Một cột, đủ bốn field, không overflow |
+| `4:40713` | AUTH-03 Verify Email / Pending | `/verify-email?token=...` | Chỉ pending sau bấm xác nhận thủ công; mở URL không consume token |
+| `4:40726` | AUTH-03 Verify Email / Success | `/verify-email?token=...` | API verify thành công; guest tới login, user tới dashboard theo role |
+| `4:40741` | AUTH-03 Verify Email / Invalid | `/verify-email?token=...` | Token thiếu hoặc `INVALID_EMAIL_VERIFICATION_TOKEN`; guest login/user về account; network/5xx có retry riêng |
+| `4:40756` | AUTH-03 Verify Email / Resend cooldown | `/verify-email`, notice trên `/account` và các consumer cũ | User chưa xác minh gửi request; `202` accepted, `429` báo chờ; retry thủ công, không countdown 45 giây |
+| `4:40774` | AUTH-04 OAuth Callback / Loading | `/oauth/google/callback` | AuthProvider restore refresh-cookie → /me; callback dùng chung kết quả |
+| `4:40787` | AUTH-04 OAuth Callback / Success | `/oauth/google/callback` | User authenticated → render Success → router.replace ngay; test giữ destination request để chụp state ngắn này |
+| `4:40800` | AUTH-04 OAuth Callback / Failure | `/oauth/google/callback` | Restore không hoàn tất: retry OAuth hoặc login; lỗi tạm thời có retry restore |
+| `4:40817` | AUTH-05 Session Expired / Desktop | Các route authenticated hiện có; ảnh tại `/account` | Bằng chứng phiên trước + refresh credential bị từ chối → expired; CTA /login |
+| `4:40832` | AUTH-05 Session Expired / Mobile | Các route authenticated hiện có; ảnh tại `/account` | Cùng điều kiện desktop; layout mobile giữ skip target/focus và không overflow |
+
+Backend OAuth thất bại vẫn redirect `/login?error=google_login_failed`; Login hiển thị lỗi Google và link thử lại theo contract cũ. Không đổi callback backend hoặc tạo route Session Expired riêng.
+
+### Authentication state
+
+| State | Điều kiện | User/token và UI |
+| --- | --- | --- |
+| `loading` | Restore ban đầu hoặc retry thủ công | Khi chưa có user: loading; khi có user: giữ shell/content, Button retry pending |
+| `authenticated` | Refresh + /me hoặc login + /me thành công | Token chỉ trong memory; cờ `corestack.session-established=true` trong sessionStorage |
+| `guest` | Refresh trả `401 INVALID_REFRESH_TOKEN/REFRESH_TOKEN_REUSED` mà không có bằng chứng phiên trước; hoặc logout chủ động | Không render expired; logout xóa token/cờ/cache |
+| `expired` | Hai mã credential trên, đúng endpoint refresh, có user/bằng chứng đã đăng nhập trước | Xóa token/user/query cache; thay trang protected bằng Session Expired |
+| `restore-error` | Network/5xx, unknown 401 hoặc /me lỗi sau refresh | Không suy ra guest/expired; giữ user/token/cache đã có, cho retry và giữ nội dung mounted |
+
+Cờ sessionStorage chỉ là bằng chứng UI theo tab, không phải credential hoặc authorization. Nếu storage bị chặn, vẫn giữ bằng chứng trong memory cho tab hiện tại; sau reload không có bằng chứng thì xử lý bảo thủ như guest khi credential bị từ chối. AuthProvider vẫn là nguồn state duy nhất. Interceptor báo lỗi refresh qua native event, vẫn single-flight/retry tối đa một lần; logout abort và bỏ kết quả refresh cũ, không kích hoạt expired.
+
+### Verification và bằng chứng visual
+
+- Frontend lint/typecheck/test/build PASS; 90 tests/10 files, tăng 28 regression cases từ baseline A.4; lint không warning, 15 static pages. Root `git diff --check` PASS.
+- Chrome production PASS: 17 frame IDs duy nhất, 45 screenshots. Mỗi frame có desktop 1440 và mobile 390px, cộng capture theo kích thước inventory; giữ checks A.2–A.4 ở 320/390/768/1280/1600px.
+- Artifact local của lượt verify: `C:/Users/Hoang Viet/AppData/Local/Temp/corebase-phase-a2-3UmauF/`. `b1-frames.json` gắn node ID với viewport/filename và captures responsive; `b1-contact-sheet.png` gom 17 capture chính. Runner tạo thư mục mới cho mỗi lần chạy.
+- Đã xem contact sheet và screenshots desktop/mobile, so với ảnh tham chiếu ở bố cục split, form, semantic colors và status cards. Không tuyên bố pixel-perfect; chưa có export/context/asset gốc riêng từng frame, toggle Show/Hide và SVG/CSS symbols là fallback.
+- API dùng fixtures; chưa kiểm chứng Google thật, SMTP/worker delivery hoặc integration backend trong phiên này. Không sửa backend, API HTTP, Prisma, permission hoặc AppShell A.3.
+
+Báo cáo file/flow/design/test chi tiết ở [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md), mục 15; checklist ở [CHECKLIST.md](../../CHECKLIST.md).

@@ -1,4 +1,8 @@
-import { apiClient, refreshAccessToken } from "@/lib/axios/client";
+import {
+  apiClient,
+  cancelSessionRefresh,
+  refreshAccessToken,
+} from "@/lib/axios/client";
 import { clearAccessToken, setAccessToken } from "@/lib/auth/access-token";
 import type { RegisterFormValues } from "../schemas/register.schema";
 import type { LoginFormValues } from "../schemas/login.schema";
@@ -19,10 +23,17 @@ export type AuthenticatedUser = RegisteredUser & {
   permissions: string[];
 };
 
-export type AuthSession = { id: string; createdAt: string; expiresAt: string; current: boolean };
+export type AuthSession = {
+  id: string;
+  createdAt: string;
+  expiresAt: string;
+  current: boolean;
+};
 
 export async function getSessions() {
-  const response = await apiClient.get<{ data: { sessions: AuthSession[] } }>("/auth/sessions");
+  const response = await apiClient.get<{ data: { sessions: AuthSession[] } }>(
+    "/auth/sessions",
+  );
   return response.data.data.sessions;
 }
 
@@ -30,8 +41,14 @@ export async function revokeSession(id: string) {
   await apiClient.delete(`/auth/sessions/${encodeURIComponent(id)}`);
 }
 
-export async function changePassword(newPassword: string, currentPassword?: string) {
-  await apiClient.post("/auth/password/change", { newPassword, ...(currentPassword ? { currentPassword } : {}) });
+export async function changePassword(
+  newPassword: string,
+  currentPassword?: string,
+) {
+  await apiClient.post("/auth/password/change", {
+    newPassword,
+    ...(currentPassword ? { currentPassword } : {}),
+  });
 }
 
 type RegisterResponse = {
@@ -77,9 +94,10 @@ type VerifyEmailResponse = {
   data: { user: RegisteredUser };
 };
 
-
 // Gửi dữ liệu đăng ký đã chuẩn hóa tới backend và trả user vừa tạo.
-export async function registerUser(values: RegisterFormValues) {
+export async function registerUser(
+  values: Omit<RegisterFormValues, "confirmPassword">,
+) {
   const displayName = values.displayName.trim();
 
   const response = await apiClient.post<RegisterResponse>("/auth/register", {
@@ -126,6 +144,7 @@ export function getGoogleOAuthStartUrl() {
 
 // Thu hồi session phía backend và luôn xóa access token khỏi bộ nhớ phía frontend.
 export async function logoutUser(): Promise<void> {
+  cancelSessionRefresh();
   try {
     await apiClient.post("/auth/logout");
   } finally {

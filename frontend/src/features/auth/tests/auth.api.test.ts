@@ -3,10 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const postMock = vi.hoisted(() => vi.fn());
 const getMock = vi.hoisted(() => vi.fn());
 const refreshAccessTokenMock = vi.hoisted(() => vi.fn());
+const cancelSessionRefreshMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/axios/client", () => ({
   apiClient: { get: getMock, post: postMock },
   refreshAccessToken: refreshAccessTokenMock,
+  cancelSessionRefresh: cancelSessionRefreshMock,
 }));
 
 import {
@@ -20,7 +22,8 @@ import {
   requestEmailVerification,
   restoreAuthenticatedSession,
   verifyEmail,
-} from "./auth.api";
+  registerUser,
+} from "../api/auth.api";
 
 describe("logoutUser", () => {
   beforeEach(() => {
@@ -34,6 +37,31 @@ describe("logoutUser", () => {
 
     await expect(logoutUser()).rejects.toThrow("network error");
     expect(getAccessToken()).toBeNull();
+    expect(cancelSessionRefreshMock).toHaveBeenCalledOnce();
+    expect(cancelSessionRefreshMock.mock.invocationCallOrder[0]).toBeLessThan(
+      postMock.mock.invocationCallOrder[0],
+    );
+  });
+});
+
+describe("registration API boundary", () => {
+  it("sends only the existing registration fields even when confirmPassword is supplied", async () => {
+    postMock.mockClear();
+    postMock.mockResolvedValue({
+      data: { data: { user: { id: "new-user" } } },
+    });
+    const values = {
+      email: "new@example.com",
+      password: "valid-password",
+      confirmPassword: "valid-password",
+      displayName: "  New User  ",
+    };
+    await registerUser(values);
+    expect(postMock).toHaveBeenCalledWith("/auth/register", {
+      email: values.email,
+      password: values.password,
+      displayName: "New User",
+    });
   });
 });
 
@@ -47,9 +75,7 @@ describe("email verification API", () => {
 
     await requestEmailVerification();
 
-    expect(postMock).toHaveBeenCalledWith(
-      "/auth/email-verification/request",
-    );
+    expect(postMock).toHaveBeenCalledWith("/auth/email-verification/request");
   });
 
   it("posts the raw token only to the verify endpoint", async () => {
@@ -71,10 +97,9 @@ describe("email verification API", () => {
 
     await verifyEmail("raw-token");
 
-    expect(postMock).toHaveBeenCalledWith(
-      "/auth/email-verification/verify",
-      { token: "raw-token" },
-    );
+    expect(postMock).toHaveBeenCalledWith("/auth/email-verification/verify", {
+      token: "raw-token",
+    });
   });
 });
 

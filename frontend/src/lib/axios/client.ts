@@ -36,6 +36,26 @@ type RefreshResponse = {
 };
 
 let refreshPromise: Promise<string> | null = null;
+let refreshController: AbortController | null = null;
+
+export function isInvalidRefreshCredential(error: unknown): boolean {
+  return (
+    axios.isAxiosError<{ error?: { code?: string } }>(error) &&
+    error.config?.url?.endsWith("/auth/refresh") === true &&
+    error.response?.status === 401 &&
+    ["INVALID_REFRESH_TOKEN", "REFRESH_TOKEN_REUSED"].includes(
+      error.response.data?.error?.code ?? "",
+    )
+  );
+}
+
+// Abort outstanding refreshes before logout so they cannot restore a logged-out session.
+export function cancelSessionRefresh(): void {
+  refreshController?.abort();
+  refreshController = null;
+  refreshPromise = null;
+  clearAccessToken();
+}
 
 const AUTH_FLOW_PATHS = [
   "/auth/login",
@@ -53,19 +73,41 @@ function isAuthFlowRequest(url: string | undefined): boolean {
 // Gọi endpoint refresh bằng Axios client riêng để tránh interceptor tự gọi lặp vô hạn.
 export function refreshAccessToken(): Promise<string> {
   if (!refreshPromise) {
+    const controller = new AbortController();
+    const previousToken = getAccessToken();
+    refreshController = controller;
     refreshPromise = refreshClient
-      .post<RefreshResponse>("/auth/refresh")
+      .post<RefreshResponse>("/auth/refresh", undefined, {
+        signal: controller.signal,
+      })
       .then((response) => {
+        if (controller.signal.aborted || getAccessToken() !== previousToken) {
+          throw new axios.CanceledError("Session refresh superseded");
+        }
         const token = response.data.data.accessToken;
         setAccessToken(token);
         return token;
       })
       .catch((error: unknown) => {
-        clearAccessToken();
+        if (
+          !controller.signal.aborted &&
+          getAccessToken() === previousToken &&
+          !axios.isCancel(error)
+        ) {
+          if (isInvalidRefreshCredential(error)) clearAccessToken();
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(
+              new CustomEvent("auth:refresh-failed", { detail: error }),
+            );
+          }
+        }
         throw error;
       })
       .finally(() => {
-        refreshPromise = null;
+        if (refreshController === controller) {
+          refreshController = null;
+          refreshPromise = null;
+        }
       });
   }
 
@@ -108,7 +150,7 @@ apiClient.interceptors.response.use(undefined, async (error: unknown) => {
     const token = await refreshAccessToken();
     config.headers.Authorization = `Bearer ${token}`;
     return apiClient(config);
-  } catch {
-    return Promise.reject(error);
+  } catch (refreshError: unknown) {
+    return Promise.reject(refreshError);
   }
 });

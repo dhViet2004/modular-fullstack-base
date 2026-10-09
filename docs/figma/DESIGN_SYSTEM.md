@@ -8,6 +8,8 @@ Nguồn: [file Figma](https://www.figma.com/design/w7niXpOtilM8YR13A2nrsF/Untitl
 
 Cập nhật triển khai: người dùng đã cho phép Phase A chỉ dựa trên 5 frame Design System đã đọc. **A.1 Foundations & shared layout đã implement và verify** trên working tree; chi tiết ở mục 12. A.2 Shared UI Primitives ở mục 13; A.3 App Shell & Role-based Navigation ở mục 14. Implementation/verification được phân biệt với đối chiếu visual; trạng thái PARTIAL ở trên vẫn áp dụng cho việc phân tích toàn bộ file Figma.
 
+Cập nhật 2026-10-09: **B.1 Public & Auth đã triển khai và verify đủ 17 frame chức năng** từ mapping người dùng xác nhận và [ảnh tổng hợp](references/02%20Public%20%26%20Auth.png); visual **VISUAL_PARTIAL**. Báo cáo B.1 nằm ở mục 15. Quota MCP/context/asset gốc vẫn thiếu; 58 frame ngoài B.1 tiếp tục BLOCKED.
+
 ## 1. Bằng chứng và giới hạn
 
 - `whoami` thành công: seat Full, plan Starter. Kết nối MCP hoạt động.
@@ -450,3 +452,113 @@ Verification trong `frontend/`: `corepack pnpm lint`, `corepack pnpm typecheck`,
 [primitives.browser-check.mjs](../../frontend/src/components/ui/tests/primitives.browser-check.mjs) mở rộng runner Chrome/CDP đã có; chạy trên production bằng `corepack pnpm start --port 3002` và `node src/components/ui/tests/primitives.browser-check.mjs http://127.0.0.1:3002`. PASS: 25 route/width cases ở 320/390/768/1280/1600, sidebar/topbar/avatar geometry, hover/keyboard/focus-visible/ARIA, skip link, drawer focus/Escape/close/route/resize, account popover keyboard/light-dismiss/account link, long name/email overflow, 6 role-permission combinations trên mobile/desktop, 3 role session refresh thành công/thất bại và logout pending/completion. Giữ regression A.2 cho primitives và auth double-submit/error recovery. API dùng fixtures; không thay thế integration backend thật.
 
 Đã xem screenshots admin expanded 1280, drawer 390 và account dropdown/collapsed sidebar 768. Đây là kiểm tra UI source, không phải bằng chứng visual Product. A.3 ghi nhận EmailVerificationSetting nằm ngoài guard của RoleDashboard. **Đã sửa trong A.4:** setting là children của RoleDashboard, chỉ mount sau loading/user/SUPER_ADMIN guard; regression tests và Chrome xác nhận không gọi API cấu hình khi chưa đủ quyền. Giữ API/hooks/backend authorization; không thêm bằng chứng visual Figma hoặc đổi inventory.
+
+## 15. Phase B.1 - Public & Auth
+
+Ngày triển khai: 2026-10-09 (Asia/Saigon). **17/17 frame chức năng VERIFIED, visual VISUAL_PARTIAL.** Danh sách từng frame/route/trigger ở [SCREEN_MAPPING.md](SCREEN_MAPPING.md), mục 13. Không có chức năng B.1 BLOCKED.
+
+### Visual và primitives
+
+[auth-page.tsx](../../frontend/src/features/auth/components/auth-page.tsx) dùng chung AuthPage/AuthStateCard cho Login/Register/Verify/OAuth/Session Recovery; Card, Button, Input và InlineAlert tiếp tục dùng A.2. Typography Inter, line-height 150%, màu/spacing/radius/focus của A.1 giữ nguyên.
+
+[auth.css](../../frontend/src/features/auth/components/auth.css) chỉ áp dụng Public & Auth: split 4:5 (640/800 ở 1440), aside Slate từ palette đã đọc, form max-width 480, status card max-width 520/padding 24/radius 12, brand 32. Auth pages mở rộng ngoài cap 1280 bằng selector giới hạn `.app-content:has(> .public-auth)`; layout authenticated A.3 không đổi. Dưới 1024 ẩn aside, gutter 24 và form một cột. Breakpoint này là lựa chọn triển khai từ ảnh tổng hợp, chưa phải native Figma property được đọc.
+
+Ảnh nguồn là `references/02 Public & Auth.png` (4520x4156). Đã so sánh Chrome desktop/mobile với ảnh và xem đủ 17 capture chính qua contact sheet; 45 screenshots kiểm tra mỗi state ở 390/1440px và kích thước frame. Thiếu export/context/asset gốc riêng từng frame vì probe MCP vẫn hết quota: **VISUAL_PARTIAL**, không pixel-perfect. Toggle Show/Hide tái sử dụng A.2; brand/status SVG và preview symbol là fallback được ghi bằng `ponytail:`.
+
+### File đã thay đổi
+
+- Page composition: [login/page.tsx](../../frontend/src/app/login/page.tsx), [register/page.tsx](../../frontend/src/app/register/page.tsx), [verify-email/page.tsx](../../frontend/src/app/verify-email/page.tsx), [oauth callback/page.tsx](../../frontend/src/app/oauth/google/callback/page.tsx).
+- Auth presentation: [auth-page.tsx](../../frontend/src/features/auth/components/auth-page.tsx), [auth.css](../../frontend/src/features/auth/components/auth.css), [globals.css](../../frontend/src/app/globals.css), [login-form.tsx](../../frontend/src/features/auth/components/login-form.tsx), [register-form.tsx](../../frontend/src/features/auth/components/register-form.tsx), [google-login-button.tsx](../../frontend/src/features/auth/components/google-login-button.tsx).
+- Verification/OAuth: [verify-email-panel.tsx](../../frontend/src/features/auth/components/verify-email-panel.tsx), [email-verification-notice.tsx](../../frontend/src/features/auth/components/email-verification-notice.tsx), [google-oauth-callback.tsx](../../frontend/src/features/auth/components/google-oauth-callback.tsx), [use-verify-email.ts](../../frontend/src/features/auth/hooks/use-verify-email.ts).
+- Session/validation/API: [auth-provider.tsx](../../frontend/src/features/auth/components/auth-provider.tsx), [auth-navigation.tsx](../../frontend/src/features/auth/components/auth-navigation.tsx), [session-recovery.tsx](../../frontend/src/features/auth/components/session-recovery.tsx), [use-logout.ts](../../frontend/src/features/auth/hooks/use-logout.ts), [register.schema.ts](../../frontend/src/features/auth/schemas/register.schema.ts), [auth.api.ts](../../frontend/src/features/auth/api/auth.api.ts), [Axios client.ts](../../frontend/src/lib/axios/client.ts).
+- Tests: [auth.api.test.ts](../../frontend/src/features/auth/tests/auth.api.test.ts) và [client.test.ts](../../frontend/src/lib/axios/tests/client.test.ts) chuyển từ cạnh source vào `tests/`; thêm [public-auth.test.tsx](../../frontend/src/features/auth/tests/public-auth.test.tsx), [public-auth.browser-check.mjs](../../frontend/src/features/auth/tests/public-auth.browser-check.mjs), cập nhật [primitives.browser-check.mjs](../../frontend/src/components/ui/tests/primitives.browser-check.mjs) để chạy suite auth bằng Chrome/CDP hiện có.
+- Tài liệu: [CHECKLIST.md](../../CHECKLIST.md), [README.md](../../README.md), [SCREEN_MAPPING.md](SCREEN_MAPPING.md) và tài liệu này. Thay đổi CHECKLIST về cổng OAuth có sẵn trước task được giữ nguyên. Backend/Prisma/dependencies/lockfiles/AppShell source không đổi.
+
+### Request flow
+
+```text
+POST /api/v1/auth/login
+→ LoginForm/RHF/Zod → useLogin → auth.api → Axios
+→ auth.routes → validateBody → authController.login → authService.login
+→ createAuthSession/Prisma → cookie + access token
+→ GET /auth/me → authenticate → sessionController.me → sessionService.me/Prisma
+→ AuthProvider → getPostLoginPath → AppShell A.3
+
+POST /api/v1/auth/register
+→ RegisterForm/RHF/Zod (confirmPassword phải trùng)
+→ useRegister → auth.api whitelist email/password/displayName → Axios
+→ auth.routes → validateBody → authController.register → authService.register
+→ Prisma → 201 user → Success + login CTA
+
+POST /api/v1/auth/email-verification/verify
+→ thao tác xác nhận thủ công → useVerifyEmail → auth.api/Axios (public)
+→ auth.routes → validateBody → verifyEmailController
+→ verifyEmail service/Prisma transaction → response → Success
+
+POST /api/v1/auth/email-verification/request
+→ EmailVerificationNotice → useRequestEmailVerification → auth.api/Axios
+→ auth.routes → authenticate → requestEmailVerificationController
+→ enqueueEmailVerification/pg-boss → 202 accepted hoặc 429
+→ worker → requestEmailVerification service → Prisma/token/mail
+
+GET /api/v1/auth/google/start, GET /api/v1/auth/google/callback
+→ auth.routes → Google controllers/service → Prisma + Google
+→ HttpOnly cookie → /oauth/google/callback
+→ AuthProvider: POST /auth/refresh → GET /auth/me
+→ GoogleOAuthCallback dùng chung state → router.replace ngay
+
+POST /api/v1/auth/refresh
+→ session.routes → sessionController.refresh → sessionService.refresh
+→ Prisma → token hoặc credential error
+→ Axios/native refresh-failed event → AuthProvider phân loại
+→ guest / expired / restore-error hoặc authenticated; không thêm route
+
+POST /api/v1/auth/logout
+→ useLogout.beginLogout → auth.api.cancelSessionRefresh → Axios
+→ session.routes → sessionController.logout → sessionService.logout
+→ Prisma → response → clear user/token/marker/cache → /login
+```
+
+Luồng backend trên là source hiện có, chỉ được đọc để trace. Request gửi email hiện gọi enqueue từ controller; không tạo service/repository mới hoặc refactor boundary này trong B.1.
+
+### Quyết định thiết kế
+
+- Business rules/authorization và token verification vẫn ở backend service. Confirm password là validation UI trong schema Zod frontend; feature API có whitelist payload nên không gửi confirmPassword kể cả khi object input chứa field này.
+- Verify Email giữ xác nhận thủ công. `202` chỉ báo đã nhận yêu cầu, không khẳng định email đã gửi. `429` hiển thị phản hồi và cho retry thủ công; không có timer 45 giây khi chưa có deadline/Retry-After đáng tin cậy.
+- AuthProvider mở rộng state `loading/authenticated/guest/expired/restore-error`, giữ API user/isLoading cũ. Expired cần đúng refresh endpoint + 401 + mã credential xác định + bằng chứng phiên trước; network/5xx và /me lỗi không biến thành guest/expired.
+- Response verify public chỉ cập nhật `emailVerifiedAt/updatedAt` khi user hiện tại cùng ID; dùng functional state update trong AuthProvider, không đổi auth status/bằng chứng phiên và không khôi phục user đã logout. Metadata update không xóa `restore-error` hoặc vô hiệu lần retry đang chạy.
+- Token chỉ trong memory, refresh cookie HttpOnly do backend quản lý. sessionStorage chỉ lưu cờ boolean theo tab sau /me thành công; cờ không dùng để cấp quyền. Lỗi tạm thời giữ user/token/cache và mounted content; retry có user giữ shell, không biến trang đang mở thành guest.
+- Logout đánh dấu chủ động trước request, xóa cờ, abort refresh và vô hiệu kết quả restore cũ; response refresh đến muộn không khôi phục phiên hoặc ghi đè token login mới. Credential bị từ chối xóa user/query cache và render expired; fallback giữ `#main-content` để skip link vẫn hoạt động.
+- OAuth Callback dùng cùng kết quả restore với AuthProvider, không gọi refresh/me thêm lần nữa. Success render trước effect điều hướng, không dùng timeout. Chrome giữ destination request chỉ trong test để chụp Success chuyển tiếp.
+- Không thêm repository, dependency, store hoặc auth framework. Hai component presentation chung phục vụ nhiều auth screens trong một file; session-recovery là UI cho guard hiện có. Native event chỉ nối Axios infrastructure với AuthProvider.
+
+### Test đã thêm/cập nhật
+
+- `auth/tests/auth.api.test.ts`: whitelist register payload không chứa confirmPassword; logout hủy refresh trước khi gửi request và vẫn clear token khi lỗi.
+- `auth/tests/public-auth.test.tsx`: mật khẩu khớp đúng giá trị, bắt buộc confirm; registration success; manual verification/pending/success/invalid/network thiếu JSON; resend không đoán deadline; OAuth states; expired khác restore-error; giữ shell/content và main-content target.
+- `lib/axios/tests/client.test.ts`: known credential rejection, network/500/503/429/unknown 401, /me không phải bằng chứng expired, single-flight/retry; refresh cũ sau logout/login và cleanup không làm mất refresh mới.
+- Chrome/CDP suite: đủ 17 frame, RHF wiring/API payload, double submit, verify không auto-consume hoặc xóa lỗi restore khi cập nhật metadata, resend 429/202, callback chỉ một restore + redirect ngay, backend OAuth failure redirect cũ, guest/expired, restore + /me errors, interceptor refresh/retry và logout race; giữ tests primitives/shell/guards cũ.
+- Không thêm test backend vì không đổi backend/schema/HTTP contract; browser fixtures kiểm tra frontend, không thay thế integration server/Google/SMTP.
+
+### Kiểm tra
+
+Các lệnh thực tế, chạy trong `frontend/` trừ git check ở root:
+
+| Command | Kết quả |
+| --- | --- |
+| `corepack pnpm lint` | PASS, không warning |
+| `corepack pnpm typecheck` | PASS |
+| `corepack pnpm test` | PASS, 90 tests/10 files; 28 cases mới |
+| `corepack pnpm build` | PASS, 15 static pages |
+| `corepack pnpm start --port 3002` | Production server chạy để verify Chrome |
+| `node src/components/ui/tests/primitives.browser-check.mjs http://127.0.0.1:3002` | PASS, A.2–A.4 và B.1; 17 frame/45 screenshots, không runtime exceptions |
+| `git diff --check` | PASS |
+
+Formatter dùng Prettier đã cài trong backend để format các file frontend đã sửa; không cài package mới. Artifact local: `C:/Users/Hoang Viet/AppData/Local/Temp/corebase-phase-a2-3UmauF/`, gồm `b1-frames.json`, `b1-contact-sheet.png` và PNGs. Mỗi lần chạy runner tạo directory mới; metadata ghi node ID/viewport/filename cho từng frame và captures desktop/mobile.
+
+### Vấn đề ngoài scope / PARTIAL / BLOCKED
+
+- **VISUAL_PARTIAL (17 frame):** thiếu context/export/assets gốc riêng từng frame, chưa xác nhận pixel fidelity; giữ native/text/SVG/CSS fallback. Không đánh dấu Product inventory thành DETAIL_OK.
+- **PARTIAL (resend countdown):** UI xử lý 429 đầy đủ nhưng không tái tạo con số 45 trong ảnh; chỉ thêm countdown khi API cung cấp thời hạn đáng tin cậy.
+- **BLOCKED ngoài B.1:** 58 Product & Handoff frames còn thiếu reference/context; native DS variables/asset details vẫn bị MCP quota chặn.
+- Google login thật và SMTP/worker delivery chưa kiểm chứng trong phiên này; API fixtures không chứng minh integration thật. Không sửa backend hoặc HTTP API contract để khắc phục các phần này.

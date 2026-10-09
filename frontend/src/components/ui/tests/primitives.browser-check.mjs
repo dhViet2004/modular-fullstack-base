@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import tailwind from "@tailwindcss/postcss";
+import { checkPublicAuth } from "../../../features/auth/tests/public-auth.browser-check.mjs";
 
 const frontend = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -437,6 +438,18 @@ try {
 
   if (app) {
     await checkApp(app);
+    await send("Fetch.disable");
+    await checkPublicAuth({
+      origin: app,
+      profile,
+      socket,
+      send,
+      evaluate,
+      key,
+      click,
+      navigate,
+      until,
+    });
     assert.deepEqual(browserErrors, [], "production runtime exceptions");
     await send("Page.captureScreenshot", {
       format: "png",
@@ -495,7 +508,7 @@ async function checkApp(origin) {
     createdAt: "2026-10-08T00:00:00Z",
     updatedAt: "2026-10-08T00:00:00Z",
   };
-  socket.addEventListener("message", async ({ data }) => {
+  const intercept = async ({ data }) => {
     const message = JSON.parse(data);
     if (message.method !== "Fetch.requestPaused") return;
     const { requestId, request } = message.params;
@@ -566,10 +579,17 @@ async function checkApp(origin) {
       responseCode: request.method === "OPTIONS" ? 204 : status,
       responseHeaders,
       body: Buffer.from(
-        JSON.stringify({ success: status === 200, data: payload }),
+        JSON.stringify({
+          success: status === 200,
+          data: payload,
+          ...(status === 401
+            ? { error: { code: "INVALID_REFRESH_TOKEN" } }
+            : {}),
+        }),
       ).toString("base64"),
     });
-  });
+  };
+  socket.addEventListener("message", intercept);
   await send("Fetch.enable", {
     patterns: [{ urlPattern: "*/api/v1/*", requestStage: "Request" }],
   });
@@ -621,7 +641,7 @@ async function checkApp(origin) {
         assert(await evaluate("!document.querySelector('.role-app-shell')"));
         assert(
           await evaluate(
-            "getComputedStyle(document.querySelector('.ui-card')).borderRadius === '12px'",
+            "getComputedStyle(document.querySelector('.ui-input')).borderRadius === '8px'",
           ),
         );
       }
@@ -889,6 +909,7 @@ async function checkApp(origin) {
         body: Buffer.from(
           JSON.stringify({
             success: !!role,
+            ...(!role ? { error: { code: "INVALID_REFRESH_TOKEN" } } : {}),
             data: role
               ? {
                   accessToken: "ui-fixture-token",
@@ -983,6 +1004,7 @@ async function checkApp(origin) {
     for (const [name, text] of [
       ["email", "ui@example.com"],
       ["password", "example-password"],
+      ["confirmPassword", "example-password"],
       ["displayName", "UI Test"],
     ]) {
       if (!(await evaluate(`!!document.querySelector('input[name=${name}]')`)))
@@ -1053,6 +1075,7 @@ async function checkApp(origin) {
   console.log(
     "PASS: production auth forms including double-submit/error recovery, role navigation and 25 responsive cases (API fixtures).",
   );
+  socket.removeEventListener("message", intercept);
 }
 
 async function checkShell(width, route, origin) {

@@ -171,6 +171,7 @@ Chỉ đánh dấu `[x]` khi đã chạy lệnh kiểm chứng trên working tre
 - [~] CI chạy format, lint, typecheck, test, build và migration drift check — workflow đã tạo và lint YAML đạt; chờ run trên GitHub Actions
 - [~] Phase A — Shared Design System: A.1/A.2 DONE; A.3 AppShell/role navigation VERIFIED (lint/typecheck/test/build, 55 tests và Chrome 320/390/768/1280/1600px, drawer/session/logout); breakpoint UI PROPOSAL, visual/asset PARTIAL; Product & Handoff BLOCKED do quota, chưa thay nội dung screens
 - [x] A.4 — Permission Guard Cleanup: `/super-admin` chỉ mount cấu hình sau guard loading/user/SUPER_ADMIN; UI loading/401/403/allowed rõ ràng; lint/typecheck/test/build và Chrome PASS, 62 tests/9 files; giữ authentication/API/backend authorization
+- [x] B.1 — Public & Auth: đủ 17 frame chức năng; confirmPassword client-only, verify thủ công, OAuth redirect ngay và phân biệt guest/expired/restore-error; lint/typecheck/test/build và Chrome PASS, 90 tests/45 screenshots; visual VISUAL_PARTIAL, countdown resend chờ deadline từ backend; chi tiết trong `docs/figma/SCREEN_MAPPING.md` và `docs/figma/DESIGN_SYSTEM.md`
 
 Các rủi ro và bài học từ phiên bản cũ nằm trong `review-source/`; baseline mới phải giải quyết chúng bằng test và bằng chứng kiểm chứng, không kế thừa các dấu tick cũ.
 
