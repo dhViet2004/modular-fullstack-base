@@ -6,12 +6,7 @@ import {
   getRoleFlags,
 } from "../permissions";
 
-const memberLinks = [
-  "/account",
-  "/account?tab=sessions",
-  "/account/files",
-  "/account?tab=security",
-];
+const memberLinks = ["/account", "/account/files"];
 
 describe("audit permissions", () => {
   it("only enables the audit UI when audit:read is present", () => {

@@ -1,7 +1,9 @@
 import { getRoleFlags } from "./permissions";
 
 export function getAccountTab(value: string | null) {
-  return value === "sessions" || value === "security" ? value : "overview";
+  return value === "roles" || value === "sessions" || value === "security"
+    ? value
+    : "info";
 }
 
 export function getPostLoginPath(roles: string[]) {

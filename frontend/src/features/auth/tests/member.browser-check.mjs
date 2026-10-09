@@ -60,6 +60,7 @@ export async function checkMember({
   let fileMode = "ok";
   let authMode = "ok";
   let meMode = "ok";
+  let role = "MEMBER";
   const held = new Set();
   const paused = [];
   const calls = [];
@@ -152,7 +153,7 @@ export async function checkMember({
       return fulfill(requestId, meMode === "ok" ? 200 : 503, {
         user,
         access: {
-          roles: ["MEMBER"],
+          roles: [role],
           permissions: ["profile:read:self", "profile:update:self"],
         },
       });
@@ -267,6 +268,15 @@ export async function checkMember({
       `[...document.querySelectorAll('${selector} a[aria-current=page]')].map(el => el.getAttribute('href'))`,
     );
     assert.deepEqual(links, [expected]);
+  }
+  async function currentAccountTab(expected) {
+    await until(
+      () =>
+        evaluate(
+          `document.querySelector('.member-tabs [aria-selected="true"]')?.getAttribute('href') === ${JSON.stringify(expected)}`,
+        ),
+      `selected account tab ${expected}`,
+    );
   }
   async function dialogCheck() {
     await until(
@@ -403,8 +413,10 @@ export async function checkMember({
     await capture("4:40847", "dashboard-desktop", 1440, 1000);
     await capture("4:40924", "dashboard-mobile", 390, 1425);
     await resize(320, 844);
+    await click('.member-tabs a[href="/account?tab=roles"]');
+    await text("Xem quyền của tôi");
     check(
-      "merged account fits 320px and exposes the native permission disclosure to keyboard",
+      "account tabs fit 320px and expose the native permission disclosure to keyboard",
       await evaluate(
         "document.documentElement.scrollWidth <= innerWidth && document.querySelector('.member-view summary').textContent.includes('Xem quyền')",
       ),
@@ -418,6 +430,8 @@ export async function checkMember({
     await key("Enter");
     await extraScreenshot("account-320");
     await resize(1440);
+    await click('.member-tabs a[href="/account"]');
+    await text("Gửi lại email");
     const resendBefore = count("/auth/email-verification/request");
     await evaluate(
       "document.querySelector('.member-email-notice button').click(); document.querySelector('.member-email-notice button').click()",
@@ -478,11 +492,12 @@ export async function checkMember({
     );
     await capture("4:40999", "account-unverified", 960, 760);
     const readsBeforeHistory = count("/auth/me");
-    await click('.shell-sidebar a[href="/account?tab=sessions"]');
+    await click('.member-tabs a[href="/account?tab=sessions"]');
     await text("Phiên đăng nhập đang hoạt động");
-    await currentActive("/account?tab=sessions");
+    await currentActive("/account");
+    await currentAccountTab("/account?tab=sessions");
     await evaluate("history.back()");
-    await text("Tài khoản của tôi");
+    await currentAccountTab("/account");
     await currentActive("/account");
     check(
       "Back restores the canonical account URL without resurrecting Info",
@@ -490,7 +505,8 @@ export async function checkMember({
     );
     await evaluate("history.forward()");
     await text("Phiên đăng nhập đang hoạt động");
-    await currentActive("/account?tab=sessions");
+    await currentActive("/account");
+    await currentAccountTab("/account?tab=sessions");
     check(
       "query deep links and history preserve one active view without extra account reads",
       count("/auth/me") === readsBeforeHistory,
@@ -559,7 +575,7 @@ export async function checkMember({
       user: originalUser,
       access: { roles: ["MEMBER"], permissions: [] },
     }).catch(() => {});
-    await click('.shell-sidebar a[href="/account?tab=security"]');
+    await click('.member-tabs a[href="/account?tab=security"]');
     await text("Đặt mật khẩu");
     check(
       "late password metadata cannot restore an old user",
@@ -603,7 +619,7 @@ export async function checkMember({
     );
     sessions = [session(currentId, true)];
     await go("/account?tab=sessions", 720, 455);
-    await text("Một phiên đăng nhập");
+    await text("1 phiên");
     await capture("4:41078", "sessions-one", 720, 455);
     await resize(1440);
     await click(`button[data-revoke="${currentId}"]`);
@@ -635,7 +651,7 @@ export async function checkMember({
     await capture("4:41105", "sessions-error", 720, 580);
     sessionMode = "ok";
     await click(".member-view button:not([data-revoke])");
-    await text("Một phiên đăng nhập");
+    await text("1 phiên");
     sessionMode = "403";
     await go("/account?tab=sessions");
     await text("Bạn không có quyền xem các phiên này");
@@ -665,7 +681,7 @@ export async function checkMember({
       email: "second@example.com",
       displayName: "Second Account",
     });
-    await click('.shell-sidebar a[href="/account?tab=sessions"]');
+    await click('.member-tabs a[href="/account?tab=sessions"]');
     await text("Không có phiên đăng nhập đang hoạt động");
     check(
       "late session list cannot restore data after logout/account switch",
@@ -959,7 +975,9 @@ export async function checkMember({
       "late mutation cannot repopulate private cache after logout",
       await evaluate("!document.body.textContent.includes('stale-upload')"),
     );
-    await click('.shell-sidebar a[href="/account?tab=security"]');
+    await click('.shell-sidebar a[href="/account"]');
+    await currentAccountTab("/account");
+    await click('.member-tabs a[href="/account?tab=security"]');
     await field("currentPassword", "old-password");
     await field("newPassword", "new-password-123");
     await click('.member-form button[type="submit"]');
@@ -974,7 +992,7 @@ export async function checkMember({
       displayName: "Sixth Account",
       hasPassword: false,
     });
-    await click('.shell-sidebar a[href="/account?tab=security"]');
+    await click('.member-tabs a[href="/account?tab=security"]');
     await text("Đặt mật khẩu");
     check(
       "late password response cannot overwrite the next account",
@@ -992,6 +1010,151 @@ export async function checkMember({
         "!JSON.stringify({ ...localStorage, ...sessionStorage }).includes('token')",
       ),
     );
+
+    // Shared self-service UI across roles, viewport sizes and session counts.
+    for (const currentRole of ["MEMBER", "ADMIN", "SUPER_ADMIN"]) {
+      role = currentRole;
+      authMode = "ok";
+      user = {
+        ...originalUser,
+        id: `account-${role}`,
+        emailVerifiedAt: "2026-10-09T00:30:00Z",
+      };
+      await go("/account");
+      for (const width of [320, 390, 768, 1280, 1440]) {
+        await resize(width, 900);
+        for (const href of [
+          "/account",
+          "/account?tab=roles",
+          "/account?tab=security",
+        ]) {
+          await click(`.member-tabs a[href="${href}"]`);
+          await currentAccountTab(href);
+          await currentActive("/account");
+          check(
+            `${role} ${href} fits ${width}px and keeps one sidebar entry`,
+            await evaluate(
+              "document.documentElement.scrollWidth <= innerWidth && document.querySelectorAll('.member-tabs [role=tab]').length === 4 && document.querySelectorAll('.shell-sidebar nav a[href=\"/account\"]').length === 1 && !document.querySelector('.shell-sidebar nav a[href*=\"/account?tab\"]')",
+            ),
+          );
+        }
+      }
+      for (const total of [0, 1, 3]) {
+        sessions = Array.from({ length: total }, (_, index) =>
+          session(
+            [currentId, otherId, "00000000-0000-4000-8000-000000000003"][index],
+            index === 0,
+          ),
+        );
+        await go("/account?tab=sessions");
+        await text(
+          total ? `${total} phiên` : "Không có phiên đăng nhập đang hoạt động",
+        );
+        for (const width of [320, 390, 768, 1280, 1440]) {
+          await resize(width, 900);
+          await currentAccountTab("/account?tab=sessions");
+          await currentActive("/account");
+          check(
+            `${role} ${total} sessions use ${width < 768 ? "cards" : "table"} at ${width}px`,
+            await evaluate(`(() => {
+            const table = document.querySelector('.member-table');
+            const cards = document.querySelector('.member-mobile-list');
+            return document.documentElement.scrollWidth <= innerWidth && (${total} === 0
+              ? !table && !cards && !document.querySelector('[data-revoke]')
+              : table.querySelectorAll('tbody tr').length === ${total} && cards.children.length === ${total}
+                && table.querySelectorAll('th[scope=col]').length === 5
+                && getComputedStyle(table).display === '${width < 768 ? "none" : "table"}'
+                && getComputedStyle(cards).display === '${width < 768 ? "grid" : "none"}');
+          })()`),
+          );
+          if (total === 1)
+            await extraScreenshot(`account-${role}-one-session-${width}`);
+        }
+      }
+      await evaluate("document.querySelector('#account-tab-sessions').focus()");
+      await key("Home");
+      check(
+        `${role} Home focuses the information tab`,
+        await evaluate("document.activeElement.id === 'account-tab-info'"),
+      );
+      await key("ArrowRight");
+      await key("Enter");
+      await currentAccountTab("/account?tab=roles");
+      await key("End");
+      await key(" ");
+      await currentAccountTab("/account?tab=sessions");
+      await key("ArrowRight");
+      check(
+        `${role} arrow navigation wraps to the first tab`,
+        await evaluate("document.activeElement.id === 'account-tab-info'"),
+      );
+      await key("ArrowLeft");
+      await key("Tab");
+      check(
+        `${role} Tab enters the selected tab panel`,
+        await evaluate("document.activeElement.id === 'account-tab-panel'"),
+      );
+      const ax = await send("Accessibility.getFullAXTree");
+      check(
+        `${role} tabs and session table have accessible names`,
+        ax.nodes.filter((node) => node.role?.value === "tab").length === 4 &&
+          ax.nodes.some(
+            (node) =>
+              node.role?.value === "table" &&
+              node.name?.value === "Phiên đăng nhập",
+          ),
+      );
+      check(
+        `${role} account never requests the system email setting`,
+        count("/system/email-verification") === 0,
+      );
+
+      await click(`.member-table button[data-revoke="${otherId}"]`);
+      await dialogCheck();
+      await click(".ui-dialog[open] .ui-dialog-actions button:last-child");
+      await fulfill(
+        (await take(`/auth/sessions/${otherId}`, "DELETE")).requestId,
+        503,
+      );
+      await text("Không thể thu hồi phiên");
+      check(
+        `${role} failed revoke retains the session and allows retry`,
+        await evaluate(
+          `document.querySelector('.member-table button[data-revoke="${otherId}"]') !== null && document.querySelector('.ui-dialog').open`,
+        ),
+      );
+      await click(".ui-dialog[open] .ui-dialog-actions button:last-child");
+      sessions = sessions.filter((item) => item.id !== otherId);
+      await fulfill(
+        (await take(`/auth/sessions/${otherId}`, "DELETE")).requestId,
+        204,
+      );
+      await text("Đã thu hồi phiên đăng nhập");
+      check(
+        `${role} other-session revoke keeps current authentication`,
+        await evaluate("!!document.querySelector('.role-app-shell')"),
+      );
+      await resize(390, 900);
+      await click(`.member-mobile-list button[data-revoke="${currentId}"]`);
+      await text("Đây là phiên hiện tại");
+      await click(".ui-dialog[open] .ui-dialog-actions button:last-child");
+      authMode = "guest";
+      await fulfill((await take("/auth/logout")).requestId, 204);
+      await until(
+        () =>
+          evaluate(
+            "location.pathname === '/login' && !document.querySelector('.role-app-shell')",
+          ),
+        `${role} current-session logout`,
+      );
+      check(
+        `${role} current-session revoke uses logout and clears session evidence`,
+        count(`/auth/sessions/${currentId}`, "DELETE") === 0 &&
+          (await evaluate(
+            "sessionStorage.getItem('corestack.session-established') === null && !document.body.textContent.includes('Phiên đăng nhập đã hết hạn')",
+          )),
+      );
+    }
     await writeFile(
       join(profile, "b2-frames.json"),
       JSON.stringify(frames, null, 2),

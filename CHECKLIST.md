@@ -276,7 +276,7 @@ Không có frame chức năng B.4 PARTIAL/BLOCKED. Fixtures không xác nhận J
 
 - [x] Rà soát toàn bộ link `?tab=info`: runtime chỉ có navigation entry; các references còn lại là tests/tài liệu. Dashboard/Info cùng dùng AuthProvider nên không cần API mới
 - [x] `/account` giữ hồ sơ, trạng thái, roles/permissions, ngày tham gia/xác minh, bảo mật/đổi mật khẩu/phiên và quick links; xóa view Info và actions trùng, chỉ một resend notice
-- [x] Sidebar bỏ mục Info trùng Tổng quan; link cũ `/account?tab=info` dùng `router.replace` về `/account`; giữ Sessions/Files/Security và menu ADMIN/SUPER_ADMIN
+- [x] Sidebar bỏ mục Info trùng lặp; link cũ `/account?tab=info` dùng `router.replace` về `/account`; các chức năng Sessions/Security nằm trong tab account, Files và menu ADMIN/SUPER_ADMIN giữ route/permission riêng
 - [x] Cập nhật regression cho profile chỉ xuất hiện một lần, permission-aware shortcuts, một resend, active state, canonicalization, deep links/Back/Forward và không thêm requests; keyboard/responsive 320px/390px/1440px PASS
 - [x] Frontend typecheck/lint/test/build PASS: 158 tests/16 files, 15 static pages. Chrome production A.1–B.4 PASS với API fixtures; MEMBER 17 frame/57 assertions/54 screenshots. Bằng chứng: `tmp/account-merge-acceptance/`; mapping MEM-01/MEM-02 cùng route tại `docs/figma/SCREEN_MAPPING.md` mục 14
 - [~] VISUAL_PARTIAL: composition hợp nhất theo yêu cầu; đã xem Chrome desktop/mobile/320px nhưng thiếu original per-frame exports, không pixel-perfect. Fixtures không chứng minh live backend integration; backend/AuthProvider/hooks/API/RBAC giữ nguyên
@@ -318,3 +318,11 @@ Không có frame chức năng B.4 PARTIAL/BLOCKED. Fixtures không xác nhận J
 
 - [x] ??ng b? session refresh rotation v?i `previousRefreshTokenHash`, `lastUsedAt` v? grace period 30 gi?y.
 - [x] R?t g?n Google OAuth v? email verification: gi? controller/service/schema, g?p persistence/token helper v?o service.
+
+## Account self-service tabs và session table (2026-10-10)
+
+- [x] `/account` là route canonical duy nhất cho thông tin cá nhân, vai trò/quyền, bảo mật/mật khẩu và phiên đăng nhập; `tab=info`, `tab=roles`, `tab=security`, `tab=sessions` chỉ là query deep link.
+- [x] Sidebar gộp các mục cá nhân thành `Tài khoản của tôi`; giữ `Tệp của tôi`, các mục ADMIN/SUPER_ADMIN theo permission và menu avatar về `/account`.
+- [x] Desktop render session table cho 1 hoặc nhiều phiên; 0 phiên dùng empty state; mobile dùng card; giữ current/other revoke, confirm dialog và ownership self-service.
+- [x] Unit/browser PASS: ba role có cùng bốn tab và 0/1/3 sessions tại 320/390/768/1280/1440px; keyboard/focus/AX, active sidebar, deep links/Back/Forward, loading/empty/error/retry, expired/restore-error, current/other revoke và mutation error/retry, Login/Logout và account isolation.
+- [x] Frontend `corepack pnpm@9.15.9 typecheck/lint/test/build`, formatter và `git diff --check` PASS: 168 tests/16 files, 15 static pages; Chrome full A.1–B.4 PASS với API fixtures (Account 180 assertions, ADMIN 104, SUPER_ADMIN 104). Artifacts: `tmp/account-tabs-acceptance/`; không chạy backend checks hoặc live integration vì không sửa backend/API/RBAC/Prisma.

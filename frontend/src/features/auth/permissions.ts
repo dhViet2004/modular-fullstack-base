@@ -41,10 +41,8 @@ export function getNavigationItems(roles: string[], permissions: string[]) {
           { href: "/super-admin?tab=rbac", label: "Vai trò và quyền" },
         ]
       : []),
-    { href: "/account", label: "Tổng quan" },
-    { href: "/account?tab=sessions", label: "Phiên đăng nhập" },
+    { href: "/account", label: "Tài khoản của tôi" },
     { href: "/account/files", label: "Tệp của tôi" },
-    { href: "/account?tab=security", label: "Bảo mật" },
   ];
 }
 

@@ -9,7 +9,7 @@ import { RoleBadge } from "@/components/ui/role-badge";
 import { InlineAlert } from "@/components/ui/feedback";
 
 import { getNavigationItems, getRoleFlags } from "../permissions";
-import { getAccountTab, getPostLoginPath } from "../post-login-route";
+import { getPostLoginPath } from "../post-login-route";
 import { useAuth } from "./auth-provider";
 import { LogoutButton } from "./logout-button";
 import { SessionRecovery } from "./session-recovery";
@@ -22,14 +22,11 @@ function AccountNavigation({
   pathname: string;
 }) {
   const value = useSearchParams().get("tab");
-  const tab = getAccountTab(value);
   const activePath =
-    pathname === "/account" && tab !== "overview"
-      ? "/account?tab=" + tab
-      : pathname === "/super-admin" &&
-          (value === "email-verification" || value === "rbac")
-        ? "/super-admin?tab=" + value
-        : pathname;
+    pathname === "/super-admin" &&
+    (value === "email-verification" || value === "rbac")
+      ? "/super-admin?tab=" + value
+      : pathname;
   return <Sidebar items={items} pathname={activePath} />;
 }
 

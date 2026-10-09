@@ -100,9 +100,17 @@ async function evaluate(expression) {
 }
 
 async function key(keyName, shift = false) {
-  const code = { Tab: 9, Escape: 27, " ": 32, Enter: 13, ArrowDown: 40 }[
-    keyName
-  ];
+  const code = {
+    Tab: 9,
+    Escape: 27,
+    " ": 32,
+    Enter: 13,
+    Home: 36,
+    End: 35,
+    ArrowLeft: 37,
+    ArrowRight: 39,
+    ArrowDown: 40,
+  }[keyName];
   await send("Input.dispatchKeyEvent", {
     type: "keyDown",
     key: keyName,
@@ -717,12 +725,7 @@ async function checkApp(origin) {
     }
   }
 
-  const memberLinks = [
-    "/account",
-    "/account?tab=sessions",
-    "/account/files",
-    "/account?tab=security",
-  ];
+  const memberLinks = ["/account", "/account/files"];
   for (const [currentRole, granted, expected] of [
     ["MEMBER", [], memberLinks],
     ["ADMIN", [], ["/admin", ...memberLinks]],
@@ -1200,7 +1203,7 @@ async function checkShell(width, route, origin) {
     await key("Tab", true);
     assert.equal(
       await evaluate("document.activeElement.getAttribute('href')"),
-      "/account?tab=security",
+      "/account/files",
     );
     await key("Tab");
     assert.equal(

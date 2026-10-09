@@ -32,6 +32,21 @@ function date(value: string) {
   return new Date(value).toLocaleString("vi-VN");
 }
 
+const accountTabs = [
+  { value: "info", label: "Thông tin cá nhân", href: "/account" },
+  { value: "roles", label: "Vai trò và quyền", href: "/account?tab=roles" },
+  {
+    value: "security",
+    label: "Bảo mật & mật khẩu",
+    href: "/account?tab=security",
+  },
+  {
+    value: "sessions",
+    label: "Phiên đăng nhập",
+    href: "/account?tab=sessions",
+  },
+] as const;
+
 export function AccountPanel() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
@@ -63,21 +78,78 @@ function AccountContent({
   user: AuthenticatedUser;
   tab: ReturnType<typeof getAccountTab>;
 }) {
-  if (tab === "security") return <AccountSecurity user={user} />;
-  if (tab === "sessions") return <AccountSessions user={user} />;
-  return <AccountDashboard user={user} />;
+  return (
+    <section className="member-view" aria-labelledby="account-title">
+      <header className="member-heading">
+        <h1 id="account-title">Tài khoản của tôi</h1>
+        <p>Hồ sơ, quyền truy cập và bảo mật của bạn.</p>
+      </header>
+      <div
+        className="member-tabs"
+        role="tablist"
+        aria-label="Quản lý tài khoản cá nhân"
+        onKeyDown={(event) => {
+          const tabs = Array.from(
+            event.currentTarget.querySelectorAll<HTMLAnchorElement>(
+              '[role="tab"]',
+            ),
+          );
+          const index = tabs.indexOf(
+            document.activeElement as HTMLAnchorElement,
+          );
+          const target = {
+            ArrowRight: (index + 1) % tabs.length,
+            ArrowLeft: (index + tabs.length - 1) % tabs.length,
+            Home: 0,
+            End: tabs.length - 1,
+          }[event.key];
+          if (target === undefined) return;
+          event.preventDefault();
+          tabs[target]?.focus();
+        }}
+      >
+        {accountTabs.map((item) => (
+          <Link
+            key={item.value}
+            id={`account-tab-${item.value}`}
+            role="tab"
+            href={item.href}
+            scroll={false}
+            aria-selected={tab === item.value}
+            aria-controls="account-tab-panel"
+            tabIndex={tab === item.value ? 0 : -1}
+            onKeyDown={(event) => {
+              if (event.key !== " ") return;
+              event.preventDefault();
+              event.currentTarget.click();
+            }}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </div>
+      <div
+        className="member-view"
+        id="account-tab-panel"
+        role="tabpanel"
+        aria-labelledby={`account-tab-${tab}`}
+        tabIndex={0}
+      >
+        {tab === "info" && <AccountInfo user={user} />}
+        {tab === "roles" && <AccountRoles user={user} />}
+        {tab === "security" && <AccountSecurity user={user} />}
+        {tab === "sessions" && <AccountSessions user={user} />}
+      </div>
+    </section>
+  );
 }
 
-function AccountDashboard({ user }: { user: AuthenticatedUser }) {
+function AccountInfo({ user }: { user: AuthenticatedUser }) {
   const shortcuts = getNavigationItems(user.roles, user.permissions).filter(
     (item) => !item.href.startsWith("/account"),
   );
   return (
-    <section className="member-view" aria-labelledby="dashboard-title">
-      <header className="member-heading">
-        <h1 id="dashboard-title">Tài khoản của tôi</h1>
-        <p>Hồ sơ, quyền truy cập và bảo mật của bạn.</p>
-      </header>
+    <>
       <Card>
         <div className="member-profile">
           <span className="shell-avatar member-avatar" aria-hidden="true">
@@ -117,59 +189,6 @@ function AccountDashboard({ user }: { user: AuthenticatedUser }) {
         </dl>
         <EmailVerificationNotice className="member-email-notice" />
       </Card>
-      <div className="member-columns">
-        <Card>
-          <h2>Vai trò và quyền</h2>
-          <div className="member-badges">
-            {user.roles.length
-              ? user.roles.map((role) =>
-                  role === "MEMBER" ||
-                  role === "ADMIN" ||
-                  role === "SUPER_ADMIN" ? (
-                    <RoleBadge key={role} role={role} />
-                  ) : (
-                    <span key={role}>{role}</span>
-                  ),
-                )
-              : "Chưa được gán vai trò"}
-          </div>
-          <details open>
-            <summary>Xem quyền của tôi</summary>
-            {user.permissions.length ? (
-              <ul className="member-permissions">
-                {user.permissions.map((permission) => (
-                  <li key={permission}>
-                    <span className="member-badge">{permission}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="member-muted">Chưa có quyền được cấp.</p>
-            )}
-          </details>
-        </Card>
-        <Card>
-          <h2>Bảo mật tài khoản</h2>
-          <p>
-            {user.hasPassword
-              ? "Đã thiết lập mật khẩu đăng nhập."
-              : "Bạn có thể đặt mật khẩu để đăng nhập bằng email."}
-          </p>
-          <p className="member-muted">
-            Xem và thu hồi từng phiên đăng nhập của bạn.
-          </p>
-          <Link
-            className="ui-button member-fit"
-            data-variant="secondary"
-            href="/account?tab=sessions"
-          >
-            Phiên đăng nhập
-          </Link>
-          <Link className="member-text-link" href="/account?tab=security">
-            {user.hasPassword ? "Đổi mật khẩu" : "Đặt mật khẩu"}
-          </Link>
-        </Card>
-      </div>
       <Card>
         <h2>Truy cập nhanh</h2>
         <div className="member-actions">
@@ -188,7 +207,42 @@ function AccountDashboard({ user }: { user: AuthenticatedUser }) {
           ))}
         </div>
       </Card>
-    </section>
+    </>
+  );
+}
+
+function AccountRoles({ user }: { user: AuthenticatedUser }) {
+  return (
+    <Card>
+      <h2>Vai trò và quyền</h2>
+      <div className="member-badges">
+        {user.roles.length
+          ? user.roles.map((role) =>
+              role === "MEMBER" ||
+              role === "ADMIN" ||
+              role === "SUPER_ADMIN" ? (
+                <RoleBadge key={role} role={role} />
+              ) : (
+                <span key={role}>{role}</span>
+              ),
+            )
+          : "Chưa được gán vai trò"}
+      </div>
+      <details open>
+        <summary>Xem quyền của tôi</summary>
+        {user.permissions.length ? (
+          <ul className="member-permissions">
+            {user.permissions.map((permission) => (
+              <li key={permission}>
+                <span className="member-badge">{permission}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="member-muted">Chưa có quyền được cấp.</p>
+        )}
+      </details>
+    </Card>
   );
 }
 
@@ -246,7 +300,7 @@ function AccountSecurity({ user }: { user: AuthenticatedUser }) {
   return (
     <section className="member-view" aria-labelledby="security-title">
       <header className="member-heading">
-        <h1 id="security-title">Bảo mật tài khoản</h1>
+        <h2 id="security-title">Bảo mật tài khoản</h2>
         <p>Mật khẩu và xác thực của bạn.</p>
       </header>
       <Card>
@@ -365,7 +419,7 @@ function AccountSessions({ user }: { user: AuthenticatedUser }) {
   return (
     <section className="member-view" aria-labelledby="sessions-title">
       <header className="member-heading">
-        <h1 id="sessions-title">Phiên đăng nhập</h1>
+        <h2 id="sessions-title">Phiên đăng nhập</h2>
         <p>Quản lý từng phiên truy cập tài khoản của bạn.</p>
       </header>
       <div className="ui-alert member-information" role="note">
@@ -400,38 +454,11 @@ function AccountSessions({ user }: { user: AuthenticatedUser }) {
       )}
       {query.data && (
         <Card>
-          <h2>
-            {sessions.length === 1
-              ? "Một phiên đăng nhập"
-              : "Phiên đăng nhập đang hoạt động"}
-          </h2>
+          <h2>Phiên đăng nhập đang hoạt động</h2>
           <p className="member-muted">{sessions.length} phiên</p>
           {query.isFetching && <p role="status">Đang cập nhật danh sách...</p>}
           {!sessions.length ? (
             <p>Không có phiên đăng nhập đang hoạt động.</p>
-          ) : sessions.length === 1 ? (
-            <div className="member-view">
-              <dl className="member-fields">
-                <div>
-                  <dt>Phiên</dt>
-                  <dd>{sessions[0].id}</dd>
-                </div>
-                <div>
-                  <dt>Tạo lúc</dt>
-                  <dd>{date(sessions[0].createdAt)}</dd>
-                </div>
-                <div>
-                  <dt>Hết hạn</dt>
-                  <dd>{date(sessions[0].expiresAt)}</dd>
-                </div>
-              </dl>
-              {sessions[0].current && (
-                <span className="member-badge member-current member-fit">
-                  Thiết bị này
-                </span>
-              )}
-              <div>{action(sessions[0])}</div>
-            </div>
           ) : (
             <>
               <table className="member-table" aria-label="Phiên đăng nhập">
@@ -467,11 +494,9 @@ function AccountSessions({ user }: { user: AuthenticatedUser }) {
                         <br />
                         {session.id}
                       </p>
-                      {session.current && (
-                        <span className="member-badge member-current member-fit">
-                          Thiết bị này
-                        </span>
-                      )}
+                      <span className="member-badge member-current member-fit">
+                        {session.current ? "Thiết bị này" : "Đang hoạt động"}
+                      </span>
                       <dl className="member-fields">
                         <div>
                           <dt>Tạo lúc</dt>

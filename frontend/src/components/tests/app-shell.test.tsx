@@ -65,24 +65,12 @@ describe("app shell navigation", () => {
     {
       role: "MEMBER",
       permissions: [],
-      expected: [
-        "/account",
-        "/account?tab=sessions",
-        "/account/files",
-        "/account?tab=security",
-      ],
+      expected: ["/account", "/account/files"],
     },
     {
       role: "ADMIN",
       permissions: ["users:read"],
-      expected: [
-        "/admin",
-        "/admin/users",
-        "/account",
-        "/account?tab=sessions",
-        "/account/files",
-        "/account?tab=security",
-      ],
+      expected: ["/admin", "/admin/users", "/account", "/account/files"],
     },
     {
       role: "SUPER_ADMIN",
@@ -94,9 +82,7 @@ describe("app shell navigation", () => {
         "/super-admin?tab=email-verification",
         "/super-admin?tab=rbac",
         "/account",
-        "/account?tab=sessions",
         "/account/files",
-        "/account?tab=security",
       ],
     },
   ])(
@@ -117,7 +103,7 @@ describe("app shell navigation", () => {
     },
   );
 
-  it.each([null, "info", "sessions", "security", "unknown"])(
+  it.each([null, "info", "roles", "sessions", "security", "unknown"])(
     "marks exactly one sidebar view for tab %s without adding a permission gate",
     (tab) => {
       context.tab = tab;
@@ -127,11 +113,8 @@ describe("app shell navigation", () => {
         ...navigation.matchAll(/<a([^>]*aria-current="page"[^>]*)>/g),
       ];
       expect(current).toHaveLength(1);
-      const expected =
-        tab === "sessions" || tab === "security"
-          ? `/account?tab=${tab}`
-          : "/account";
-      expect(current[0][1]).toContain(`href="${expected}"`);
+      expect(current[0][1]).toContain('href="/account"');
+      expect(current[0][1]).toContain('aria-label="Tài khoản của tôi"');
     },
   );
 
